@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout | Krisin Clothing</title>
+<link rel="icon" href="assets/logo-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .steps{display:flex;align-items:center;gap:10px;margin:26px 0 36px;}
+  .step{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--stone);}
+  .step .dot{width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--stone);flex-shrink:0;}
+  .step.done .dot{background:var(--black);border-color:var(--black);color:var(--white);}
+  .step.active{color:var(--black);font-weight:600;}
+  .step.active .dot{border-color:var(--black);color:var(--black);}
+  .step-line{flex:1;height:1px;background:var(--line);max-width:56px;}
+  .pay-method{border:1px solid var(--line);padding:18px;display:flex;gap:14px;align-items:flex-start;cursor:pointer;transition:border-color .2s var(--ease);}
+  .pay-method + .pay-method{border-top:none;}
+  .pay-method.selected{border-color:var(--black);}
+  .pay-method input{margin-top:3px;accent-color:var(--black);}
+  .pay-method .pm-title{font-size:14.5px;font-weight:600;color:var(--ink);}
+  .pay-method .pm-sub{font-size:12.5px;color:var(--stone);margin-top:3px;}
+  .pay-method .pm-marks{display:flex;gap:6px;margin-top:10px;}
+  .pay-method .pm-marks span{font-size:10.5px;letter-spacing:.03em;border:1px solid var(--line);padding:3px 7px;color:var(--charcoal);}
+  .rz-note{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;background:var(--fog);font-size:12px;color:var(--charcoal);}
+  .rz-note svg{width:16px;height:16px;flex-shrink:0;margin-top:1px;stroke:var(--charcoal);fill:none;stroke-width:1.5;}
+  #pay-cta[disabled]{opacity:.55;cursor:not-allowed;}
+  .order-id-accent{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+    <nav class="main-nav"></nav>
+    <div class="header-actions">
+      <a href="cart.html" class="icon-btn" aria-label="Back to bag">
+        <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
+        <span class="count-badge hidden" data-cart-count>0</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <div class="page-hero" style="padding-top:40px;padding-bottom:0;border:none">
+    <h1 class="heading">Checkout</h1>
+    <div class="steps">
+      <div class="step done"><span class="dot">✓</span>Bag</div>
+      <div class="step-line"></div>
+      <div class="step active"><span class="dot">2</span>Details &amp; payment</div>
+      <div class="step-line"></div>
+      <div class="step"><span class="dot">3</span>Confirmation</div>
+    </div>
+  </div>
+
+  <form id="checkout-form" class="checkout-layout">
+    <div>
+      <div class="checkout-section">
+        <h3>Contact &amp; shipping</h3>
+        <div class="form-grid">
+          <div class="field"><label for="fname">Full name</label><input id="fname" required></div>
+          <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" pattern="[0-9]{10}" required></div>
+          <div class="field full"><label for="email">Email</label><input id="email" type="email" required></div>
+          <div class="field full"><label for="address">Address</label><input id="address" required></div>
+          <div class="field"><label for="city">City</label><input id="city" required></div>
+          <div class="field"><label for="state">State</label><input id="state" required></div>
+          <div class="field"><label for="pincode">Pincode</label><input id="pincode" inputmode="numeric" pattern="[0-9]{6}" required></div>
+        </div>
+      </div>
+
+      <div class="checkout-section">
+        <h3>Payment method</h3>
+        <label class="pay-method selected" data-pm="online">
+          <input type="radio" name="pay" value="online" checked>
+          <div>
+            <div class="pm-title">Pay online with Razorpay</div>
+            <div class="pm-sub">Cards, UPI, net banking and wallets, in one secure checkout.</div>
+            <div class="pm-marks"><span>UPI</span><span>Cards</span><span>Net Banking</span><span>Wallets</span></div>
+          </div>
+        </label>
+        <label class="pay-method" data-pm="cod">
+          <input type="radio" name="pay" value="cod">
+          <div>
+            <div class="pm-title">Cash on delivery</div>
+            <div class="pm-sub">Pay in cash when your order arrives. A ₹49 handling fee applies.</div>
+          </div>
+        </label>
+        <div class="rz-note">
+          <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 018 0v3"/></svg>
+          <span>Payments are processed by Razorpay. Krisin Clothing never sees or stores your card, UPI or bank details.</span>
+        </div>
+      </div>
+
+      <button type="submit" id="pay-cta" class="btn btn-primary btn-block">Pay and place order</button>
+      <p class="sub" style="font-size:12px;margin-top:14px;text-align:center;max-width:none">Your information is used only to process and deliver this order.</p>
+    </div>
+
+    <aside class="summary-box" id="order-summary"></aside>
+  </form>
+
+  <div id="confirmation" class="hidden text-center" style="padding:80px 0;">
+    <h2 class="display-2">Thank you.</h2>
+    <p class="sub" style="margin:16px auto">Your order <strong class="order-id-accent" id="order-id"></strong> has been placed. A confirmation has been sent to your email.</p>
+    <p class="sub" id="payment-ref" style="margin:6px auto;font-size:13px"></p>
+    <a href="shop.html" class="btn btn-primary" style="margin-top:20px">Continue shopping</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom" style="border:none;padding-top:0">
+      <span>© 2026 Krisin Clothing</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Razorpay Checkout -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="js/data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
+<script>
+(function () {
+  /* =========================================================
+     RAZORPAY SETUP
+     -----------------------------------------------------------
+     RAZORPAY_KEY_ID below is Razorpay's own public sample test
+     key (documented at razorpay.com/docs) so this checkout works
+     out of the box in test mode. Before going live, replace it
+     with the Key ID from Settings > API Keys in your Razorpay
+     Dashboard, and switch it to your live key when you're ready
+     to accept real payments. See README.md for the full setup
+     guide, including why order creation should move to a small
+     backend before launch.
+     ========================================================= */
+  const RAZORPAY_KEY_ID = "rzp_test_1DP5mmOlF5G5ag";
+
+  const summaryEl = document.getElementById("order-summary");
+  const form = document.getElementById("checkout-form");
+  const payCta = document.getElementById("pay-cta");
+  const cart = STORE.getCart();
+
+  if (cart.length === 0) {
+    window.location.href = "cart.html";
+    return;
+  }
+
+  function totals() {
+    const subtotal = STORE.cartTotal();
+    const shipping = subtotal >= 1999 ? 0 : 99;
+    const codFee = getSelectedMethod() === "cod" ? 49 : 0;
+    return { subtotal, shipping, codFee, total: subtotal + shipping + codFee };
+  }
+
+  function getSelectedMethod() {
+    const el = form.querySelector('input[name="pay"]:checked');
+    return el ? el.value : "online";
+  }
+
+  function renderSummary() {
+    const { subtotal, shipping, codFee, total } = totals();
+    summaryEl.innerHTML = `
+      <h3>Order summary</h3>
+      ${cart.map(item => {
+        const p = getProduct(item.productId);
+        return `<div class="summary-line"><span>${p.name} × ${item.qty}</span><span class="mono-price">${formatPrice(p.price * item.qty)}</span></div>`;
+      }).join("")}
+      <div class="summary-line" style="border-top:1px solid var(--line);margin-top:10px;padding-top:14px"><span>Subtotal</span><span class="mono-price">${formatPrice(subtotal)}</span></div>
+      <div class="summary-line"><span>Shipping</span><span class="mono-price">${shipping === 0 ? "Free" : formatPrice(shipping)}</span></div>
+      ${codFee ? `<div class="summary-line"><span>Cash on delivery fee</span><span class="mono-price">${formatPrice(codFee)}</span></div>` : ""}
+      <div class="summary-line total"><span>Total</span><span class="mono-price">${formatPrice(total)}</span></div>
+    `;
+    payCta.textContent = getSelectedMethod() === "cod" ? "Place order" : `Pay ${formatPrice(total)} with Razorpay`;
+  }
+  renderSummary();
+
+  form.querySelectorAll('.pay-method').forEach(label => {
+    label.addEventListener("click", () => {
+      form.querySelectorAll('.pay-method').forEach(l => l.classList.remove("selected"));
+      label.classList.add("selected");
+      renderSummary();
+    });
+  });
+
+  async function completeOrder(orderId, paymentRef, rzpOrderId) {
+    // Record order in Neon Postgres database
+    const { subtotal, shipping, codFee, total } = totals();
+    const orderData = {
+      id: orderId,
+      customerName: document.getElementById("fname").value.trim(),
+      customerEmail: document.getElementById("email").value.trim(),
+      customerPhone: document.getElementById("phone").value.trim(),
+      shippingAddress: {
+        address: document.getElementById("addr").value.trim(),
+        city: document.getElementById("city").value.trim(),
+        pincode: document.getElementById("pincode").value.trim(),
+        state: document.getElementById("state").value.trim()
+      },
+      items: cart.map(i => {
+        const p = getProduct(i.productId);
+        return {
+          productId: i.productId,
+          name: p ? p.name : i.productId,
+          color: i.color,
+          size: i.size,
+          qty: i.qty,
+          price: p ? p.price : 0
+        };
+      }),
+      subtotal,
+      shippingFee: shipping,
+      codFee,
+      total,
+      paymentMethod: getSelectedMethod(),
+      paymentStatus: paymentRef ? "paid" : "pending",
+      razorpayPaymentId: paymentRef || null,
+      razorpayOrderId: rzpOrderId || null,
+    };
+
+    try {
+      await KrisinAPI.createOrder(orderData);
+      console.log("Order saved to Neon Postgres:", orderId);
+    } catch (err) {
+      console.warn("Neon order sync note:", err.message);
+    }
+
+    document.getElementById("order-id").textContent = "#" + orderId;
+    document.getElementById("payment-ref").textContent = paymentRef ? `Payment reference: ${paymentRef}` : "Payment on delivery";
+    form.classList.add("hidden");
+    document.querySelector(".steps").innerHTML = `
+      <div class="step done"><span class="dot">✓</span>Bag</div>
+      <div class="step-line"></div>
+      <div class="step done"><span class="dot">✓</span>Details &amp; payment</div>
+      <div class="step-line"></div>
+      <div class="step active"><span class="dot">✓</span>Confirmation</div>`;
+    document.getElementById("confirmation").classList.remove("hidden");
+    localStorage.removeItem("mc_cart");
+    updateHeaderCounts();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function makeOrderId() {
+    return "KC" + Math.floor(100000 + Math.random() * 900000);
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    const method = getSelectedMethod();
+    const { total } = totals();
+    const orderId = makeOrderId();
+    const name = document.getElementById("fname").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+
+    // Check account status against Neon Postgres database
+    try {
+      const check = await KrisinAPI.checkCustomerStatus(email);
+      if (check && check.allowed === false) {
+        showToast(check.message || "Your account has been disabled. Order cannot be placed.");
+        return;
+      }
+    } catch (e) {
+      // Continue if offline
+    }
+
+    if (method === "cod") {
+      completeOrder(orderId, null, null);
+      return;
+    }
+
+    // Online payment via Razorpay Checkout.
+    payCta.disabled = true;
+    payCta.textContent = "Opening secure checkout…";
+
+    const rzp = new Razorpay({
+      key: RAZORPAY_KEY_ID,
+      amount: Math.round(total * 100), // Razorpay expects the amount in paise.
+      currency: "INR",
+      name: "Krisin Clothing",
+      description: `Order ${orderId}, ${cart.reduce((n, i) => n + i.qty, 0)} item(s)`,
+      image: "assets/logo-icon.png",
+      prefill: { name, email, contact: phone },
+      notes: { order_id: orderId },
+      theme: { color: "#14244b" },
+      handler: function (response) {
+        completeOrder(orderId, response.razorpay_payment_id, response.razorpay_order_id);
+      },
+      modal: {
+        ondismiss: function () {
+          payCta.disabled = false;
+          renderSummary();
+        }
+      }
+    });
+
+    rzp.on("payment.failed", function (response) {
+      payCta.disabled = false;
+      renderSummary();
+      showToast("Payment failed. Please try again.");
+    });
+
+    rzp.open();
+  });
+})();
+</script>
+</body>
+</html>

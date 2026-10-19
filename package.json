@@ -1,0 +1,11 @@
+{
+  "name": "krisin-clothing",
+  "version": "1.0.0",
+  "description": "Krisin Clothing e-commerce store with Neon PostgreSQL backend",
+  "scripts": {
+    "start": "npm start --prefix server-example",
+    "dev": "npm run dev --prefix server-example",
+    "db:init": "npm run db:init --prefix server-example",
+    "db:test": "npm run db:test --prefix server-example"
+  }
+}

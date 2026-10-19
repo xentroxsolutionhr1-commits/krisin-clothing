@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop All | Krisin Clothing</title>
+<link rel="icon" href="assets/logo-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <button class="menu-toggle icon-btn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+    <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+    <nav class="main-nav">
+      <a href="index.html">Home</a>
+      <a href="shop.html" class="active">Shop</a>
+      <a href="shop.html?filter=new">New Arrivals</a>
+      <a href="shop.html">Collections</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" data-search-toggle aria-label="Search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </button>
+      <div class="search-bar"><input type="text" id="shop-search" placeholder="Search products…"></div>
+      <a href="about.html" class="icon-btn" aria-label="Account">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+      </a>
+      <a href="shop.html?filter=wishlist" class="icon-btn" aria-label="Wishlist">
+        <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z"/></svg>
+        <span class="count-badge hidden" data-wish-count>0</span>
+      </a>
+      <button class="icon-btn" data-cart-open aria-label="Cart">
+        <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
+        <span class="count-badge hidden" data-cart-count>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav">
+  <div class="mobile-nav-top">
+    <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+    <button class="icon-btn mobile-nav-close" aria-label="Close menu">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <nav class="mobile-nav-links">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Shop</a>
+    <a href="shop.html?filter=new">New Arrivals</a>
+    <a href="shop.html">Collections</a>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+  </nav>
+  <div class="mobile-nav-foot">
+    <a href="cart.html">Cart</a>
+    <a href="shop.html?filter=wishlist">Wishlist</a>
+  </div>
+</div>
+
+<div class="drawer-overlay" data-cart-close></div>
+<aside class="cart-drawer">
+  <div class="drawer-head">
+    <span class="heading" style="font-size:18px">Your Bag</span>
+    <button class="icon-btn" data-cart-close aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body"></div>
+  <div class="drawer-foot">
+    <div class="summary-line total"><span>Subtotal</span><span data-drawer-total>₹0</span></div>
+    <a href="cart.html" class="btn btn-outline btn-block" style="margin-top:12px">View Bag</a>
+    <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px">Checkout</a>
+  </div>
+</aside>
+
+<main>
+  <div class="shop-header container">
+    <h1 class="heading" id="shop-title">Shop All</h1>
+    <p class="sub" id="shop-subtitle">Every essential, in one place.</p>
+  </div>
+
+  <div class="container shop-toolbar">
+    <div class="filters" id="category-chips">
+      <button class="filter-chip active" data-cat="all">All</button>
+    </div>
+    <div class="toolbar-right">
+      <span class="result-count"><span id="result-count">0</span> items</span>
+      <select id="sort-select" aria-label="Sort products">
+        <option value="featured">Sort: Featured</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="newest">Newest</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="container shop-layout">
+    <aside class="shop-sidebar">
+      <h5>Size</h5>
+      <div id="size-filters"></div>
+      <h5>Color</h5>
+      <div id="color-filters"></div>
+      <h5>Price</h5>
+      <label class="check-row"><input type="radio" name="price" value="all" checked> All Prices</label>
+      <label class="check-row"><input type="radio" name="price" value="0-1000"> Under ₹1,000</label>
+      <label class="check-row"><input type="radio" name="price" value="1000-1500"> ₹1,000 – ₹1,500</label>
+      <label class="check-row"><input type="radio" name="price" value="1500-9999"> ₹1,500 &amp; above</label>
+    </aside>
+    <div>
+      <div class="product-grid" id="shop-grid"></div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <img src="assets/logo-horizontal-onDark.png" alt="Krisin Clothing">
+        <p>Minimal. Modern. Everyday. Considered essentials, designed in-house and made to last.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <ul>
+          <li><a href="shop.html?cat=T-Shirts">T-Shirts</a></li>
+          <li><a href="shop.html?cat=Shirts">Shirts</a></li>
+          <li><a href="shop.html?cat=Pants">Pants</a></li>
+          <li><a href="shop.html?cat=Hoodies">Hoodies</a></li>
+          <li><a href="shop.html?cat=Glasses">Glasses</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Help</h4>
+        <ul>
+          <li><a href="contact.html">Shipping</a></li>
+          <li><a href="contact.html">Returns</a></li>
+          <li><a href="product.html?id=mc-001">Size Guide</a></li>
+          <li><a href="contact.html">FAQs</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <ul>
+          <li><a href="about.html">About</a></li>
+          <li><a href="about.html">Our Story</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Social</h4>
+        <ul>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">Facebook</a></li>
+          <li><a href="#">WhatsApp</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Krisin Clothing</span>
+      <div class="legal"><a href="admin/dashboard.html" style="color:#5c5950">Store Admin</a></div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const chipsEl = document.getElementById("category-chips");
+  const sizeEl = document.getElementById("size-filters");
+  const colorEl = document.getElementById("color-filters");
+  const grid = document.getElementById("shop-grid");
+  const sortSelect = document.getElementById("sort-select");
+  const searchInput = document.getElementById("shop-search");
+
+  let state = {
+    cat: params.get("cat") || "all",
+    sizes: new Set(),
+    colors: new Set(),
+    price: "all",
+    sort: "featured",
+    q: params.get("q") || "",
+    wishlistOnly: params.get("filter") === "wishlist"
+  };
+
+  if (params.get("filter") === "new") {
+    document.getElementById("shop-title").textContent = "New Arrivals";
+    document.getElementById("shop-subtitle").textContent = "Fresh pieces for everyday wear.";
+  }
+  if (state.wishlistOnly) {
+    document.getElementById("shop-title").textContent = "Your Wishlist";
+    document.getElementById("shop-subtitle").textContent = "Saved pieces, ready when you are.";
+  }
+  if (state.q) {
+    document.getElementById("shop-title").textContent = `Results for "${state.q}"`;
+    document.getElementById("shop-subtitle").textContent = "";
+    if (searchInput) searchInput.value = state.q;
+  }
+
+  CATEGORIES.forEach(cat => {
+    const b = document.createElement("button");
+    b.className = "filter-chip" + (state.cat === cat ? " active" : "");
+    b.dataset.cat = cat;
+    b.textContent = cat;
+    chipsEl.appendChild(b);
+  });
+  if (state.cat !== "all") chipsEl.querySelector('[data-cat="all"]').classList.remove("active");
+
+  chipsEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".filter-chip");
+    if (!btn) return;
+    state.cat = btn.dataset.cat;
+    chipsEl.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    render();
+  });
+
+  const allSizes = [...new Set(PRODUCTS.flatMap(p => p.sizes))].filter(s => s !== "One Size");
+  allSizes.forEach(size => {
+    const label = document.createElement("label");
+    label.className = "check-row";
+    label.innerHTML = `<input type="checkbox" value="${size}"> ${size}`;
+    sizeEl.appendChild(label);
+  });
+  sizeEl.addEventListener("change", (e) => {
+    const cb = e.target;
+    if (cb.checked) state.sizes.add(cb.value); else state.sizes.delete(cb.value);
+    render();
+  });
+
+  const allColors = [...new Map(PRODUCTS.flatMap(p => p.colors).map(c => [c.name, c])).values()];
+  allColors.forEach(c => {
+    const label = document.createElement("label");
+    label.className = "check-row";
+    label.innerHTML = `<input type="checkbox" value="${c.name}"><span class="swatch" style="background:${c.hex}"></span> ${c.name}`;
+    colorEl.appendChild(label);
+  });
+  colorEl.addEventListener("change", (e) => {
+    const cb = e.target;
+    if (cb.checked) state.colors.add(cb.value); else state.colors.delete(cb.value);
+    render();
+  });
+
+  document.querySelectorAll('input[name="price"]').forEach(r => {
+    r.addEventListener("change", () => { state.price = r.value; render(); });
+  });
+
+  sortSelect.addEventListener("change", () => { state.sort = sortSelect.value; render(); });
+
+  function render() {
+    let list = PRODUCTS.slice();
+
+    if (state.wishlistOnly) {
+      const wish = STORE.getWishlist();
+      list = list.filter(p => wish.includes(p.id));
+    }
+    if (state.cat !== "all") list = list.filter(p => p.category === state.cat);
+    if (state.sizes.size) list = list.filter(p => p.sizes.some(s => state.sizes.has(s)));
+    if (state.colors.size) list = list.filter(p => p.colors.some(c => state.colors.has(c.name)));
+    if (state.price !== "all") {
+      const [min, max] = state.price.split("-").map(Number);
+      list = list.filter(p => p.price >= min && p.price <= max);
+    }
+    if (state.q) {
+      const q = state.q.toLowerCase();
+      list = list.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+    }
+
+    if (state.sort === "price-asc") list.sort((a, b) => a.price - b.price);
+    if (state.sort === "price-desc") list.sort((a, b) => b.price - a.price);
+    if (state.sort === "newest") list.sort((a, b) => (b.isNew === true) - (a.isNew === true));
+
+    document.getElementById("result-count").textContent = list.length;
+    renderProductGrid(grid, list);
+  }
+
+  render();
+  KrisinAPI.syncCatalogue().then(() => render());
+})();
+</script>
+</body>
+</html>

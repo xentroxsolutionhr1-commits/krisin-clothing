@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+server-example/node_modules/
+
+# Environment variables & secrets (NEVER commit credentials)
+.env
+.env.local
+.env.*.local
+server-example/.env
+server-example/.env.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
