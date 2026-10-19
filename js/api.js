@@ -7,7 +7,7 @@
    is not running or database is not yet initialized.
    ========================================================= */
 
-const API_BASE = "http://localhost:4000/api";
+const API_BASE = "https://krisin-clothing.onrender.com/api";
 
 const KrisinAPI = {
   isBackendAvailable: null,
