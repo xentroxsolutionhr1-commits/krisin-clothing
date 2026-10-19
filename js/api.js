@@ -12,18 +12,33 @@ const API_BASE = "http://localhost:4000/api";
 const KrisinAPI = {
   isBackendAvailable: null,
 
-  async checkHealth() {
-    try {
-      const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(1800) });
-      if (!res.ok) return { online: false };
-      const data = await res.json();
-      this.isBackendAvailable = data.database && data.database.connected;
-      return { online: true, ...data };
-    } catch {
+async checkHealth() {
+  try {
+    const res = await fetch(`${API_BASE}/health`, {
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!res.ok) {
       this.isBackendAvailable = false;
       return { online: false };
     }
-  },
+
+    const data = await res.json();
+
+    this.isBackendAvailable = Boolean(
+      data.database && data.database.connected
+    );
+
+    return {
+      ...data,
+      online: true
+    };
+  } catch (error) {
+    this.isBackendAvailable = false;
+    console.error("Health check failed:", error);
+    return { online: false };
+  }
+},
 
   async syncCatalogue() {
     try {
