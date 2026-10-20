@@ -20,9 +20,76 @@ const Razorpay = require("razorpay");
 const path = require("path");
 const { query, isDatabaseConfigured, testConnection } = require("./db");
 
+
 const app = express();
+
+// Render runs the app behind a proxy.
+app.set("trust proxy", 1);
+
 app.use(cors());
 app.use(express.json());
+
+// Restrict admin pages and sensitive admin API endpoints by IP.
+const adminAllowedIps = (process.env.ADMIN_ALLOWED_IPS || "")
+  .split(",")
+  .map(ip => ip.trim())
+  .filter(Boolean);
+
+function adminIpAllowlist(req, res, next) {
+  const requestPath = req.path;
+  const method = req.method;
+
+  const isAdminPage =
+    requestPath === "/admin" ||
+    requestPath.startsWith("/admin/");
+
+  const isAdminApi =
+    requestPath === "/api/auth/login" ||
+    requestPath === "/api/inventory" ||
+    requestPath === "/api/customers" ||
+    requestPath.startsWith("/api/customers/") &&
+      method === "PATCH" ||
+    requestPath === "/api/orders" &&
+      method === "GET" ||
+    /^\/api\/orders\/[^/]+\/status$/.test(requestPath) &&
+      method === "PATCH" ||
+    requestPath === "/api/coupons" &&
+      ["GET", "POST"].includes(method) ||
+    /^\/api\/products\/[^/]+$/.test(requestPath) &&
+      ["PUT", "DELETE"].includes(method) ||
+    requestPath === "/api/products" &&
+      method === "POST" ||
+    /^\/api\/reviews\/[^/]+\/status$/.test(requestPath) &&
+      method === "PATCH" ||
+    requestPath === "/api/admin/stats";
+
+  if (!isAdminPage && !isAdminApi) {
+    return next();
+  }
+
+  if (adminAllowedIps.length === 0) {
+    return res.status(503).send("Admin IP allowlist is not configured.");
+  }
+
+const clientIp = (req.ip || "").replace(/^::ffff:/, "");
+
+if (!adminAllowedIps.includes(clientIp)) {
+  return res.status(403).send("Access denied: IP address not allowed.");
+}
+
+return next();
+  console.log("Detected client IP:", clientIp);
+  console.log("Allowed IPs:", adminAllowedIps);
+
+  if (!adminAllowedIps.includes(clientIp)) {
+    return res.status(403).send("Access denied: IP address not allowed.");
+  }
+
+  next();
+}
+
+app.use(adminIpAllowlist);
+
 
 // Optionally serve static storefront from the parent directory
 app.use(express.static(path.join(__dirname, "..")));
