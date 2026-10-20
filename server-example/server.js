@@ -35,6 +35,7 @@ const adminAllowedIps = (process.env.ADMIN_ALLOWED_IPS || "")
   .map(ip => ip.trim())
   .filter(Boolean);
 
+
 function adminIpAllowlist(req, res, next) {
   const requestPath = req.path;
   const method = req.method;
@@ -43,53 +44,58 @@ function adminIpAllowlist(req, res, next) {
     requestPath === "/admin" ||
     requestPath.startsWith("/admin/");
 
+  
   const isAdminApi =
     requestPath === "/api/auth/login" ||
     requestPath === "/api/inventory" ||
     requestPath === "/api/customers" ||
-    requestPath.startsWith("/api/customers/") &&
-      method === "PATCH" ||
-    requestPath === "/api/orders" &&
-      method === "GET" ||
-    /^\/api\/orders\/[^/]+\/status$/.test(requestPath) &&
-      method === "PATCH" ||
-    requestPath === "/api/coupons" &&
-      ["GET", "POST"].includes(method) ||
-    /^\/api\/products\/[^/]+$/.test(requestPath) &&
-      ["PUT", "DELETE"].includes(method) ||
-    requestPath === "/api/products" &&
-      method === "POST" ||
-    /^\/api\/reviews\/[^/]+\/status$/.test(requestPath) &&
-      method === "PATCH" ||
-    requestPath === "/api/admin/stats";
+    (requestPath.startsWith("/api/customers/") &&
+      method === "PATCH") ||
+
+    (requestPath === "/api/orders" &&
+  method === "GET") ||
+    (/^\/api\/orders\/[^/]+\/status$/.test(requestPath) &&
+  method === "PATCH") ||
+    (requestPath === "/api/coupons" &&
+  ["GET", "POST"].includes(method)) ||
+    (/^\/api\/products\/[^/]+$/.test(requestPath) &&
+  ["PUT", "DELETE"].includes(method)) ||
+    (requestPath === "/api/products" &&
+  method === "POST") ||
+    (/^\/api\/reviews\/[^/]+\/status$/.test(requestPath) &&
+  method === "PATCH") ||
+requestPath === "/api/admin/stats";
+
+
 
   if (!isAdminPage && !isAdminApi) {
     return next();
   }
 
   if (adminAllowedIps.length === 0) {
-    return res.status(503).send("Admin IP allowlist is not configured.");
+    return res.status(503).send(
+      "Admin IP allowlist is not configured."
+    );
   }
-console.log("X-Forwarded-For:", req.headers["x-forwarded-for"]);
-console.log("X-Real-IP:", req.headers["x-real-ip"]);
-console.log("Express IP:", req.ip);
-console.log("Socket IP:", req.socket.remoteAddress);
-const clientIp = (req.ip || "").replace(/^::ffff:/, "");
-console.log("Detected IP:", clientIp);
-console.log("Allowed IPs:", adminAllowedIps);
-if (!adminAllowedIps.includes(clientIp)) {
-  return res.status(403).send("Access denied: IP address not allowed.");
-}
+   console.log("IP diagnostic:", {
+  expressIp: req.ip,
+  socketIp: req.socket.remoteAddress,
+  forwardedFor: req.headers["x-forwarded-for"]
+});
+  const clientIp = (req.ip || "").replace(/^::ffff:/, "");
 
-return next();
-  console.log("Detected client IP:", clientIp);
-  console.log("Allowed IPs:", adminAllowedIps);
+  console.log("Admin IP check:", {
+    clientIp,
+    allowed: adminAllowedIps.includes(clientIp)
+  });
 
   if (!adminAllowedIps.includes(clientIp)) {
-    return res.status(403).send("Access denied: IP address not allowed.");
+    return res.status(403).send(
+      "Access denied: IP address not allowed."
+    );
   }
 
-  next();
+  return next();
 }
 
 app.use(adminIpAllowlist);
