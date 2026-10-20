@@ -70,7 +70,10 @@ function adminIpAllowlist(req, res, next) {
   if (adminAllowedIps.length === 0) {
     return res.status(503).send("Admin IP allowlist is not configured.");
   }
-
+console.log("X-Forwarded-For:", req.headers["x-forwarded-for"]);
+console.log("X-Real-IP:", req.headers["x-real-ip"]);
+console.log("Express IP:", req.ip);
+console.log("Socket IP:", req.socket.remoteAddress);
 const clientIp = (req.ip || "").replace(/^::ffff:/, "");
 console.log("Detected IP:", clientIp);
 console.log("Allowed IPs:", adminAllowedIps);
