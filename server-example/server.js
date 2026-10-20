@@ -72,7 +72,8 @@ function adminIpAllowlist(req, res, next) {
   }
 
 const clientIp = (req.ip || "").replace(/^::ffff:/, "");
-
+console.log("Detected IP:", clientIp);
+console.log("Allowed IPs:", adminAllowedIps);
 if (!adminAllowedIps.includes(clientIp)) {
   return res.status(403).send("Access denied: IP address not allowed.");
 }
