@@ -24,7 +24,7 @@ const { query, isDatabaseConfigured, testConnection } = require("./db");
 const app = express();
 
 // Render runs the app behind a proxy.
-app.set("trust proxy", 1);
+app.set("trust proxy", 3);
 
 app.use(cors());
 app.use(express.json());
