@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin sign in | Krisin Clothing</title>
+  <link rel="icon" href="/assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+
+<body class="a-login-body">
+
+  <div class="a-login-card">
+    <img src="/assets/logo-horizontal.png" alt="Krisin Clothing">
+    <h1>Admin sign in</h1>
+    <p class="sub">Store management is restricted to Krisin staff. Sign in to continue.</p>
+
+    <div class="a-login-error" id="login-error">That email or password isn't right. Try again.</div>
+
+    <form id="login-form">
+      <div class="a-field">
+        <label for="li-email">Email</label>
+        <input type="email" id="li-email" autocomplete="username" required>
+      </div>
+      <div class="a-field">
+        <label for="li-pass">Password</label>
+        <input type="password" id="li-pass" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="a-btn primary" id="login-btn">Sign in</button>
+    </form>
+
+
+  </div>
+
+  <script>
+    const API_BASE = window.location.port === "4000" ? "" : "http://localhost:4000";
+
+    // If already signed in with a real token, verify and redirect to dashboard
+    const existingToken = localStorage.getItem("krisin_admin_token") || sessionStorage.getItem("krisin_admin_token");
+    if (existingToken && sessionStorage.getItem("krisin_admin_session") === "1") {
+      window.location.href = "/admin/dashboard";
+    }
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("li-email").value.trim().toLowerCase();
+      const pass = document.getElementById("li-pass").value;
+      const errBox = document.getElementById("login-error");
+      const btn = document.getElementById("login-btn");
+
+      errBox.classList.remove("show");
+      btn.textContent = "Signing in\u2026";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password: pass })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.token) {
+          // Store real JWT token so dashboard can use it
+          localStorage.setItem("krisin_admin_token", data.token);
+          sessionStorage.setItem("krisin_admin_token", data.token);
+          sessionStorage.setItem("krisin_admin_session", "1");
+          localStorage.setItem("krisin_admin_session", "1");
+          localStorage.setItem("krisin_admin_email", email);
+          sessionStorage.setItem("krisin_admin_email", email);
+          window.location.href = "/admin/dashboard";
+        } else {
+          errBox.textContent = data.error || "Invalid email or password.";
+          errBox.classList.add("show");
+          btn.textContent = "Sign in";
+          btn.disabled = false;
+        }
+      } catch (err) {
+        errBox.textContent = "Cannot reach server. Make sure the backend is running on port 4000.";
+        errBox.classList.add("show");
+        btn.textContent = "Sign in";
+        btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+
+</html>
