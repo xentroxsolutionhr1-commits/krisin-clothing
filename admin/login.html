@@ -38,7 +38,7 @@
   </div>
 
   <script>
-    const API_BASE = window.location.port === "4000" ? "" : "http://localhost:4000";
+    const API_BASE = "https://krisin-clothing-1.onrender.com";
 
     // If already signed in with a real token, verify and redirect to dashboard
     const existingToken = localStorage.getItem("krisin_admin_token") || sessionStorage.getItem("krisin_admin_token");

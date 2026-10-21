@@ -15,11 +15,11 @@
     /**
      * Resolves backend API root.
      * When running directly from Express (port 4000), relative path "" is used.
-     * When running via a separate static server (e.g. port 8000), targets http://localhost:4000.
+     * When running via a separate static server (e.g. port 8000), targets https://krisin-clothing-1.onrender.com.
      */
     getApiBase() {
       // Backend always runs on port 4000
-      return "http://localhost:4000";
+      return "https://krisin-clothing-1.onrender.com";
     },
 
     /* =========================================================

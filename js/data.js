@@ -282,7 +282,7 @@ function getAdminProducts() {
  */
 function syncProductsFromBackend() {
   try {
-    var apiBase = (typeof AUTH !== "undefined" && AUTH.getApiBase) ? AUTH.getApiBase() : "http://localhost:4000";
+    var apiBase = (typeof AUTH !== "undefined" && AUTH.getApiBase) ? AUTH.getApiBase() : "https://krisin-clothing-1.onrender.com";
     fetch(apiBase + "/api/products")
       .then(function(res) { if (!res.ok) throw new Error("Status " + res.status); return res.json(); })
       .then(function(data) {
