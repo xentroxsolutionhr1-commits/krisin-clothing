@@ -57,7 +57,11 @@ app.use((req, res, next) => {
   }
 
   const clientIp = normalizeIp(req.ip || "");
-
+  console.log("[Admin IP Debug]", {
+  clientIp: req.ip,
+  forwardedFor: req.get("x-forwarded-for"),
+  allowed: allowedAdminIps
+});
   if (!allowedAdminIps.includes(clientIp)) {
     return res.status(403).send("Access denied: IP address not allowed.");
   }
