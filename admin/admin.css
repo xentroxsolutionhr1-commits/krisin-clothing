@@ -163,6 +163,7 @@ button{font-family:inherit;font-size:inherit;cursor:pointer;}
 
 @media (max-width:900px){
   .admin-shell{grid-template-columns:1fr;}
+  .a-main{padding:18px 16px 40px;}
   .a-sidebar{
     position:fixed;top:0;left:0;bottom:0;width:250px;z-index:90;
     transform:translateX(-100%);transition:transform .22s var(--ease,ease);
@@ -172,6 +173,15 @@ button{font-family:inherit;font-size:inherit;cursor:pointer;}
   .a-stats{grid-template-columns:repeat(2,1fr);}
   .a-grid-2{grid-template-columns:1fr;}
   .a-form-grid{grid-template-columns:1fr;}
+  .a-panel{padding:16px;overflow-x:auto;}
+  .a-table{min-width:540px;}
+}
+
+@media (max-width:480px){
+  .a-stats{grid-template-columns:1fr;}
+  .a-topbar{gap:10px;}
+  .a-topbar h1{font-size:20px;}
+  .a-modal{padding:20px 16px;}
 }
 
 /* ---------- Login page ---------- */
