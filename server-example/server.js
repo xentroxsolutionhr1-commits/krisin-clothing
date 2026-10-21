@@ -29,7 +29,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "krisin_jwt_secret_key_2026_super_s
 const staticRoot = path.join(__dirname, "..");
 
 /* Restrict admin pages and APIs to approved public IP addresses */
-app.set("trust proxy", 1);
+app.set("trust proxy", 3);
 
 const normalizeIp = (ip = "") =>
   ip.startsWith("::ffff:") ? ip.slice(7) : ip;
