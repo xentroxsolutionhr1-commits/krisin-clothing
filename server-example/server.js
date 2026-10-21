@@ -28,6 +28,43 @@ const JWT_SECRET = process.env.JWT_SECRET || "krisin_jwt_secret_key_2026_super_s
 // Serve static root path
 const staticRoot = path.join(__dirname, "..");
 
+/* Restrict admin pages and APIs to approved public IP addresses */
+app.set("trust proxy", 1);
+
+const normalizeIp = (ip = "") =>
+  ip.startsWith("::ffff:") ? ip.slice(7) : ip;
+
+const allowedAdminIps = (process.env.ADMIN_ALLOWED_IPS || "")
+  .split(",")
+  .map((ip) => normalizeIp(ip.trim()))
+  .filter(Boolean);
+
+app.use((req, res, next) => {
+  const isAdminPath =
+    req.path === "/admin" ||
+    req.path.startsWith("/admin/") ||
+    req.path === "/api/admin" ||
+    req.path.startsWith("/api/admin/");
+
+  if (!isAdminPath) {
+    return next();
+  }
+
+  if (allowedAdminIps.length === 0) {
+    return res.status(503).send(
+      "Admin access is not configured. Contact the site administrator."
+    );
+  }
+
+  const clientIp = normalizeIp(req.ip || "");
+
+  if (!allowedAdminIps.includes(clientIp)) {
+    return res.status(403).send("Access denied: IP address not allowed.");
+  }
+
+  next();
+});
+
 // Admin Page Routes (defined before static middleware so they serve directly without directory listing/redirects)
 app.get(["/admin/login", "/admin/login/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "login.html"));
