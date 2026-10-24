@@ -18,7 +18,12 @@
      * When running via a separate static server (e.g. port 8000), targets https://krisin-clothing-1.onrender.com.
      */
     getApiBase() {
-      // Backend always runs on port 4000
+      if (typeof window === "undefined" || !window.location) return "";
+      const { hostname, port } = window.location;
+      if (port === "4000") return "";
+      if (hostname === "localhost" || hostname === "127.0.0.1") {
+        return "http://localhost:4000";
+      }
       return "https://krisin-clothing-1.onrender.com";
     },
 
@@ -59,6 +64,8 @@
       try {
         localStorage.removeItem(CUSTOMER_TOKEN_KEY);
         localStorage.removeItem(CUSTOMER_USER_KEY);
+        localStorage.removeItem("krisin_orders_v1");
+        localStorage.removeItem("kc_orders");
       } catch (e) {}
       this.updateHeaderAuthUI();
     },
@@ -68,7 +75,14 @@
         fetch(`${this.getApiBase()}/api/auth/logout`, { method: "POST" }).catch(() => {});
       } catch (e) {}
       this.clearCustomerSession();
-      window.location.reload();
+      if (typeof window !== "undefined") {
+        const path = (window.location.pathname || "").toLowerCase();
+        if (path.includes("orders.html") || path.includes("profile.html")) {
+          window.location.href = "login.html";
+        } else {
+          window.location.reload();
+        }
+      }
     },
 
     async customerLogin(email, password) {
@@ -149,6 +163,65 @@
         throw new Error(data.error || "Could not save order.");
       }
       return data;
+    },
+
+    async getMyOrders() {
+      const token = this.getCustomerToken();
+      if (!token) return { success: false, error: "Please sign in to view your orders." };
+      try {
+        const res = await fetch(`${this.getApiBase()}/api/orders/my-orders`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          return { success: true, orders: Array.isArray(data) ? data : [] };
+        }
+        return { success: false, error: data.error || "Failed to load orders." };
+      } catch (err) {
+        console.error("getMyOrders error:", err);
+        return { success: false, error: "Unable to connect to order server." };
+      }
+    },
+
+    async getOrderById(orderId) {
+      const token = this.getCustomerToken();
+      if (!token) return { success: false, error: "Please sign in to view this order." };
+      try {
+        const res = await fetch(`${this.getApiBase()}/api/orders/${encodeURIComponent(orderId)}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          return { success: true, order: data };
+        }
+        return { success: false, error: data.error || "Order not found." };
+      } catch (err) {
+        console.error("getOrderById error:", err);
+        return { success: false, error: "Unable to retrieve order details." };
+      }
+    },
+
+    async cancelOrder(orderId, reason = "") {
+      const token = this.getCustomerToken();
+      if (!token) return { success: false, error: "Please sign in to cancel this order." };
+      try {
+        const res = await fetch(`${this.getApiBase()}/api/orders/${encodeURIComponent(orderId)}/cancel`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ reason })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          return { success: true, message: data.message, order: data.order };
+        }
+        return { success: false, error: data.error || "Failed to cancel order." };
+      } catch (err) {
+        console.error("cancelOrder error:", err);
+        return { success: false, error: "Unable to cancel order. Please try again." };
+      }
     },
 
     /* =========================================================
@@ -298,16 +371,67 @@
         }
       });
 
+     // Update desktop main navigation bar
+const isOrdersPage = (typeof window !== "undefined" && window.location.pathname)
+  ? window.location.pathname.toLowerCase().endsWith("orders.html")
+  : false;
+      document.querySelectorAll(".main-nav").forEach(nav => {
+        let navOrders = nav.querySelector(".nav-my-orders-item");
+        if (isCustomer && customer) {
+          if (!navOrders) {
+            navOrders = document.createElement("a");
+            navOrders.className = "nav-my-orders-item";
+            navOrders.href = "orders.html";
+            navOrders.textContent = "My Orders";
+            nav.appendChild(navOrders);
+          }
+          if (isOrdersPage) {
+            navOrders.classList.add("active");
+          } else {
+            navOrders.classList.remove("active");
+          }
+        } else {
+          if (navOrders) navOrders.remove();
+        }
+      });
+
+      // Update mobile navigation links
+      document.querySelectorAll(".mobile-nav-links").forEach(mobileNav => {
+        let mobileOrders = mobileNav.querySelector(".mobile-my-orders-item");
+        if (isCustomer && customer) {
+          if (!mobileOrders) {
+            mobileOrders = document.createElement("a");
+            mobileOrders.className = "mobile-my-orders-item";
+            mobileOrders.href = "orders.html";
+            mobileOrders.textContent = "My Orders";
+            if (isOrdersPage) mobileOrders.classList.add("active");
+            mobileNav.appendChild(mobileOrders);
+          }
+        } else {
+          if (mobileOrders) mobileOrders.remove();
+        }
+      });
+
       // Update mobile nav links if present
       const mobileNavFoot = document.querySelector(".mobile-nav-foot");
       if (mobileNavFoot) {
+        let ordersMobileLink = document.getElementById("mobile-orders-link");
         let authMobileLink = document.getElementById("mobile-auth-link");
+
         if (!authMobileLink) {
           authMobileLink = document.createElement("a");
           authMobileLink.id = "mobile-auth-link";
           mobileNavFoot.appendChild(authMobileLink);
         }
+
         if (isCustomer && customer) {
+          if (!ordersMobileLink) {
+            ordersMobileLink = document.createElement("a");
+            ordersMobileLink.id = "mobile-orders-link";
+            ordersMobileLink.textContent = "My Orders";
+            ordersMobileLink.href = "orders.html";
+            mobileNavFoot.insertBefore(ordersMobileLink, mobileNavFoot.firstChild);
+          }
           authMobileLink.textContent = `Sign Out (${customer.name.split(" ")[0]})`;
           authMobileLink.href = "#";
           authMobileLink.onclick = (e) => {
@@ -317,6 +441,7 @@
             }
           };
         } else {
+          if (ordersMobileLink) ordersMobileLink.remove();
           authMobileLink.textContent = "Sign In / Register";
           authMobileLink.href = "login.html";
           authMobileLink.onclick = null;
@@ -337,6 +462,10 @@
           <a href="profile.html">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
             My Account
+          </a>
+          <a href="orders.html">
+            <svg viewBox="0 0 24 24"><path d="M6 2l1.5 4h9L18 2"/><rect x="4" y="6" width="16" height="15" rx="1"/><path d="M10 10h4M10 14h4"/></svg>
+            My Orders
           </a>
           <div class="dropdown-divider"></div>
           <button class="logout-link" id="dropdown-logout-btn">

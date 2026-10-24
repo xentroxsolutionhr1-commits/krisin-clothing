@@ -1,5 +1,5 @@
-/**
- * Krisin Clothing — Backend Server
+﻿/**
+ * Krisin Clothing â€” Backend Server
  * 
  * Powered by:
  * - Express & CORS
@@ -106,7 +106,7 @@ pool.query("SELECT 1")
 
 
 /* =========================================================
-   SEED CUSTOMERS — NEON POSTGRESQL
+   SEED CUSTOMERS â€” NEON POSTGRESQL
    ========================================================= */
 
 // Preserve existing Neon customers; seed demo accounts only if empty.
@@ -280,7 +280,7 @@ function requireAdminAuth(req, res, next) {
 
 
 /* =========================================================
-   CUSTOMER AUTHENTICATION API — REGISTRATION
+   CUSTOMER AUTHENTICATION API â€” REGISTRATION
    ========================================================= */
 
 app.post("/api/auth/register", async (req, res) => {
@@ -646,7 +646,7 @@ app.get("/api/admin/customers", requireAdminAuth, async (req, res) => {
 });
 
 /* =========================================================
-   5. ADMIN CUSTOMER MANAGEMENT — NEON POSTGRESQL
+   5. ADMIN CUSTOMER MANAGEMENT â€” NEON POSTGRESQL
    ========================================================= */
 
 // 5. Admin Toggle Customer Status
@@ -699,7 +699,7 @@ app.delete("/api/admin/customers/:id", requireAdminAuth, async (req, res) => {
   }
 });
 
-// 7. Admin Users — alias of customers for the Users tab
+// 7. Admin Users â€” alias of customers for the Users tab
 app.get("/api/admin/users", requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -729,7 +729,7 @@ app.get("/api/admin/users", requireAdminAuth, async (req, res) => {
 
 
 /* =========================================================
-   8–10. PRODUCTS — NEON POSTGRESQL
+   8â€“10. PRODUCTS â€” NEON POSTGRESQL
    Uses the existing products table and JSONB columns.
    ========================================================= */
 
@@ -772,7 +772,7 @@ app.get("/api/products", async (req, res) => {
   }
 });
 
-// 9. Admin Save Product — Create or Update
+// 9. Admin Save Product â€” Create or Update
 app.post("/api/admin/products", requireAdminAuth, async (req, res) => {
   try {
     const p = req.body;
@@ -964,7 +964,7 @@ app.post("/verify-payment", (req, res) => {
 
 
 /* =========================================================
-   SAVE PLACED ORDER — NEON POSTGRESQL
+   SAVE PLACED ORDER â€” NEON POSTGRESQL
    ========================================================= */
 
 app.post("/api/orders", async (req, res) => {
@@ -1143,8 +1143,150 @@ app.post("/api/orders", async (req, res) => {
 
 
 /* =========================================================
-   ADMIN ORDERS — NEON POSTGRESQL
+   ADMIN ORDERS â€” NEON POSTGRESQL
    ========================================================= */
+
+function formatCustomerOrder(row) {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    totalAmount: Number(row.total),
+    total: Number(row.total),
+    status: row.status,
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    paymentId: row.razorpay_payment_id || null,
+    customerName: row.customer_name,
+    customerEmail: row.customer_email,
+    customerPhone: row.customer_phone,
+    shippingAddress: row.shipping_address || {},
+    items: row.items || [],
+    subtotal: Number(row.subtotal),
+    shippingFee: Number(row.shipping_fee),
+    codFee: Number(row.cod_fee),
+    estimatedDelivery: null,
+    cancelledAt: null,
+    cancellationReason: null,
+    timeline: []
+  };
+}
+
+async function findCustomerOrder(orderId, customerEmail) {
+  const result = await pool.query(
+    `SELECT * FROM orders
+     WHERE id = $1 AND LOWER(customer_email) = LOWER($2)
+     LIMIT 1`,
+    [orderId, customerEmail]
+  );
+  return result.rows[0] || null;
+}
+
+// Get orders belonging to the signed-in customer
+app.get("/api/orders/my-orders", requireCustomerAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM orders
+       WHERE LOWER(customer_email) = LOWER($1)
+       ORDER BY created_at DESC`,
+      [req.user.email]
+    );
+    res.json(result.rows.map(formatCustomerOrder));
+  } catch (err) {
+    console.error("Fetch customer orders error:", err);
+    res.status(500).json({ error: "Could not fetch your orders." });
+  }
+});
+
+// Get one order belonging to the signed-in customer
+app.get("/api/orders/:id", requireCustomerAuth, async (req, res) => {
+  try {
+    const order = await findCustomerOrder(req.params.id, req.user.email);
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    res.json(formatCustomerOrder(order));
+  } catch (err) {
+    console.error("Fetch customer order error:", err);
+    res.status(500).json({ error: "Could not fetch this order." });
+  }
+});
+
+// Cancel an eligible order belonging to the signed-in customer
+app.patch("/api/orders/:id/cancel", requireCustomerAuth, async (req, res) => {
+  let client;
+
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `SELECT * FROM orders
+       WHERE id = $1 AND LOWER(customer_email) = LOWER($2)
+       LIMIT 1 FOR UPDATE`,
+      [req.params.id, req.user.email]
+    );
+
+    const order = result.rows[0];
+
+    if (!order) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    const eligibleStatuses = [
+      "order placed",
+      "order confirmed",
+      "processing",
+      "pending",
+      "confirmed"
+    ];
+
+    if (!eligibleStatuses.includes(String(order.status || "").toLowerCase())) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        error: "This order can no longer be cancelled online."
+      });
+    }
+
+       const updated = await client.query(
+      `UPDATE orders
+       SET status = 'cancelled'
+       WHERE id = $1
+         AND LOWER(customer_email) = LOWER($2)
+       RETURNING *`,
+      [req.params.id, req.user.email]
+    );
+
+    if (!updated.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        error: "The order changed and could not be cancelled. Please refresh and try again."
+      });
+    }
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: "Order cancelled. This does not automatically process a payment refund.",
+      order: formatCustomerOrder(updated.rows[0])
+    });
+  } catch (err) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        console.error("Order cancellation rollback error:", rollbackErr);
+      }
+    }
+
+    console.error("Cancel customer order error:", err);
+    res.status(500).json({ error: "Could not cancel this order." });
+  } finally {
+    if (client) client.release();
+  }
+});
 
 // List all orders
 app.get("/api/admin/orders", requireAdminAuth, async (req, res) => {
@@ -1224,4 +1366,3 @@ const server = app.listen(port, () => {
 server.on("error", (err) => {
   console.error("Server startup error:", err);
 });
-
