@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -110,10 +110,35 @@
 
   <main>
 
-    <!-- ================= HERO ================= -->
-    <section class="hero">
-      <img src="https://images.unsplash.com/photo-1490114538077-0a7f8cb49891?q=80&w=2000&auto=format&fit=crop"
-        alt="Model wearing a minimalist black hoodie against a plain backdrop">
+    <!-- ================= HERO CAROUSEL ================= -->
+    <section class="hero hero-carousel" id="hero-carousel">
+      <!-- Carousel slides -->
+      <div class="carousel-track">
+        <div class="carousel-slide active">
+          <img src="assets/carousel/slide-1.jpg" alt="Krisin Clothing editorial lookbook — casual essentials">
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/carousel/slide-2.png" alt="Krisin Clothing editorial — layered outerwear look">
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/carousel/slide-3.jpg" alt="Krisin Clothing editorial — multi-look collection showcase">
+        </div>
+      </div>
+
+
+      <!-- Carousel dots -->
+      <div class="carousel-dots">
+        <button class="carousel-dot active" data-slide="0" aria-label="Go to slide 1"></button>
+        <button class="carousel-dot" data-slide="1" aria-label="Go to slide 2"></button>
+        <button class="carousel-dot" data-slide="2" aria-label="Go to slide 3"></button>
+      </div>
+
+      <!-- Carousel progress bar -->
+      <div class="carousel-progress">
+        <div class="carousel-progress-bar"></div>
+      </div>
+
+      <!-- Hero content overlay (unchanged) -->
       <div class="container hero-content">
         <span class="eyebrow">Fall 2026</span>
         <h1>Fewer pieces.<br>Worn on repeat.</h1>
@@ -126,7 +151,7 @@
     </section>
 
     <!-- ================= NEW ARRIVALS ================= -->
-    <section class="section" id="new-arrivals">
+    <section class="section" id="new-arrivals" data-scroll-reveal>
       <div class="container">
         <div class="section-head">
           <div>
@@ -140,7 +165,7 @@
     </section>
 
     <!-- ================= SHOP BY CATEGORY ================= -->
-    <section class="section section-tight" style="padding-top:0">
+    <section class="section section-tight" style="padding-top:0" data-scroll-reveal>
       <div class="container">
         <div class="section-head">
           <div>
@@ -181,8 +206,9 @@
     </section>
 
     <!-- ================= FEATURED COLLECTION ================= -->
-    <section class="feature-band">
-      <img src="https://images.unsplash.com/photo-1552374196-c4e7ffc6e126?q=80&w=2000&auto=format&fit=crop"
+    <section class="feature-band" data-scroll-reveal>
+      <img
+        src="https://images.unsplash.com/photo-1633655442136-bbc120229009?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
         alt="Editorial shot of the Everyday Collection">
       <div class="container feature-band-content">
         <h2 class="display-2">The everyday collection</h2>
@@ -192,7 +218,7 @@
     </section>
 
     <!-- ================= BEST SELLERS ================= -->
-    <section class="section">
+    <section class="section" data-scroll-reveal>
       <div class="container">
         <div class="section-head">
           <div>
@@ -206,7 +232,7 @@
     </section>
 
     <!-- ================= BRAND STORY ================= -->
-    <section class="section">
+    <section class="section" data-scroll-reveal>
       <div class="container">
         <div class="split">
           <div class="split-media">
@@ -225,7 +251,7 @@
     </section>
 
     <!-- ================= LOOKBOOK ================= -->
-    <section class="section section-tight">
+    <section class="section section-tight" data-scroll-reveal>
       <div class="container">
         <div class="section-head">
           <div>
@@ -236,14 +262,12 @@
       </div>
       <div class="container">
         <div class="lookbook-grid">
-          <div class="look-item l1"><img
-              src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1200&auto=format&fit=crop"
+          <div class="look-item l1"><img src="https://i.pinimg.com/736x/f5/3e/20/f53e205504436bd2ec7f924a18c17636.jpg"
               alt="Lookbook editorial 1"></div>
-          <div class="look-item l2"><img
-              src="https://images.unsplash.com/photo-1503341504253-dff4815485f1?q=80&w=900&auto=format&fit=crop"
+          <div class="look-item l2"><img src="https://i.pinimg.com/736x/5c/08/84/5c08848cafbf058671c9d8597d27c61f.jpg"
               alt="Lookbook editorial 2"></div>
           <div class="look-item l3"><img
-              src="https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=700&auto=format&fit=crop"
+              src="https://images.unsplash.com/photo-1633655442168-c6ef0ed2f984?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
               alt="Lookbook editorial 3"></div>
           <div class="look-item l4"><img
               src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=700&auto=format&fit=crop"
