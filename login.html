@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Sign In | Krisin Clothing</title>
+  <link rel="icon" href="assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <button class="menu-toggle icon-btn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
+
+      <a href="index.html" class="brand">
+        <img src="assets/logo-horizontal.png" alt="Krisin Clothing">
+      </a>
+
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="new-arrivals.html">New Arrivals</a>
+        <a href="collections.html">Collections</a>
+        <a href="about.html">About Us</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-btn" data-search-toggle aria-label="Search">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
+        </button>
+
+        <div class="search-bar">
+          <input type="text" placeholder="Search products…">
+        </div>
+
+        <a href="login.html" class="icon-btn" aria-label="Account">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
+          </svg>
+        </a>
+
+        <a href="shop.html?filter=wishlist" class="icon-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z" />
+          </svg>
+          <span class="count-badge hidden" data-wish-count>0</span>
+        </a>
+
+        <button class="icon-btn" data-cart-open aria-label="Cart">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 8h12l-1 12H7L6 8z" />
+            <path d="M9 8V6a3 3 0 016 0v2" />
+          </svg>
+          <span class="count-badge hidden" data-cart-count>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-nav">
+    <div class="mobile-nav-top">
+      <a href="index.html" class="brand">
+        <img src="assets/logo-horizontal.png" alt="Krisin Clothing">
+      </a>
+      <button class="icon-btn mobile-nav-close" aria-label="Close menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="mobile-nav-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="new-arrivals.html">New Arrivals</a>
+      <a href="collections.html">Collections</a>
+      <a href="about.html">About Us</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+
+    <div class="mobile-nav-foot">
+      <a href="cart.html">Cart</a>
+      <a href="shop.html?filter=wishlist">Wishlist</a>
+    </div>
+  </div>
+
+  <div class="drawer-overlay" data-cart-close></div>
+
+  <aside class="cart-drawer">
+    <div class="drawer-head">
+      <span class="heading" style="font-size:18px">Your Bag</span>
+      <button class="icon-btn" data-cart-close aria-label="Close">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="drawer-body"></div>
+
+    <div class="drawer-foot">
+      <div class="summary-line total">
+        <span>Subtotal</span>
+        <span data-drawer-total>₹0</span>
+      </div>
+      <a href="cart.html" class="btn btn-outline btn-block" style="margin-top:12px">View Bag</a>
+      <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px">Checkout</a>
+    </div>
+  </aside>
+
+  <main class="container">
+    <div class="auth-wrapper">
+      <div class="auth-card">
+        <h1>Sign In</h1>
+        <p class="sub">Welcome back. Enter your credentials to access your account.</p>
+
+        <div class="auth-notice" id="auth-notice">
+          Please sign in to proceed to checkout. Your selected items and cart remain intact.
+        </div>
+
+        <div class="auth-success" id="auth-success">
+          Account created successfully! Please sign in with your new credentials.
+        </div>
+
+        <div class="auth-alert" id="auth-error"></div>
+
+        <form id="login-form" class="auth-form">
+          <div class="field">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" required autocomplete="username" placeholder="name@example.com">
+          </div>
+
+          <div class="field">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label for="login-password" style="margin:0">Password</label>
+              <a href="forgot-password.html" class="link-underline" style="font-size:12px">Forgot password?</a>
+            </div>
+            <input type="password" id="login-password" required autocomplete="current-password" placeholder="••••••••">
+          </div>
+
+          <button type="submit" id="login-btn" class="btn btn-primary btn-block">
+            Sign In
+          </button>
+        </form>
+
+        <div class="auth-footer">
+          Don't have an account?
+          <a href="register.html" id="signup-link" class="link-underline">Sign Up</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom" style="border:none;padding-top:0">
+        <span>© 2026 Krisin Clothing</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const registered = params.get("registered");
+
+      const signupLink = document.getElementById("signup-link");
+      const successBox = document.getElementById("auth-success");
+      const form = document.getElementById("login-form");
+      const errorBox = document.getElementById("auth-error");
+      const submitBtn = document.getElementById("login-btn");
+
+      // Registration success message
+      if (registered === "1") {
+        successBox.textContent = "Account created successfully! Please sign in with your new credentials.";
+        successBox.classList.add("show");
+      }
+
+      // Password reset success message
+      if (params.get("reset") === "1") {
+        successBox.textContent = "Password updated successfully! Please sign in with your new password.";
+        successBox.classList.add("show");
+      }
+
+      // Redirect an already logged-in customer.
+      if (AUTH.isCustomerLoggedIn()) {
+        const target = params.get("redirect") || "index.html";
+        window.location.replace(target);
+        return;
+      }
+
+      // Preserve redirect parameter during registration if needed.
+      const redirectParam = params.get("redirect");
+      signupLink.href = redirectParam ? `register.html?redirect=${encodeURIComponent(redirectParam)}` : "register.html";
+
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        errorBox.textContent = "";
+        errorBox.classList.remove("show");
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Signing in…";
+
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+
+        try {
+          const result = await AUTH.customerLogin(email, password);
+
+          if (result && result.success) {
+            const target = params.get("redirect") || "index.html";
+            window.location.replace(target);
+            return;
+          }
+
+          errorBox.textContent =
+            result?.error || "Incorrect email or password.";
+          errorBox.classList.add("show");
+
+        } catch (error) {
+          console.error("Login error:", error);
+          errorBox.textContent =
+            "Unable to sign in. Please try again.";
+          errorBox.classList.add("show");
+
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Sign In";
+        }
+      });
+    })();
+  </script>
+
+  <script src="js/animations.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,294 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="page-title">Product | Krisin Clothing</title>
+  <link rel="icon" href="assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <button class="menu-toggle icon-btn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
+      <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="new-arrivals.html">New Arrivals</a>
+        <a href="collections.html">Collections</a>
+        <a href="about.html">About Us</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" data-search-toggle aria-label="Search">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
+        </button>
+        <div class="search-bar"><input type="text" placeholder="Search products…"></div>
+        <a href="login.html" class="icon-btn" aria-label="Account">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
+          </svg>
+        </a>
+        <a href="shop.html?filter=wishlist" class="icon-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z" />
+          </svg>
+          <span class="count-badge hidden" data-wish-count>0</span>
+        </a>
+        <button class="icon-btn" data-cart-open aria-label="Cart">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 8h12l-1 12H7L6 8z" />
+            <path d="M9 8V6a3 3 0 016 0v2" />
+          </svg>
+          <span class="count-badge hidden" data-cart-count>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="mobile-nav">
+    <div class="mobile-nav-top">
+      <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+      <button class="icon-btn mobile-nav-close" aria-label="Close menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+    <nav class="mobile-nav-links">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="new-arrivals.html">New Arrivals</a>
+      <a href="collections.html">Collections</a>
+      <a href="about.html">About Us</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="mobile-nav-foot">
+      <a href="cart.html">Cart</a>
+      <a href="shop.html?filter=wishlist">Wishlist</a>
+    </div>
+  </div>
+
+  <div class="drawer-overlay" data-cart-close></div>
+  <aside class="cart-drawer">
+    <div class="drawer-head">
+      <span class="heading" style="font-size:18px">Your Bag</span>
+      <button class="icon-btn" data-cart-close aria-label="Close">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-body"></div>
+    <div class="drawer-foot">
+      <div class="summary-line total"><span>Subtotal</span><span data-drawer-total>₹0</span></div>
+      <a href="cart.html" class="btn btn-outline btn-block" style="margin-top:12px">View Bag</a>
+      <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px">Checkout</a>
+    </div>
+  </aside>
+
+  <main class="container">
+    <div id="pdp-root"></div>
+
+    <section class="section section-tight" style="border-top:1px solid var(--line)">
+      <div class="section-head">
+        <div>
+          <h2 class="heading">You May Also Like</h2>
+        </div>
+      </div>
+      <div class="product-grid" id="related-grid"></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <img src="assets/logo-horizontal-onDark.png" alt="Krisin Clothing">
+          <p>Minimal. Modern. Everyday. Considered essentials, designed in-house and made to last.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="shop.html?cat=T-Shirts">T-Shirts</a></li>
+            <li><a href="shop.html?cat=Shirts">Shirts</a></li>
+            <li><a href="shop.html?cat=Pants">Pants</a></li>
+            <li><a href="shop.html?cat=Hoodies">Hoodies</a></li>
+            <li><a href="shop.html?cat=Glasses">Glasses</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Help</h4>
+          <ul>
+            <li><a href="contact.html">Shipping</a></li>
+            <li><a href="contact.html">Returns</a></li>
+            <li><a href="#" onclick="return false;">Size Guide</a></li>
+            <li><a href="contact.html">FAQs</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About</a></li>
+            <li><a href="about.html">Our Story</a></li>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Social</h4>
+          <ul>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">Facebook</a></li>
+            <li><a href="#">WhatsApp</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Krisin Clothing</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js?v=2"></script>
+  <script src="js/auth.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const product = getProduct(params.get("id")) || getAdminProducts()[0];
+      document.getElementById("page-title").textContent = product.name + " | Krisin Clothing";
+
+      let activeImg = 0;
+      let activeColor = product.colors[0].name;
+      let activeSize = product.sizes.find(s => !product.outOfStock.includes(s)) || product.sizes[0];
+      let qty = 1;
+
+      const root = document.getElementById("pdp-root");
+
+      function accordionHTML() {
+        const items = [
+          ["Description", `<p>${product.description}</p>`],
+          ["Fit & size", `<p>${product.fit}</p>`],
+          ["Material & care", `<p>${product.material}</p>`],
+          ["Shipping & returns", `<ul><li>Free shipping on orders above ₹1,999</li><li>Delivered in 3 to 6 business days</li><li>Easy 15-day returns &amp; exchanges</li></ul>`]
+        ];
+        return items.map(([title, body], i) => `
+      <div class="accordion-item ${i === 0 ? "open" : ""}">
+        <button class="accordion-head" data-acc="${i}">
+          ${title}
+          <svg class="chev" width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="accordion-body">${body}</div>
+      </div>`).join("");
+      }
+
+      function render() {
+        const wished = STORE.isWishlisted(product.id);
+        root.innerHTML = `
+    <div class="pdp">
+      <div class="pdp-gallery">
+        <div class="pdp-main-img"><img src="${product.images[activeImg]}" alt="${product.name}"></div>
+        <div class="pdp-thumbs">
+          ${product.images.map((img, i) => `<button class="${i === activeImg ? "active" : ""}" data-img="${i}"><img src="${img}" alt=""></button>`).join("")}
+        </div>
+      </div>
+      <div class="pdp-info">
+        <span class="eyebrow">${product.category}</span>
+        <h1>${product.name}</h1>
+        <div class="pdp-price mono-price">${product.compareAt ? `<del>${formatPrice(product.compareAt)}</del> <span class="sale-price">${formatPrice(product.price)}</span>` : formatPrice(product.price)}</div>
+
+        <div class="option-row">
+          <div class="label-line"><span>Color: ${activeColor}</span></div>
+          <div class="color-options">
+            ${product.colors.map(c => `<button class="color-swatch ${c.name === activeColor ? "active" : ""}" style="background:${c.hex}" data-color="${c.name}" aria-label="${c.name}"></button>`).join("")}
+          </div>
+        </div>
+
+        <div class="option-row">
+          <div class="label-line"><span>Size: ${activeSize}</span><a href="#size-guide" class="link-underline" style="border-color:var(--stone)">Size Guide</a></div>
+          <div class="size-options">
+            ${product.sizes.map(s => {
+          const disabled = product.outOfStock.includes(s);
+          return `<button class="size-box ${s === activeSize ? "active" : ""} ${disabled ? "disabled" : ""}" data-size="${s}" ${disabled ? "disabled" : ""}>${s}</button>`;
+        }).join("")}
+          </div>
+        </div>
+
+        <div class="option-row">
+          <div class="label-line"><span>Quantity</span></div>
+          <div class="qty-row">
+            <button data-qty="dec">−</button>
+            <span>${qty}</span>
+            <button data-qty="inc">+</button>
+          </div>
+        </div>
+
+        <div class="pdp-cta">
+          <button class="btn btn-primary" id="add-to-cart">Add to cart</button>
+          <button class="btn btn-outline" id="buy-now">Buy now</button>
+          <button class="wish-toggle ${wished ? "active" : ""}" id="wish-btn" aria-label="Toggle wishlist">
+            <svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z"/></svg>
+          </button>
+        </div>
+        <p class="sub" style="font-size:12.5px;color:var(--stone)" id="size-guide">${product.stock > 10 ? "In stock, ready to ship." : `Only ${product.stock} left, order soon.`}</p>
+
+        <div style="margin-top:30px">${accordionHTML()}</div>
+      </div>
+    </div>`;
+
+        root.querySelectorAll(".pdp-thumbs button").forEach(b => b.addEventListener("click", () => { activeImg = +b.dataset.img; render(); }));
+        root.querySelectorAll(".color-swatch").forEach(b => b.addEventListener("click", () => { activeColor = b.dataset.color; render(); }));
+        root.querySelectorAll(".size-box:not(.disabled)").forEach(b => b.addEventListener("click", () => { activeSize = b.dataset.size; render(); }));
+        root.querySelector('[data-qty="inc"]').addEventListener("click", () => { qty++; render(); });
+        root.querySelector('[data-qty="dec"]').addEventListener("click", () => { if (qty > 1) qty--; render(); });
+        root.querySelector("#wish-btn").addEventListener("click", () => {
+          const active = STORE.toggleWishlist(product.id);
+          showToast(active ? "Added to wishlist" : "Removed from wishlist");
+          render();
+        });
+        root.querySelector("#add-to-cart").addEventListener("click", () => {
+          STORE.addToCart(product.id, activeColor, activeSize, qty);
+          showToast("Added to your bag");
+        });
+        root.querySelector("#buy-now").addEventListener("click", () => {
+          STORE.addToCart(product.id, activeColor, activeSize, qty);
+          if (typeof AUTH !== "undefined" && !AUTH.isCustomerLoggedIn()) {
+            window.location.href = "login.html?redirect=checkout";
+          } else {
+            window.location.href = "checkout.html";
+          }
+        });
+        root.querySelectorAll(".accordion-head").forEach(h => h.addEventListener("click", () => {
+          h.closest(".accordion-item").classList.toggle("open");
+        }));
+      }
+
+      render();
+
+      const related = getAdminProducts().filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+      renderProductGrid(document.getElementById("related-grid"), related.length ? related : getAdminProducts().filter(p => p.id !== product.id).slice(0, 4));
+    })();
+  </script>
+  <script src="js/animations.js"></script>
+</body>
+
+</html>

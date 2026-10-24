@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin | Krisin Clothing</title>
+  <link rel="icon" href="/assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/admin/admin.css">
+</head>
+
+<body>
+
+  <script>
+    // Auth guard — runs before the page paints.
+    const hasAdminSession = sessionStorage.getItem("krisin_admin_session") === "1" || localStorage.getItem("krisin_admin_session") === "1";
+    const hasAdminToken = sessionStorage.getItem("krisin_admin_token") || localStorage.getItem("krisin_admin_token");
+    if (!hasAdminSession || !hasAdminToken) {
+      window.location.href = "/admin/login";
+    }
+  </script>
+
+  <div class="admin-shell">
+    <div class="a-sidebar-backdrop" id="a-sidebar-backdrop"
+      style="display:none;position:fixed;inset:0;background:rgba(15,20,35,.4);z-index:80;"></div>
+    <aside class="a-sidebar" id="a-sidebar">
+      <div class="a-brand"><img src="/assets/logo-icon-white.png" alt=""><span>Krisin Admin</span></div>
+      <nav class="a-nav" id="a-nav">
+        <button data-tab="dashboard" class="active"><svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="9" />
+            <rect x="14" y="3" width="7" height="5" />
+            <rect x="14" y="12" width="7" height="9" />
+            <rect x="3" y="16" width="7" height="5" />
+          </svg>Dashboard</button>
+        <button data-tab="products"><svg viewBox="0 0 24 24">
+            <path d="M21 8l-9-5-9 5 9 5 9-5z" />
+            <path d="M3 8v8l9 5 9-5V8" />
+          </svg>Products</button>
+        <button data-tab="categories"><svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="8" height="8" />
+            <rect x="13" y="3" width="8" height="8" />
+            <rect x="3" y="13" width="8" height="8" />
+            <rect x="13" y="13" width="8" height="8" />
+          </svg>Categories</button>
+        <button data-tab="inventory"><svg viewBox="0 0 24 24">
+            <path d="M20 7l-8-4-8 4v10l8 4 8-4V7z" />
+            <path d="M4 7l8 4 8-4" />
+            <path d="M12 11v10" />
+          </svg>Inventory</button>
+        <button data-tab="orders"><svg viewBox="0 0 24 24">
+            <path d="M6 2l1.5 4h9L18 2" />
+            <rect x="4" y="6" width="16" height="15" rx="1" />
+          </svg>Orders</button>
+        <button data-tab="customers"><svg viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
+          </svg>Customers</button>
+        <button data-tab="coupons"><svg viewBox="0 0 24 24">
+            <path d="M4 9a2 2 0 002-2V5h12v2a2 2 0 002 2v6a2 2 0 00-2 2v2H6v-2a2 2 0 00-2-2V9z" />
+          </svg>Coupons</button>
+        <button data-tab="reviews"><svg viewBox="0 0 24 24">
+            <path d="M12 2l2.9 6.5 7.1.6-5.4 4.7 1.7 6.9-6.3-3.9-6.3 3.9 1.7-6.9-5.4-4.7 7.1-.6L12 2z" />
+          </svg>Reviews</button>
+        <button data-tab="users"><svg viewBox="0 0 24 24">
+            <circle cx="9" cy="7" r="4" />
+            <path d="M2 21c1-4 4-6 7-6s6 2 7 6" />
+            <path d="M16 3.1a4 4 0 010 7.8" />
+            <path d="M22 21c-1-3.5-3-5-6-5" />
+          </svg>Users</button>
+      </nav>
+      <div class="a-sidebar-foot">
+        Signed in as<br><strong style="color:#fff" id="a-signed-in-email">Admin</strong><br>
+        <a href="/">← Back to store</a><br>
+        <button class="a-logout" id="a-logout-btn">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="a-main">
+      <div class="a-topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="a-menu-btn" id="a-menu-btn" aria-label="Open menu"><svg viewBox="0 0 24 24">
+              <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" fill="none"
+                stroke-linecap="round" />
+            </svg></button>
+          <div>
+            <h1 id="a-title">Dashboard</h1>
+            <p id="a-subtitle">Welcome back. Here's how the store is doing.</p>
+          </div>
+        </div>
+        <div class="a-admin-pill">
+          <div class="a-avatar">KA</div><span>Krisin Admin</span>
+        </div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <section class="a-tab active" id="tab-dashboard">
+        <div class="a-stats">
+          <div class="a-card">
+            <div class="lbl">Total Balance</div>
+            <div class="val" id="stat-balance">₹0</div>
+            <div class="delta up">Available Payout</div>
+          </div>
+          <div class="a-card">
+            <div class="lbl">Revenue (30d)</div>
+            <div class="val" id="stat-revenue">₹0</div>
+            <div class="delta up">↑ 12.4% vs last month</div>
+          </div>
+          <div class="a-card">
+            <div class="lbl">Orders (30d)</div>
+            <div class="val" id="stat-orders">0</div>
+            <div class="delta up">↑ 8.1% vs last month</div>
+          </div>
+          <div class="a-card">
+            <div class="lbl">Customers</div>
+            <div class="val" id="stat-customers">0</div>
+            <div class="delta up">↑ 5 new this week</div>
+          </div>
+          <div class="a-card">
+            <div class="lbl">Low Stock Items</div>
+            <div class="val" id="stat-lowstock">0</div>
+            <div class="delta down">Needs attention</div>
+          </div>
+        </div>
+
+        <div class="a-grid-2">
+          <div class="a-panel">
+            <h3>Recent Orders</h3>
+            <p class="sub">Latest activity across the store.</p>
+            <table class="a-table">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-orders-body"></tbody>
+            </table>
+          </div>
+          <div class="a-panel">
+            <h3>Low Stock</h3>
+            <p class="sub">Products under 20 units.</p>
+            <table class="a-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Stock</th>
+                </tr>
+              </thead>
+              <tbody id="low-stock-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRODUCTS -->
+      <section class="a-tab" id="tab-products">
+        <div class="a-actions">
+          <button class="a-btn primary" id="btn-add-product">+ Add product</button>
+          <button class="a-btn" id="btn-export-csv">Export CSV</button>
+        </div>
+        <div class="a-searchbar"><svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg><input placeholder="Search products…" id="product-search"></div>
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="products-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CATEGORIES -->
+      <section class="a-tab" id="tab-categories">
+        <div class="a-actions">
+          <button class="a-btn primary" id="btn-add-category">+ Add category</button>
+        </div>
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Products</th>
+                <th>Type</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="categories-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- INVENTORY -->
+      <section class="a-tab" id="tab-inventory">
+        <div class="a-panel">
+          <h3>Inventory</h3>
+          <p class="sub">Stock levels across all variants.</p>
+          <table class="a-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Sizes</th>
+                <th>Stock</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="inventory-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ORDERS -->
+      <section class="a-tab" id="tab-orders">
+        <div class="a-searchbar"><svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg><input placeholder="Search orders…" id="order-search"></div>
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Items</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section class="a-tab" id="tab-customers">
+        <div class="a-searchbar"><svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg><input placeholder="Search customers…" id="customer-search"></div>
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Password</th>
+                <th>Orders</th>
+                <th>Lifetime Value</th>
+                <th>Status</th>
+                <th>Access</th>
+              </tr>
+            </thead>
+            <tbody id="customers-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- COUPONS -->
+      <section class="a-tab" id="tab-coupons">
+        <div class="a-actions"><button class="a-btn primary" id="btn-add-coupon">+ Create coupon</button></div>
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Discount</th>
+                <th>Uses</th>
+                <th>Expires</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="coupons-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REVIEWS -->
+      <section class="a-tab" id="tab-reviews">
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Customer</th>
+                <th>Rating</th>
+                <th>Comment</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- USERS -->
+      <section class="a-tab" id="tab-users">
+        <div class="a-actions" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+          <div class="a-searchbar" style="flex:1;min-width:200px">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+            <input placeholder="Search users by name or email…" id="user-search">
+          </div>
+          <span id="user-count-label" style="font-size:13px;color:#6b7280;white-space:nowrap">Loading…</span>
+        </div>
+        <div class="a-panel" style="padding:0;margin-top:16px">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Password</th>
+                <th>Registered</th>
+                <th>Orders</th>
+                <th>Spent</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-body"><tr><td colspan="10"><div class="a-empty">Loading users…</div></td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ================= PRODUCT MODAL ================= -->
+  <div class="a-modal-backdrop" id="product-modal-backdrop">
+    <div class="a-modal">
+      <div class="a-modal-head">
+        <h3 id="product-modal-title">Add product</h3>
+        <button class="a-modal-close" id="product-modal-close" aria-label="Close"><svg viewBox="0 0 24 24">
+            <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg></button>
+      </div>
+      <form id="product-form">
+        <input type="hidden" id="pf-id">
+        <div class="a-form-grid">
+          <div class="a-field full">
+            <label for="pf-name">Product name</label>
+            <input type="text" id="pf-name" required placeholder="e.g. Minimal Oversized Tee">
+          </div>
+          <div class="a-field">
+            <label for="pf-category">Category</label>
+            <select id="pf-category" required></select>
+          </div>
+          <div class="a-field">
+            <label for="pf-price">Price (₹)</label>
+            <input type="number" id="pf-price" min="0" step="1" required placeholder="899">
+          </div>
+          <div class="a-field">
+            <label for="pf-compare">Compare-at price (₹)</label>
+            <input type="number" id="pf-compare" min="0" step="1" placeholder="Optional — shown struck through">
+          </div>
+          <div class="a-field">
+            <label for="pf-stock">Stock (units)</label>
+            <input type="number" id="pf-stock" min="0" step="1" required placeholder="42">
+          </div>
+          <div class="a-field full">
+            <label for="pf-image">Image URL</label>
+            <input type="url" id="pf-image" placeholder="https://…">
+            <span class="a-field-hint">Leave blank to use a placeholder image.</span>
+          </div>
+          <div class="a-field full">
+            <label>Sizes available</label>
+            <div class="a-check-grid" id="pf-sizes">
+              <label class="a-check-chip"><input type="checkbox" value="XS">XS</label>
+              <label class="a-check-chip"><input type="checkbox" value="S">S</label>
+              <label class="a-check-chip"><input type="checkbox" value="M">M</label>
+              <label class="a-check-chip"><input type="checkbox" value="L">L</label>
+              <label class="a-check-chip"><input type="checkbox" value="XL">XL</label>
+              <label class="a-check-chip"><input type="checkbox" value="XXL">XXL</label>
+            </div>
+          </div>
+          <div class="a-field full">
+            <label for="pf-desc">Description</label>
+            <textarea id="pf-desc" placeholder="Short product description shown on the product page."></textarea>
+          </div>
+          <div class="a-field">
+            <label class="a-check-chip" style="display:inline-flex;align-items:center;"><input type="checkbox"
+                id="pf-new" style="margin-right:6px;">Mark as new</label>
+          </div>
+          <div class="a-field">
+            <label class="a-check-chip" style="display:inline-flex;align-items:center;"><input type="checkbox"
+                id="pf-bestseller" style="margin-right:6px;">Best seller</label>
+          </div>
+        </div>
+        <div class="a-modal-foot">
+          <button type="button" class="a-btn" id="product-cancel">Cancel</button>
+          <button type="submit" class="a-btn primary" id="product-save">Save product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= DELETE CONFIRM MODAL ================= -->
+  <div class="a-modal-backdrop" id="delete-modal-backdrop">
+    <div class="a-modal" style="max-width:400px;">
+      <div class="a-modal-head">
+        <h3>Remove product?</h3>
+        <button class="a-modal-close" id="delete-modal-close" aria-label="Close"><svg viewBox="0 0 24 24">
+            <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg></button>
+      </div>
+      <p class="a-modal-warn">This removes <strong id="delete-product-name"></strong> from the shop. Customers won't be
+        able to find or buy it anymore. This can't be undone from here.</p>
+      <div class="a-modal-foot">
+        <button type="button" class="a-btn" id="delete-cancel">Cancel</button>
+        <button type="button" class="a-btn danger" id="delete-confirm">Remove product</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CATEGORY MODAL ================= -->
+  <div class="a-modal-backdrop" id="category-modal-backdrop">
+    <div class="a-modal" style="max-width:440px;">
+      <div class="a-modal-head">
+        <h3 id="category-modal-title">Add category</h3>
+        <button class="a-modal-close" id="category-modal-close" aria-label="Close"><svg viewBox="0 0 24 24">
+            <path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+          </svg></button>
+      </div>
+      <form id="category-form">
+        <div class="a-field">
+          <label for="cat-name-input">Category Name</label>
+          <input type="text" id="cat-name-input" required placeholder="e.g. Footwear, Outerwear, Accessories" autocomplete="off">
+        </div>
+        <div class="a-modal-foot">
+          <button type="button" class="a-btn" id="category-cancel">Cancel</button>
+          <button type="submit" class="a-btn primary" id="category-submit">Save category</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= ORDER DETAILS MODAL ================= -->
+  <div class="a-modal-backdrop" id="order-details-modal-backdrop">
+    <div class="a-modal" style="max-width:760px;max-height:90vh;overflow-y:auto;">
+      <div class="a-modal-head">
+        <div>
+          <h3 id="adm-modal-order-id" style="font-size:20px;color:var(--a-navy);">Order Details</h3>
+          <div id="adm-modal-order-date" style="font-size:12px;color:var(--a-muted);margin-top:2px;"></div>
+        </div>
+        <button class="a-modal-close" id="order-details-modal-close" aria-label="Close">
+          <svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg>
+        </button>
+      </div>
+
+      <div id="adm-modal-order-content"></div>
+
+      <div class="a-modal-foot" style="justify-content:flex-end;">
+        <button type="button" class="a-btn" id="order-details-modal-dismiss">Close</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="a-toast-stack" id="a-toast-stack"></div>
+
+  <script src="/js/data.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    /* Backend API helpers (used by Users tab and session verification) */
+    const ADMIN_API = window.location.port === "4000" ? "" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:4000" : "https://krisin-clothing-1.onrender.com");
+    function getAdminToken() {
+      return localStorage.getItem("krisin_admin_token") || sessionStorage.getItem("krisin_admin_token") || "";
+    }
+
+    /* =========================================================
+       Storage layer — overlays admin edits on top of the static
+       catalogue in js/data.js using localStorage. In production
+       this whole layer would be replaced by real API calls to a
+       backend + database (see README).
+       ========================================================= */
+    const LS_OVERRIDES = "krisin_admin_product_overrides_v1"; // { [id]: {partial fields} }
+    const LS_CUSTOM = "krisin_admin_custom_products_v1";   // [ full product objects ]
+    const LS_DELETED = "krisin_admin_deleted_ids_v1";        // [ id, id, ... ]
+    const LS_USERSTATUS = "krisin_admin_user_status_v1";         // { [email]: "active"|"disabled" }
+    const LS_CATEGORIES = "krisin_admin_categories_v1";         // [ category strings ]
+
+    function lsGet(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch { return fallback; }
+    }
+    function lsSet(key, value) {
+      try { localStorage.setItem(key, JSON.stringify(value)); } catch { }
+    }
+
+    function getAllProducts() {
+      const overrides = lsGet(LS_OVERRIDES, {});
+      const deleted = new Set(lsGet(LS_DELETED, []));
+      const custom = lsGet(LS_CUSTOM, []);
+
+      const base = PRODUCTS
+        .filter(p => !deleted.has(p.id))
+        .map(p => overrides[p.id] ? { ...p, ...overrides[p.id] } : p);
+
+      const extra = custom.filter(p => !deleted.has(p.id));
+
+      return [...base, ...extra];
+    }
+
+    function getAllCategories() {
+      const fromData = new Set(CATEGORIES);
+      const customCats = lsGet(LS_CATEGORIES, []);
+      if (Array.isArray(customCats)) {
+        customCats.forEach(c => { if (c) fromData.add(c.trim()); });
+      }
+      getAllProducts().forEach(p => { if (p.category) fromData.add(p.category.trim()); });
+      return Array.from(fromData);
+    }
+
+    function saveProduct(product, isNew) {
+      if (isNew) {
+        const custom = lsGet(LS_CUSTOM, []);
+        custom.push(product);
+        lsSet(LS_CUSTOM, custom);
+      } else {
+        const isCustom = lsGet(LS_CUSTOM, []).some(p => p.id === product.id);
+        if (isCustom) {
+          const custom = lsGet(LS_CUSTOM, []).map(p => p.id === product.id ? product : p);
+          lsSet(LS_CUSTOM, custom);
+        } else {
+          const overrides = lsGet(LS_OVERRIDES, {});
+          overrides[product.id] = product;
+          lsSet(LS_OVERRIDES, overrides);
+        }
+      }
+
+      // Sync to SQLite backend if admin token is present
+      const token = getAdminToken();
+      if (token) {
+        fetch(`${ADMIN_API}/api/admin/products`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(product)
+        }).catch(() => {});
+      }
+    }
+
+    function deleteProductById(id) {
+      const isCustom = lsGet(LS_CUSTOM, []).some(p => p.id === id);
+      if (isCustom) {
+        lsSet(LS_CUSTOM, lsGet(LS_CUSTOM, []).filter(p => p.id !== id));
+      } else {
+        const deleted = lsGet(LS_DELETED, []);
+        deleted.push(id);
+        lsSet(LS_DELETED, deleted);
+      }
+
+      // Sync deletion to SQLite backend
+      const token = getAdminToken();
+      if (token) {
+        fetch(`${ADMIN_API}/api/admin/products/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        }).catch(() => {});
+      }
+    }
+
+    function getUserStatus(email) {
+      const statuses = lsGet(LS_USERSTATUS, {});
+      return statuses[email] || "active";
+    }
+    function setUserStatus(email, status) {
+      const statuses = lsGet(LS_USERSTATUS, {});
+      statuses[email] = status;
+      lsSet(LS_USERSTATUS, statuses);
+    }
+
+    /* =========================================================
+       Toasts
+       ========================================================= */
+    function toast(message, type) {
+      const stack = document.getElementById("a-toast-stack");
+      const el = document.createElement("div");
+      el.className = "a-toast" + (type === "error" ? " error" : "");
+      el.textContent = message;
+      stack.appendChild(el);
+      setTimeout(() => el.remove(), 3200);
+    }
+
+    /* =========================================================
+       Sign-in pill + logout
+       ========================================================= */
+    document.getElementById("a-signed-in-email").textContent = sessionStorage.getItem("krisin_admin_email") || localStorage.getItem("krisin_admin_email") || "Admin";
+    document.getElementById("a-logout-btn").addEventListener("click", () => {
+      ['krisin_admin_token', 'krisin_admin_session', 'krisin_admin_email'].forEach(k => {
+        sessionStorage.removeItem(k);
+        localStorage.removeItem(k);
+      });
+      window.location.href = "/admin/login";
+    });
+
+    /* =========================================================
+       Mobile sidebar toggle
+       ========================================================= */
+    const sidebar = document.getElementById("a-sidebar");
+    const backdrop = document.getElementById("a-sidebar-backdrop");
+    function openSidebar() { sidebar.classList.add("open"); backdrop.style.display = "block"; }
+    function closeSidebar() { sidebar.classList.remove("open"); backdrop.style.display = "none"; }
+    document.getElementById("a-menu-btn").addEventListener("click", openSidebar);
+    backdrop.addEventListener("click", closeSidebar);
+
+    /* =========================================================
+       Tab switching
+       ========================================================= */
+    const titles = {
+      dashboard: ["Dashboard", "Welcome back. Here's how the store is doing."],
+      products: ["Products", "Manage your catalogue of T-Shirts, Shirts, Pants, Hoodies, Glasses & Accessories."],
+      categories: ["Categories", "Organise products into shop categories."],
+      inventory: ["Inventory", "Track stock across every size and colour."],
+      orders: ["Orders", "View and fulfil customer orders."],
+      customers: ["Customers", "Everyone who has shopped with Krisin Clothing, and their account access."],
+      coupons: ["Coupons", "Manage discount codes and promotions."],
+      reviews: ["Reviews", "Moderate product reviews from customers."]
+    };
+    document.getElementById("a-nav").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-tab]");
+      if (!btn) return;
+      document.querySelectorAll(".a-nav button").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".a-tab").forEach(t => t.classList.remove("active"));
+      document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+      document.getElementById("a-title").textContent = titles[btn.dataset.tab][0];
+      document.getElementById("a-subtitle").textContent = titles[btn.dataset.tab][1];
+      closeSidebar();
+    });
+
+    /* =========================================================
+       Mock orders / customers / coupons / reviews
+       (Orders, coupons and reviews are demo data — wiring these
+       to real records needs the backend described in the README.)
+       ========================================================= */
+    const ORDERS = [
+      { id: "MC10482", customer: "Aarav Menon", date: "28 Aug 2026", items: 3, total: 4497, pay: "UPI", status: "paid" },
+      { id: "MC10481", customer: "Sneha Pillai", date: "28 Aug 2026", items: 1, total: 1999, pay: "COD", status: "pending" },
+      { id: "MC10480", customer: "Rahul Nair", date: "27 Aug 2026", items: 2, total: 2698, pay: "Card", status: "paid" },
+      { id: "MC10479", customer: "Divya Krishnan", date: "27 Aug 2026", items: 4, total: 5896, pay: "UPI", status: "paid" },
+      { id: "MC10478", customer: "Kiran Das", date: "26 Aug 2026", items: 1, total: 899, pay: "Net Banking", status: "pending" },
+      { id: "MC10477", customer: "Anjali Suresh", date: "25 Aug 2026", items: 2, total: 3298, pay: "UPI", status: "paid" }
+    ];
+    const CUSTOMERS = [
+      { name: "Aarav Menon", email: "aarav.menon@example.com", phone: "9876543210", pass: "aarav@123", orders: 6, ltv: 18420 },
+      { name: "Sneha Pillai", email: "sneha.pillai@example.com", phone: "9876543211", pass: "sneha#pass", orders: 2, ltv: 3998 },
+      { name: "Rahul Nair", email: "rahul.nair@example.com", phone: "9876543212", pass: "rahul$2026", orders: 4, ltv: 9640 },
+      { name: "Divya Krishnan", email: "divya.k@example.com", phone: "9876543213", pass: "divya@krish", orders: 9, ltv: 27210 },
+      { name: "Kiran Das", email: "kiran.das@example.com", phone: "9876543214", pass: "kiran!999", orders: 1, ltv: 899 }
+    ];
+    const COUPONS = [
+      { code: "WELCOME10", discount: "10% off", uses: "482 / ∞", expires: "31 Dec 2026", status: "ok" },
+      { code: "FREESHIP", discount: "Free shipping", uses: "213 / ∞", expires: "31 Oct 2026", status: "ok" },
+      { code: "FEST25", discount: "25% off", uses: "97 / 500", expires: "15 Sep 2026", status: "low" }
+    ];
+    const REVIEWS = [
+      { product: "Minimal Oversized Tee", customer: "Aarav Menon", rating: 5, comment: "Fits exactly as described, fabric feels premium.", status: "ok" },
+      { product: "Classic Pullover Hoodie", customer: "Divya Krishnan", rating: 4, comment: "Great hoodie, wish it came in more colours.", status: "ok" },
+      { product: "Relaxed Fit Pants", customer: "Rahul Nair", rating: 5, comment: "My new everyday pants. Perfect fit.", status: "pending" }
+    ];
+
+    function money(n) { return "₹" + Number(n).toLocaleString("en-IN"); }
+    function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
+
+    /* =========================================================
+       User-side & Backend Orders / Customers Management
+       ========================================================= */
+    let liveOrders = null;
+    let liveCustomers = null;
+
+    function parseOrderItems(items) {
+      if (!items) return [];
+      if (Array.isArray(items)) return items;
+      try {
+        const parsed = JSON.parse(items);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function getAllOrders() {
+      // 1. Get user orders stored from checkout (localStorage)
+      const localRaw = lsGet("krisin_orders_v1", []).concat(lsGet("kc_orders", []));
+      const seen = new Set();
+      const localOrders = [];
+      localRaw.forEach(o => {
+        const id = o.id || o.orderId;
+        if (id && !seen.has(id)) {
+          seen.add(id);
+          const parsed = parseOrderItems(o.items || o.items_json);
+          const custName = o.customerName || o.customer_name || o.customer || "Customer";
+          const custEmail = o.customerEmail || o.customer_email || o.email || "";
+          const custPhone = o.customerPhone || o.customer_phone || o.phone || "";
+          const shippingAddress = o.shippingAddress || o.shipping_address || {};
+          const totalVal = (o.totalAmount !== undefined) ? Number(o.totalAmount) : (o.total_amount !== undefined ? Number(o.total_amount) : Number(o.total || 0));
+          localOrders.push({
+            ...o,
+            id,
+            orderId: id,
+            customer: custName,
+            customerName: custName,
+            customer_name: custName,
+            customerEmail: custEmail,
+            customer_email: custEmail,
+            customerPhone: custPhone,
+            customer_phone: custPhone,
+            shippingAddress,
+            shipping_address: shippingAddress,
+            items: parsed,
+            items_count: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            itemsCount: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            subtotal: o.subtotal !== undefined ? Number(o.subtotal) : totalVal,
+            shippingFee: o.shippingFee !== undefined ? Number(o.shippingFee) : (o.shipping_fee !== undefined ? Number(o.shipping_fee) : 0),
+            codFee: o.codFee !== undefined ? Number(o.codFee) : (o.cod_fee !== undefined ? Number(o.cod_fee) : 0),
+            total: totalVal,
+            total_amount: totalVal,
+            totalAmount: totalVal,
+            pay: o.pay || o.paymentMethod || o.payment_method || "Online",
+            paymentMethod: o.paymentMethod || o.payment_method || o.pay || "Online",
+            payment_method: o.payment_method || o.paymentMethod || o.pay || "Online",
+            paymentStatus: o.paymentStatus || o.payment_status || "Pending",
+            payment_status: o.payment_status || o.paymentStatus || "Pending",
+            status: o.status || "Order Confirmed",
+            timeline: o.timeline || [],
+            date: o.date || (o.created_at ? o.created_at.split("T")[0] : "Today"),
+            created_at: o.created_at || o.createdAt || new Date().toISOString(),
+            createdAt: o.createdAt || o.created_at || new Date().toISOString()
+          });
+        }
+      });
+
+      // 2. If live orders from backend exist, normalize and merge
+      if (liveOrders && Array.isArray(liveOrders)) {
+        const liveNormalized = liveOrders.map(o => {
+          const parsed = parseOrderItems(o.items || o.items_json);
+          const totalVal = (o.totalAmount !== undefined) ? Number(o.totalAmount) : (o.total_amount !== undefined ? Number(o.total_amount) : Number(o.total || 0));
+          const custName = o.customerName || o.customer_name || o.customer || "Customer";
+          const custEmail = o.customerEmail || o.customer_email || o.email || "";
+          const custPhone = o.customerPhone || o.customer_phone || o.phone || "";
+          const createdAt = o.createdAt || o.created_at || new Date().toISOString();
+          const orderDate = o.date || (createdAt ? createdAt.split(" ")[0].split("T")[0] : "Today");
+          const payMethod = o.paymentMethod || o.payment_method || o.pay || "Online";
+          const payId = o.paymentId || o.payment_id || null;
+          const status = o.status || "Order Confirmed";
+          const shippingAddress = o.shippingAddress || o.shipping_address || {};
+          const timeline = o.timeline || [];
+          return {
+            id: o.id || o.orderId,
+            orderId: o.id || o.orderId,
+            customer: custName,
+            customer_name: custName,
+            customerName: custName,
+            customer_email: custEmail,
+            customerEmail: custEmail,
+            customer_phone: custPhone,
+            customerPhone: custPhone,
+            shippingAddress,
+            shipping_address: shippingAddress,
+            items: parsed,
+            items_count: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            itemsCount: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            subtotal: o.subtotal !== undefined ? Number(o.subtotal) : totalVal,
+            shippingFee: o.shippingFee !== undefined ? Number(o.shippingFee) : (o.shipping_fee !== undefined ? Number(o.shipping_fee) : 0),
+            codFee: o.codFee !== undefined ? Number(o.codFee) : (o.cod_fee !== undefined ? Number(o.cod_fee) : 0),
+            total: totalVal,
+            total_amount: totalVal,
+            totalAmount: totalVal,
+            pay: payMethod,
+            payment_method: payMethod,
+            paymentMethod: payMethod,
+            payment_id: payId,
+            paymentId: payId,
+            payment_status: o.paymentStatus || o.payment_status || "Pending",
+            paymentStatus: o.paymentStatus || o.payment_status || "Pending",
+            status: status,
+            timeline: timeline,
+            date: orderDate,
+            created_at: createdAt,
+            createdAt: createdAt
+          };
+        });
+
+        const liveIds = new Set(liveNormalized.map(o => o.id));
+        const extraLocal = localOrders.filter(o => !liveIds.has(o.id));
+        return [...liveNormalized, ...extraLocal];
+      }
+
+      // 3. Fallback when no backend: real user orders first, then mock orders
+      const userOrderIds = new Set(localOrders.map(o => o.id));
+      const remainingMock = ORDERS.filter(o => !userOrderIds.has(o.id));
+      return [...localOrders, ...remainingMock];
+    }
+
+    function getAllCustomers() {
+      if (liveCustomers && Array.isArray(liveCustomers) && liveCustomers.length > 0) {
+        return liveCustomers;
+      }
+      const localCust = lsGet("krisin_customers_v1", []);
+      const userOrders = lsGet("krisin_orders_v1", []).concat(lsGet("kc_orders", []));
+      const map = new Map();
+
+      // Seed with default customers
+      CUSTOMERS.forEach(c => map.set((c.email || '').toLowerCase(), { ...c }));
+
+      // Merge local customers
+      localCust.forEach(c => {
+        const email = (c.email || '').toLowerCase();
+        if (email) map.set(email, { ...map.get(email), ...c });
+      });
+
+      // Merge any user who placed an order
+      userOrders.forEach(o => {
+        const email = (o.customer_email || o.email || '').toLowerCase();
+        if (email) {
+          const existing = map.get(email);
+          const orderTotal = Number(o.total || o.total_amount || 0);
+          if (existing) {
+            existing.orders = (existing.orders || 0) + 1;
+            existing.ltv = (existing.ltv || 0) + orderTotal;
+          } else {
+            map.set(email, {
+              name: o.customer || o.customer_name || "Customer",
+              email: email,
+              orders: 1,
+              ltv: orderTotal,
+              status: "active"
+            });
+          }
+        }
+      });
+
+      return Array.from(map.values());
+    }
+
+    /* =========================================================
+       Dashboard stats
+       ========================================================= */
+    function renderDashboardStats() {
+      const products = getAllProducts();
+      const allOrders = getAllOrders();
+      const allCustomers = getAllCustomers();
+
+      const totalRevenue = allOrders.reduce((s, o) => s + Number(o.total || o.total_amount || 0), 0);
+      const totalBalance = allOrders
+        .filter(o => (o.status || '').toLowerCase() === "paid" || (o.status || '').toLowerCase() === "confirmed")
+        .reduce((s, o) => s + Number(o.total || o.total_amount || 0), 0);
+
+      const balStat = document.getElementById("stat-balance");
+      if (balStat) balStat.textContent = money(totalBalance);
+      
+      const revStat = document.getElementById("stat-revenue");
+      if (revStat) revStat.textContent = money(totalRevenue);
+
+      const ordStat = document.getElementById("stat-orders");
+      if (ordStat) ordStat.textContent = allOrders.length;
+
+      const custStat = document.getElementById("stat-customers");
+      if (custStat) custStat.textContent = allCustomers.length;
+
+      const lowStockProducts = products.filter(p => (p.stock !== undefined ? p.stock : 10) < 20);
+      const lowStockStat = document.getElementById("stat-lowstock");
+      if (lowStockStat) lowStockStat.textContent = lowStockProducts.length;
+
+      // Render Recent Orders (latest 5)
+      document.getElementById("recent-orders-body").innerHTML = allOrders.slice(0, 5).map(o => {
+        const orderId = o.id || o.orderId || "";
+        const custName = o.customer || o.customerName || o.customer_name || "Customer";
+        const custEmail = o.customerEmail || o.customer_email || "";
+        const itemCount = o.itemsCount || o.items_count || (Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.qty) || 1), 0) : 1);
+        const total = o.total || o.totalAmount || o.total_amount || 0;
+        const currentStatus = o.status || "Order Confirmed";
+        const statusLower = currentStatus.toLowerCase();
+        let statusClass = "pending";
+        if (statusLower === "delivered") statusClass = "ok";
+        else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
+        else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
+        else if (statusLower === "cancelled") statusClass = "disabled";
+
+        return `
+    <tr style="cursor:pointer;" data-order-view="${orderId}">
+      <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
+      <td>
+        <div style="font-weight:600;">${escapeHtml(custName)}</div>
+        ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
+      </td>
+      <td>${itemCount} items</td>
+      <td><strong>${money(total)}</strong></td>
+      <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
+    </tr>`;
+      }).join("") || `<tr><td colspan="5"><div class="a-empty">No recent orders yet.</div></td></tr>`;
+
+      document.getElementById("low-stock-body").innerHTML = lowStockProducts.map(p => `
+    <tr><td>${escapeHtml(p.name)}</td><td><span class="a-status low">${p.stock} units</span></td></tr>`).join("") ||
+        `<tr><td colspan="2">All products are well stocked.</td></tr>`;
+    }
+
+    /* =========================================================
+       Products tab
+       ========================================================= */
+    function renderProducts(list) {
+      const products = list || getAllProducts();
+      const body = document.getElementById("products-body");
+      if (!products.length) {
+        body.innerHTML = `<tr><td colspan="6"><div class="a-empty">No products match your search.</div></td></tr>`;
+        return;
+      }
+      body.innerHTML = products.map(p => `
+    <tr>
+      <td><div class="a-prod-cell"><img src="${p.images[0]}" alt=""><span>${escapeHtml(p.name)}</span></div></td>
+      <td>${escapeHtml(p.category)}</td>
+      <td>${money(p.price)}${p.compareAt ? ` <del style="color:#9aa1b4;font-size:12px;">${money(p.compareAt)}</del>` : ""}</td>
+      <td>${p.stock}</td>
+      <td><span class="a-status ${p.stock < 20 ? "low" : "ok"}">${p.stock < 20 ? "Low stock" : "In stock"}</span></td>
+      <td>
+        <div class="a-row-actions">
+          <button class="a-icon-btn edit" title="Edit product" data-edit="${p.id}"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+          <button class="a-icon-btn del" title="Remove product" data-del="${p.id}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+        </div>
+      </td>
+    </tr>`).join("");
+    }
+
+    function renderCategories() {
+      const products = getAllProducts();
+      const customCats = new Set(lsGet(LS_CATEGORIES, []));
+      const cats = getAllCategories();
+      const tbody = document.getElementById("categories-body");
+      if (!tbody) return;
+
+      tbody.innerHTML = cats.map(c => {
+        const count = products.filter(p => p.category === c).length;
+        const isCustom = customCats.has(c);
+        return `
+    <tr>
+      <td><strong>${escapeHtml(c)}</strong></td>
+      <td>${count} products</td>
+      <td><span class="a-status ${isCustom ? "active" : "ok"}">${isCustom ? "Custom" : "Default"}</span></td>
+      <td>
+        <div class="a-row-actions">
+          <button class="a-icon-btn del" title="Delete category" data-del-cat="${escapeHtml(c)}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+        </div>
+      </td>
+    </tr>`;
+      }).join("");
+    }
+
+    /* ---------- Category modal & actions ---------- */
+    const catModal = document.getElementById("category-modal-backdrop");
+    const catForm = document.getElementById("category-form");
+    const catInput = document.getElementById("cat-name-input");
+
+    function openCatModal() {
+      if (catForm) catForm.reset();
+      if (catModal) catModal.classList.add("open");
+      if (catInput) catInput.focus();
+    }
+    function closeCatModal() {
+      if (catModal) catModal.classList.remove("open");
+    }
+
+    const btnAddCat = document.getElementById("btn-add-category");
+    if (btnAddCat) btnAddCat.addEventListener("click", openCatModal);
+
+    const closeCatBtn = document.getElementById("category-modal-close");
+    if (closeCatBtn) closeCatBtn.addEventListener("click", closeCatModal);
+
+    const cancelCatBtn = document.getElementById("category-cancel");
+    if (cancelCatBtn) cancelCatBtn.addEventListener("click", closeCatModal);
+
+    if (catModal) {
+      catModal.addEventListener("click", (e) => {
+        if (e.target === catModal) closeCatModal();
+      });
+    }
+
+    if (catForm) {
+      catForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = catInput.value.trim();
+        if (!name) return;
+        const current = lsGet(LS_CATEGORIES, []);
+        if (current.includes(name) || CATEGORIES.includes(name)) {
+          toast("Category already exists.", "error");
+          return;
+        }
+        current.push(name);
+        lsSet(LS_CATEGORIES, current);
+        closeCatModal();
+        refreshProductViews();
+        toast(`Category "${name}" added.`);
+      });
+    }
+
+    const catBody = document.getElementById("categories-body");
+    if (catBody) {
+      catBody.addEventListener("click", (e) => {
+        const delBtn = e.target.closest("[data-del-cat]");
+        if (!delBtn) return;
+        const catName = delBtn.dataset.delCat;
+        const prodsWithCat = getAllProducts().filter(p => p.category === catName);
+        if (prodsWithCat.length > 0) {
+          if (!confirm(`Category "${catName}" has ${prodsWithCat.length} products. Deleting it will keep the products, but remove this category from the store filters. Proceed?`)) {
+            return;
+          }
+        } else {
+          if (!confirm(`Delete category "${catName}"?`)) return;
+        }
+        const current = lsGet(LS_CATEGORIES, []);
+        lsSet(LS_CATEGORIES, current.filter(c => c !== catName));
+        refreshProductViews();
+        toast(`Category "${catName}" removed.`);
+      });
+    }
+
+    function renderInventory() {
+      const products = getAllProducts();
+      document.getElementById("inventory-body").innerHTML = products.map(p => `
+    <tr>
+      <td>${escapeHtml(p.name)}</td><td>${(p.sizes || []).join(", ")}</td><td>${p.stock}</td>
+      <td><span class="a-status ${p.stock < 20 ? "low" : "ok"}">${p.stock < 20 ? "Reorder soon" : "Healthy"}</span></td>
+    </tr>`).join("");
+    }
+
+    function refreshProductViews() {
+      renderProducts();
+      renderCategories();
+      renderInventory();
+      renderDashboardStats();
+      populateCategoryOptions();
+    }
+
+    document.getElementById("product-search").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      renderProducts(getAllProducts().filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)));
+    });
+
+    /* ---------- Export CSV ---------- */
+    document.getElementById("btn-export-csv").addEventListener("click", () => {
+      const products = getAllProducts();
+      const rows = [["ID", "Name", "Category", "Price", "Compare At", "Stock", "Sizes"]];
+      products.forEach(p => rows.push([p.id, p.name, p.category, p.price, p.compareAt || "", p.stock, (p.sizes || []).join("|")]));
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "krisin-products.csv"; a.click();
+      URL.revokeObjectURL(url);
+      toast("Product catalogue exported.");
+    });
+
+    /* =========================================================
+       Product modal — add / edit
+       ========================================================= */
+    const productModal = document.getElementById("product-modal-backdrop");
+    const productForm = document.getElementById("product-form");
+
+    function populateCategoryOptions() {
+      const sel = document.getElementById("pf-category");
+      const current = sel.value;
+      sel.innerHTML = getAllCategories().map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+      if (current) sel.value = current;
+    }
+
+    function openProductModal(product) {
+      productForm.reset();
+      document.querySelectorAll("#pf-sizes input").forEach(cb => cb.checked = false);
+      populateCategoryOptions();
+
+      if (product) {
+        document.getElementById("product-modal-title").textContent = "Edit product";
+        document.getElementById("pf-id").value = product.id;
+        document.getElementById("pf-name").value = product.name;
+        document.getElementById("pf-category").value = product.category;
+        document.getElementById("pf-price").value = product.price;
+        document.getElementById("pf-compare").value = product.compareAt || "";
+        document.getElementById("pf-stock").value = product.stock;
+        document.getElementById("pf-image").value = (product.images && product.images[0]) || "";
+        document.getElementById("pf-desc").value = product.description || "";
+        document.getElementById("pf-new").checked = !!product.isNew;
+        document.getElementById("pf-bestseller").checked = !!product.bestSeller;
+        (product.sizes || []).forEach(s => {
+          const cb = document.querySelector(`#pf-sizes input[value="${s}"]`);
+          if (cb) cb.checked = true;
+        });
+      } else {
+        document.getElementById("product-modal-title").textContent = "Add product";
+        document.getElementById("pf-id").value = "";
+      }
+      productModal.classList.add("open");
+    }
+    function closeProductModal() { productModal.classList.remove("open"); }
+
+    document.getElementById("btn-add-product").addEventListener("click", () => openProductModal(null));
+    document.getElementById("product-modal-close").addEventListener("click", closeProductModal);
+    document.getElementById("product-cancel").addEventListener("click", closeProductModal);
+    productModal.addEventListener("click", (e) => { if (e.target === productModal) closeProductModal(); });
+
+    document.getElementById("products-body").addEventListener("click", (e) => {
+      const editBtn = e.target.closest("[data-edit]");
+      const delBtn = e.target.closest("[data-del]");
+      if (editBtn) {
+        const product = getAllProducts().find(p => p.id === editBtn.dataset.edit);
+        if (product) openProductModal(product);
+      }
+      if (delBtn) {
+        const product = getAllProducts().find(p => p.id === delBtn.dataset.del);
+        openDeleteModal(product);
+      }
+    });
+
+    productForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const id = document.getElementById("pf-id").value;
+      const isNew = !id;
+      const sizes = Array.from(document.querySelectorAll("#pf-sizes input:checked")).map(cb => cb.value);
+      const imageUrl = document.getElementById("pf-image").value.trim() ||
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=1200&auto=format&fit=crop";
+
+      const product = {
+        id: id || ("custom-" + Date.now()),
+        name: document.getElementById("pf-name").value.trim(),
+        category: document.getElementById("pf-category").value,
+        price: Number(document.getElementById("pf-price").value),
+        compareAt: document.getElementById("pf-compare").value ? Number(document.getElementById("pf-compare").value) : null,
+        colors: [{ name: "Default", hex: "#14244b" }],
+        sizes: sizes.length ? sizes : ["S", "M", "L"],
+        outOfStock: [],
+        stock: Number(document.getElementById("pf-stock").value),
+        images: [imageUrl],
+        description: document.getElementById("pf-desc").value.trim(),
+        fit: "",
+        material: "",
+        isNew: document.getElementById("pf-new").checked,
+        bestSeller: document.getElementById("pf-bestseller").checked
+      };
+
+      saveProduct(product, isNew);
+      closeProductModal();
+      refreshProductViews();
+      toast(isNew ? "Product added." : "Product updated.");
+    });
+
+    /* ---------- Delete modal ---------- */
+    const deleteModal = document.getElementById("delete-modal-backdrop");
+    let pendingDeleteId = null;
+    function openDeleteModal(product) {
+      if (!product) return;
+      pendingDeleteId = product.id;
+      document.getElementById("delete-product-name").textContent = product.name;
+      deleteModal.classList.add("open");
+    }
+    function closeDeleteModal() { deleteModal.classList.remove("open"); pendingDeleteId = null; }
+    document.getElementById("delete-modal-close").addEventListener("click", closeDeleteModal);
+    document.getElementById("delete-cancel").addEventListener("click", closeDeleteModal);
+    deleteModal.addEventListener("click", (e) => { if (e.target === deleteModal) closeDeleteModal(); });
+    document.getElementById("delete-confirm").addEventListener("click", () => {
+      if (pendingDeleteId) {
+        deleteProductById(pendingDeleteId);
+        refreshProductViews();
+        toast("Product removed.");
+      }
+      closeDeleteModal();
+    });
+
+    /* =========================================================
+       Orders tab & Order Details Modal
+       ========================================================= */
+    let currentViewingOrder = null;
+
+    function openOrderDetailsModal(order) {
+      if (!order) return;
+      currentViewingOrder = order;
+
+      const orderId = order.id || order.orderId || "";
+      const custName = order.customerName || order.customer_name || order.customer || "Customer";
+      const custEmail = order.customerEmail || order.customer_email || "—";
+      const custPhone = order.customerPhone || order.customer_phone || "—";
+      const addr = order.shippingAddress || order.shipping_address || {};
+      const addrLine = [addr.address, addr.city, addr.state, addr.pincode].filter(Boolean).join(", ") || "No address provided";
+      const payMethod = order.paymentMethod || order.payment_method || order.pay || "Online";
+      const payStatus = order.paymentStatus || order.payment_status || "Pending";
+      const payId = order.paymentId || order.payment_id;
+      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString("en-IN", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+      }) : (order.date || "Today");
+      const currentStatus = order.status || "Order Confirmed";
+      const items = Array.isArray(order.items) ? order.items : [];
+
+      document.getElementById("adm-modal-order-id").textContent = `Order #${orderId}`;
+      document.getElementById("adm-modal-order-date").textContent = `Placed on ${orderDate}`;
+
+      const itemsRowsHTML = items.map(item => {
+        const itemImg = item.image || item.thumbnail || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=200&auto=format&fit=crop";
+        const unitPrice = Number(item.price) || 0;
+        const qty = Number(item.qty) || 1;
+        const lineTotal = unitPrice * qty;
+        const variantText = [item.size ? `Size: ${item.size}` : null, item.color ? `Color: ${item.color}` : null].filter(Boolean).join(" • ");
+
+        return `
+          <tr style="border-bottom:1px solid #edf0f5;">
+            <td style="padding:10px 8px;width:54px;">
+              <img src="${itemImg}" alt="${escapeHtml(item.name || 'Product')}" style="width:48px;height:58px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">
+            </td>
+            <td style="padding:10px 8px;">
+              <div style="font-weight:600;color:var(--a-ink);font-size:13.5px;">${escapeHtml(item.name || 'Product')}</div>
+              ${variantText ? `<div style="font-size:12px;color:var(--a-muted);margin-top:2px;">${escapeHtml(variantText)}</div>` : ''}
+            </td>
+            <td style="padding:10px 8px;text-align:right;font-size:13px;">${money(unitPrice)}</td>
+            <td style="padding:10px 8px;text-align:center;font-size:13px;font-weight:600;">× ${qty}</td>
+            <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--a-navy);font-size:13.5px;">${money(lineTotal)}</td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--a-muted);">No items found</td></tr>`;
+
+      const subtotal = order.subtotal !== undefined ? Number(order.subtotal) : items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
+      const shippingFee = order.shippingFee !== undefined ? Number(order.shippingFee) : (subtotal >= 1999 ? 0 : 99);
+      const codFee = order.codFee !== undefined ? Number(order.codFee) : ((payMethod.toUpperCase() === "COD") ? 49 : 0);
+      const grandTotal = order.totalAmount !== undefined ? Number(order.totalAmount) : (order.total || (subtotal + shippingFee + codFee));
+
+      const stages = [
+        "Order Placed",
+        "Order Confirmed",
+        "Processing",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled"
+      ];
+
+      const stageOptions = stages.map(s => {
+        const isSel = s.toLowerCase() === currentStatus.toLowerCase();
+        return `<option value="${s}" ${isSel ? "selected" : ""}>${s}</option>`;
+      }).join("");
+
+      document.getElementById("adm-modal-order-content").innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;background:#f8f9fc;border:1px solid #e7ebf2;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:4px;">Customer & Shipping Address</div>
+            <div style="font-weight:700;color:var(--a-ink);font-size:14px;">${escapeHtml(custName)}</div>
+            <div style="font-size:12.5px;color:var(--a-ink);margin-top:2px;">${escapeHtml(addrLine)}</div>
+            <div style="font-size:12px;color:var(--a-muted);margin-top:4px;">
+              ✉️ ${escapeHtml(custEmail)} &nbsp;•&nbsp; 📞 ${escapeHtml(custPhone)}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:4px;">Payment & Fulfillment</div>
+            <div style="font-size:13px;color:var(--a-ink);">
+              Method: <strong>${escapeHtml(payMethod)}</strong>
+            </div>
+            <div style="font-size:13px;color:var(--a-ink);margin-top:2px;">
+              Payment Status: <span style="font-weight:600;color:${payStatus.toLowerCase() === 'paid' ? '#059669' : '#d97706'}">${escapeHtml(payStatus)}</span>
+            </div>
+            ${payId ? `<div style="font-size:11.5px;color:var(--a-muted);margin-top:2px;">Ref: <code>${escapeHtml(payId)}</code></div>` : ''}
+            <div style="margin-top:8px;">
+              <span class="a-status ${currentStatus.toLowerCase() === 'delivered' ? 'ok' : (currentStatus.toLowerCase() === 'cancelled' ? 'disabled' : 'active')}">${escapeHtml(currentStatus)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:8px;">Ordered Items (${items.length})</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="border-bottom:2px solid #e5e7eb;color:var(--a-muted);font-size:11.5px;text-transform:uppercase;">
+                <th style="padding:6px 8px;text-align:left;">Item</th>
+                <th style="padding:6px 8px;text-align:left;">Description</th>
+                <th style="padding:6px 8px;text-align:right;">Price</th>
+                <th style="padding:6px 8px;text-align:center;">Qty</th>
+                <th style="padding:6px 8px;text-align:right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRowsHTML}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+          <div style="width:260px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+              <span>Subtotal:</span>
+              <span style="font-weight:600;color:var(--a-ink);">${money(subtotal)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+              <span>Shipping Fee:</span>
+              <span style="font-weight:600;color:var(--a-ink);">${shippingFee === 0 ? "FREE" : money(shippingFee)}</span>
+            </div>
+            ${codFee ? `
+              <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+                <span>COD Handling:</span>
+                <span style="font-weight:600;color:var(--a-ink);">${money(codFee)}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex;justify-content:space-between;padding:6px 0 0;margin-top:6px;border-top:1px solid #e5e7eb;font-size:15px;font-weight:700;color:var(--a-navy);">
+              <span>Grand Total:</span>
+              <span>${money(grandTotal)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--a-muted);margin-bottom:8px;">Update Fulfillment Status</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="modal-status-select" style="flex:1;min-width:140px;padding:8px 12px;font-size:13px;border:1px solid var(--a-line);border-radius:6px;background:#fff;">
+              ${stageOptions}
+            </select>
+            <input type="text" id="modal-status-note" placeholder="Status note (e.g. Dispatched via BlueDart)" style="flex:1.5;min-width:180px;padding:8px 12px;font-size:13px;border:1px solid var(--a-line);border-radius:6px;">
+            <button type="button" class="a-btn primary" id="btn-update-modal-status" style="white-space:nowrap;">Update Status</button>
+          </div>
+        </div>
+      `;
+
+      const modalBackdrop = document.getElementById("order-details-modal-backdrop");
+      if (modalBackdrop) modalBackdrop.classList.add("open");
+
+      const updateBtn = document.getElementById("btn-update-modal-status");
+      if (updateBtn) {
+        updateBtn.onclick = async () => {
+          const newStatus = document.getElementById("modal-status-select").value;
+          const note = document.getElementById("modal-status-note").value.trim();
+          updateBtn.disabled = true;
+          updateBtn.textContent = "Updating…";
+
+          const token = getAdminToken();
+
+          ['krisin_orders_v1', 'kc_orders'].forEach(key => {
+            const list = lsGet(key, []);
+            const updated = list.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+            lsSet(key, updated);
+          });
+
+          if (liveOrders) {
+            liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+          }
+
+          if (token) {
+            try {
+              await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ status: newStatus, note })
+              });
+            } catch (err) {}
+          }
+
+          renderOrders();
+          renderDashboardStats();
+          toast(`Order #${orderId} updated to "${newStatus}".`);
+          closeOrderDetailsModal();
+        };
+      }
+    }
+
+    function closeOrderDetailsModal() {
+      const modal = document.getElementById("order-details-modal-backdrop");
+      if (modal) modal.classList.remove("open");
+      currentViewingOrder = null;
+    }
+
+    document.getElementById("order-details-modal-close").addEventListener("click", closeOrderDetailsModal);
+    document.getElementById("order-details-modal-dismiss").addEventListener("click", closeOrderDetailsModal);
+    document.getElementById("order-details-modal-backdrop").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("order-details-modal-backdrop")) closeOrderDetailsModal();
+    });
+
+    function renderOrders(list) {
+      const orders = list || getAllOrders();
+      const body = document.getElementById("orders-body");
+      if (!body) return;
+
+      body.innerHTML = orders.length ? orders.map(o => {
+        const orderId = o.id || o.orderId || "";
+        const custName = o.customer || o.customerName || o.customer_name || "Customer";
+        const custEmail = o.customerEmail || o.customer_email || "";
+        const orderDate = o.date || (o.created_at ? o.created_at.split("T")[0] : "Today");
+        const itemsText = Array.isArray(o.items) && o.items.length
+          ? o.items.map(i => `${i.name || 'Item'} × ${i.qty || 1}`).join(", ") 
+          : (o.items_count ? `${o.items_count} items` : (o.items || "1 item"));
+        const total = o.total || o.totalAmount || o.total_amount || 0;
+        const payMethod = o.pay || o.paymentMethod || o.payment_method || "Online";
+        const currentStatus = o.status || "Order Confirmed";
+        const statusLower = currentStatus.toLowerCase();
+        let statusClass = "pending";
+        if (statusLower === "delivered") statusClass = "ok";
+        else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
+        else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
+        else if (statusLower === "cancelled") statusClass = "disabled";
+
+        const stages = [
+          "Order Placed",
+          "Order Confirmed",
+          "Processing",
+          "Shipped",
+          "Out for Delivery",
+          "Delivered",
+          "Cancelled"
+        ];
+
+        const selectOptions = stages.map(s => {
+          const isSel = s.toLowerCase() === statusLower;
+          return `<option value="${s}" ${isSel ? "selected" : ""}>${s}</option>`;
+        }).join("");
+
+        return `
+    <tr>
+      <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
+      <td>
+        <div style="font-weight:600;">${escapeHtml(custName)}</div>
+        ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
+      </td>
+      <td>${orderDate}</td>
+      <td>
+        <span style="font-size:12.5px;cursor:pointer;color:var(--a-navy);" data-order-view="${orderId}" title="Click to view all items">${escapeHtml(itemsText)}</span>
+      </td>
+      <td><strong>${money(total)}</strong></td>
+      <td>
+        <div>${escapeHtml(payMethod)}</div>
+        <div style="font-size:11px;color:var(--a-muted);">${escapeHtml(o.paymentStatus || o.payment_status || "Pending")}</div>
+      </td>
+      <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button class="a-btn small" data-order-view="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#f0f3fa;color:var(--a-navy);border:1px solid #d5dded;cursor:pointer;">View</button>
+          <select class="a-btn small" data-order-status-select="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#1b2234;color:#fff;border:1px solid #323b54;border-radius:4px;cursor:pointer;">
+            ${selectOptions}
+          </select>
+          <button class="a-icon-btn del" title="Delete order" data-order-delete="${orderId}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+        </div>
+      </td>
+    </tr>`;
+      }).join("") : `<tr><td colspan="8"><div class="a-empty">No orders match your search.</div></td></tr>`;
+    }
+
+    document.getElementById("order-search").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const currentList = getAllOrders();
+      renderOrders(currentList.filter(o => {
+        const cName = (o.customer || o.customerName || o.customer_name || "").toLowerCase();
+        const oId = String(o.id || o.orderId || "").toLowerCase();
+        return cName.includes(q) || oId.includes(q);
+      }));
+    });
+
+    // Handle Click on Order Rows to View Details (Recent Orders & Orders table)
+    document.addEventListener("click", (e) => {
+      const viewTrigger = e.target.closest("[data-order-view]");
+      if (viewTrigger) {
+        e.preventDefault();
+        const orderId = viewTrigger.dataset.orderView;
+        const allOrders = getAllOrders();
+        const found = allOrders.find(o => (o.id === orderId || o.orderId === orderId));
+        if (found) {
+          openOrderDetailsModal(found);
+        }
+      }
+    });
+
+    // Handle Order Status Select Change
+    document.getElementById("orders-body").addEventListener("change", async (e) => {
+      const select = e.target.closest("[data-order-status-select]");
+      if (!select) return;
+
+      const orderId = select.dataset.orderStatusSelect;
+      const newStatus = select.value;
+      const token = getAdminToken();
+
+      ['krisin_orders_v1', 'kc_orders'].forEach(key => {
+        const list = lsGet(key, []);
+        const updated = list.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+        lsSet(key, updated);
+      });
+
+      if (liveOrders) {
+        liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+      }
+
+      renderOrders();
+      renderDashboardStats();
+
+      if (token) {
+        try {
+          await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (err) {
+          console.error("Admin order status update error:", err);
+        }
+      }
+      toast(`Order #${orderId} updated to "${newStatus}".`);
+    });
+
+    document.getElementById("orders-body").addEventListener("click", async (e) => {
+      const statusBtn = e.target.closest("[data-order-status]");
+      const delBtn = e.target.closest("[data-order-delete]");
+
+      if (statusBtn) {
+        const orderId = statusBtn.dataset.orderStatus;
+        const newStatus = statusBtn.dataset.targetStatus;
+        const token = getAdminToken();
+
+        ['krisin_orders_v1', 'kc_orders'].forEach(key => {
+          const list = lsGet(key, []);
+          const updated = list.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+          lsSet(key, updated);
+        });
+
+        if (liveOrders) {
+          liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+        }
+
+        renderOrders();
+        renderDashboardStats();
+
+        if (token) {
+          try {
+            await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+              body: JSON.stringify({ status: newStatus })
+            });
+          } catch (err) {}
+        }
+        toast(`Order #${orderId} marked as ${newStatus}.`);
+      }
+
+      if (delBtn) {
+        const orderId = delBtn.dataset.orderDelete;
+        if (!confirm(`Delete order #${orderId}? This cannot be undone.`)) return;
+
+        const token = getAdminToken();
+
+        ['krisin_orders_v1', 'kc_orders'].forEach(key => {
+          const list = lsGet(key, []);
+          const updated = list.filter(o => o.id !== orderId && o.orderId !== orderId);
+          lsSet(key, updated);
+        });
+
+        if (liveOrders) {
+          liveOrders = liveOrders.filter(o => o.id !== orderId && o.orderId !== orderId);
+        }
+
+        renderOrders();
+        renderDashboardStats();
+
+        if (token) {
+          try {
+            await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}`, {
+              method: "DELETE",
+              headers: { "Authorization": `Bearer ${token}` }
+            });
+          } catch (err) {}
+        }
+        toast(`Order #${orderId} deleted.`);
+      }
+    });
+
+    /* =========================================================
+       Customers tab — access control (enable / disable)
+       ========================================================= */
+    function renderCustomers(list) {
+      const customers = list || getAllCustomers();
+      const body = document.getElementById("customers-body");
+      if (!customers.length) {
+        body.innerHTML = `<tr><td colspan="8"><div class="a-empty">No customers match your search.</div></td></tr>`;
+        return;
+      }
+      body.innerHTML = customers.map(c => {
+        const status = c.status || getUserStatus(c.email);
+        const isActive = status === "active";
+        const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:#888;">—</span>';
+        const rawPwd = c.plain_password || c.password || (c.pass || "");
+        const pwdHtml = rawPwd 
+          ? `<span style="font-family:monospace;background:#242424;padding:3px 6px;border-radius:4px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
+          : '<span style="color:#888;font-style:italic;">Encrypted</span>';
+        return `
+    <tr>
+      <td><strong>${escapeHtml(c.name || "Customer")}</strong></td>
+      <td>${escapeHtml(c.email)}</td>
+      <td>${phone}</td>
+      <td>${pwdHtml}</td>
+      <td>${c.orders_count !== undefined ? c.orders_count : (c.orders || 0)}</td>
+      <td>${money(c.total_spent !== undefined ? c.total_spent : (c.ltv || 0))}</td>
+      <td><span class="a-status ${isActive ? "active" : "disabled"}">${isActive ? "Active" : "Disabled"}</span></td>
+      <td>
+        <label class="a-toggle">
+          <input type="checkbox" data-user-toggle="${escapeHtml(c.email)}" ${isActive ? "checked" : ""}>
+          <span class="track"></span>
+          <span class="a-toggle-label">${isActive ? "Allowed" : "Blocked"}</span>
+        </label>
+      </td>
+    </tr>`;
+      }).join("");
+    }
+    document.getElementById("customers-body").addEventListener("change", (e) => {
+      const toggle = e.target.closest("[data-user-toggle]");
+      if (!toggle) return;
+      const email = toggle.dataset.userToggle;
+      const newStatus = toggle.checked ? "active" : "disabled";
+      setUserStatus(email, newStatus);
+      if (liveCustomers) {
+        const c = liveCustomers.find(item => item.email.toLowerCase() === email.toLowerCase());
+        if (c) c.status = newStatus;
+      }
+      renderCustomers();
+      const customer = getAllCustomers().find(c => c.email.toLowerCase() === email.toLowerCase());
+      toast(
+        newStatus === "active"
+          ? `${customer ? customer.name : "Customer"} can sign in and order again.`
+          : `${customer ? customer.name : "Customer"}'s account is disabled — they can't sign in or check out.`
+      );
+    });
+    document.getElementById("customer-search").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const currentList = getAllCustomers();
+      renderCustomers(currentList.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)));
+    });
+
+    // Fetch real backend customers & orders if admin token is present
+    function fetchBackendData() {
+      const token = getAdminToken();
+      if (!token) return;
+
+      fetch(`${ADMIN_API}/api/admin/customers`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length) {
+            liveCustomers = data;
+            renderCustomers();
+            renderDashboardStats();
+          }
+        })
+        .catch(() => { });
+
+      fetch(`${ADMIN_API}/api/admin/orders`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length) {
+            liveOrders = data;
+            renderOrders();
+            renderDashboardStats();
+          }
+        })
+        .catch(() => { });
+
+      // Fetch any backend custom products and merge to local view
+      fetch(`${ADMIN_API}/api/products`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data) && data.length) {
+            const existing = lsGet(LS_CUSTOM, []);
+            const map = {};
+            existing.forEach(p => { map[p.id] = p; });
+            data.forEach(p => { map[p.id] = p; });
+            lsSet(LS_CUSTOM, Object.values(map));
+            refreshProductViews();
+          }
+        })
+        .catch(() => { });
+    }
+
+    // Live sync across tabs when orders are placed on user storefront
+    window.addEventListener("storage", (e) => {
+      if (e.key === "krisin_orders_v1" || e.key === "kc_orders" || e.key === "krisin_customers_v1" || e.key === "krisin_admin_product_overrides_v1") {
+        renderDashboardStats();
+        renderOrders();
+        renderCustomers();
+        refreshProductViews();
+      }
+    });
+
+    /* =========================================================
+       Coupons
+       ========================================================= */
+    document.getElementById("coupons-body").innerHTML = COUPONS.map(c => `
+  <tr><td><strong>${c.code}</strong></td><td>${c.discount}</td><td>${c.uses}</td><td>${c.expires}</td>
+  <td><span class="a-status ${c.status === "ok" ? "paid" : "pending"}">${c.status === "ok" ? "Active" : "Ending soon"}</span></td></tr>`).join("");
+    document.getElementById("btn-add-coupon").addEventListener("click", () => {
+      toast("Coupon creation needs the backend described in the README — this demo view is read-only.", "error");
+    });
+
+    /* =========================================================
+       Reviews
+       ========================================================= */
+    document.getElementById("reviews-body").innerHTML = REVIEWS.map(r => `
+  <tr><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer)}</td><td>${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</td>
+  <td style="max-width:260px">${escapeHtml(r.comment)}</td>
+  <td><span class="a-status ${r.status === "ok" ? "paid" : "pending"}">${r.status === "ok" ? "Published" : "Needs review"}</span></td></tr>`).join("");
+
+    /* =========================================================
+       Users tab — live from backend
+       ========================================================= */
+    let allUsers = [];
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    function renderUsers(list) {
+      const body = document.getElementById('users-body');
+      const countLabel = document.getElementById('user-count-label');
+      if (countLabel) countLabel.textContent = list.length + ' user' + (list.length !== 1 ? 's' : '');
+      if (!list.length) {
+        body.innerHTML = `<tr><td colspan="10"><div class="a-empty">No users found.</div></td></tr>`;
+        return;
+      }
+      body.innerHTML = list.map((u, i) => {
+        const isActive = u.status === 'active';
+        const rawPwd = u.plain_password || u.password || (u.pass || "");
+        const pwdHtml = rawPwd
+          ? `<span style="font-family:monospace;background:#242424;color:#f3f4f6;padding:3px 8px;border-radius:4px;font-size:12px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
+          : '<span style="color:#6b7280;font-size:12px;font-style:italic;">Encrypted</span>';
+        return `
+          <tr>
+            <td style="color:#9ca3af;font-size:12px">${i + 1}</td>
+            <td><strong>${escapeHtml(u.name)}</strong></td>
+            <td style="font-size:13px">${escapeHtml(u.email)}</td>
+            <td style="font-size:13px">${escapeHtml(u.phone || '—')}</td>
+            <td>${pwdHtml}</td>
+            <td style="font-size:12px;color:#6b7280">${fmtDate(u.created_at)}</td>
+            <td style="text-align:center">${u.orders_count || 0}</td>
+            <td>${money(u.total_spent || 0)}</td>
+            <td><span class="a-status ${isActive ? 'active' : 'disabled'}">${isActive ? 'Active' : 'Disabled'}</span></td>
+            <td>
+              <div style="display:flex;gap:8px;align-items:center">
+                <label class="a-toggle" title="${isActive ? 'Disable account' : 'Enable account'}">
+                  <input type="checkbox" data-user-status-toggle="${escapeHtml(u.id)}" ${isActive ? 'checked' : ''}>
+                  <span class="track"></span>
+                </label>
+                <button class="a-btn" style="padding:4px 10px;font-size:11px;height:auto;border-color:#ef4444;color:#ef4444"
+                  data-user-delete="${escapeHtml(u.id)}" data-user-name="${escapeHtml(u.name)}">Delete</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function fetchUsers() {
+      const token = getAdminToken();
+      if (!token) {
+        document.getElementById('users-body').innerHTML =
+          `<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">No admin session. Please <a href="/admin/login">sign in again</a>.</div></td></tr>`;
+        return;
+      }
+      fetch(`${ADMIN_API}/api/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(r => {
+          if (r.status === 401 || r.status === 403) throw new Error('auth');
+          return r.json();
+        })
+        .then(data => {
+          if (Array.isArray(data)) {
+            allUsers = data;
+            renderUsers(allUsers);
+            const custStat = document.getElementById('stat-customers');
+            if (custStat) custStat.textContent = data.length;
+          }
+        })
+        .catch(err => {
+          const msg = err.message === 'auth'
+            ? 'Session expired. Please <a href="/admin/login">sign in again</a>.'
+            : 'Failed to load users. Is the backend running on port 4000?';
+          document.getElementById('users-body').innerHTML =
+            `<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">${msg}</div></td></tr>`;
+        });
+    }
+
+    // Search
+    document.getElementById('user-search').addEventListener('input', e => {
+      const q = e.target.value.toLowerCase();
+      renderUsers(q ? allUsers.filter(u =>
+        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      ) : allUsers);
+    });
+
+    // Toggle status & Delete via event delegation
+    document.getElementById('users-body').addEventListener('change', async e => {
+      const toggle = e.target.closest('[data-user-status-toggle]');
+      if (!toggle) return;
+      const id = toggle.dataset.userStatusToggle;
+      const newStatus = toggle.checked ? 'active' : 'disabled';
+      const token = getAdminToken();
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/customers/${id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+          const u = allUsers.find(x => x.id === id);
+          if (u) u.status = newStatus;
+          renderUsers(allUsers);
+          toast(`Account ${newStatus === 'active' ? 'enabled' : 'disabled'}.`);
+        } else {
+          toast('Could not update status.', 'error');
+        }
+      } catch { toast('Network error.', 'error'); }
+    });
+
+    document.getElementById('users-body').addEventListener('click', async e => {
+      const delBtn = e.target.closest('[data-user-delete]');
+      if (!delBtn) return;
+      const id = delBtn.dataset.userDelete;
+      const name = delBtn.dataset.userName;
+      if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+      const token = getAdminToken();
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/customers/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          allUsers = allUsers.filter(u => u.id !== id);
+          renderUsers(allUsers);
+          toast(`"${name}" deleted.`);
+        } else {
+          toast('Could not delete user.', 'error');
+        }
+      } catch { toast('Network error.', 'error'); }
+    });
+
+    // Fetch users when tab is clicked (always refresh)
+    document.getElementById('a-nav').addEventListener('click', e => {
+      if (e.target.closest('[data-tab="users"]')) {
+        fetchUsers();
+      }
+    });
+
+    /* =========================================================
+       Initial render & Admin Session Verification
+       ========================================================= */
+    refreshProductViews();
+    renderOrders();
+    renderCustomers();
+    fetchBackendData();
+    fetchUsers(); // Preload users on dashboard open
+
+    // Display signed in admin email
+    const signedInEmail = localStorage.getItem("krisin_admin_email") || "admin@krisin.clothing";
+    const emailEl = document.getElementById("a-signed-in-email");
+    if (emailEl) emailEl.textContent = signedInEmail;
+
+    // Admin Logout Handler
+    const logoutBtn = document.getElementById("a-logout-btn");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        // Clear all admin session keys
+        ['krisin_admin_token','krisin_admin_session','krisin_admin_email'].forEach(k => {
+          localStorage.removeItem(k);
+          sessionStorage.removeItem(k);
+        });
+        window.location.href = "/admin/login";
+      });
+    }
+
+    // Verify session against backend
+    (async () => {
+      const token = getAdminToken();
+      if (!token) {
+        window.location.href = "/admin/login";
+        return;
+      }
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/verify`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          ['krisin_admin_token','krisin_admin_session','krisin_admin_email'].forEach(k => {
+            localStorage.removeItem(k);
+            sessionStorage.removeItem(k);
+          });
+          window.location.href = "/admin/login";
+        }
+      } catch (e) {
+        // Network error — keep session alive (offline mode)
+      }
+    })();
+  </script>
+</body>
+
+</html>

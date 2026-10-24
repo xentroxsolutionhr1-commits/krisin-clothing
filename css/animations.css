@@ -1,0 +1,538 @@
+﻿/* =========================================================
+   KRISIN CLOTHING — Premium Animation System
+   ========================================================= */
+
+:root {
+  --ease-out-expo:  cubic-bezier(.16, 1, .3, 1);
+  --ease-out-quart: cubic-bezier(.25, 1, .5, 1);
+  --ease-spring:    cubic-bezier(.22, .61, .36, 1);
+  --dur-xs: .2s;
+  --dur-sm: .35s;
+  --dur-md: .55s;
+  --dur-lg: .8s;
+  --dur-xl: 1.1s;
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  [data-reveal-group] > [data-stagger],
+  .section-head h2, .section-head p, .section-head a,
+  .product-card, .category-block, .look-item,
+  .split-media, .split-text,
+  .feature-band, .site-footer,
+  .pdp-gallery, .pdp-info,
+  .hero-content > *, .page-hero-content > * {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   PAGE ENTRANCE
+   ========================================================= */
+@keyframes pageEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+body {
+  animation: pageEnter .45s var(--ease-out-quart) both;
+}
+
+/* =========================================================
+   HERO CONTENT — staggered entrance
+   ========================================================= */
+@keyframes heroItemIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.hero-content .eyebrow,
+.hero-content h1,
+.hero-content p,
+.hero-content .hero-actions {
+  opacity: 0;
+  animation: heroItemIn var(--dur-lg) var(--ease-out-expo) forwards;
+}
+.hero-content .eyebrow  { animation-delay: .15s; }
+.hero-content h1        { animation-delay: .3s;  }
+.hero-content p         { animation-delay: .48s; }
+.hero-content .hero-actions { animation-delay: .62s; }
+
+/* =========================================================
+   KEYFRAMES
+   ========================================================= */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes fadeLeft {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeRight {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes wishPulse {
+  0%   { transform: scale(1);   }
+  40%  { transform: scale(1.3); }
+  70%  { transform: scale(.9);  }
+  100% { transform: scale(1);   }
+}
+@keyframes authCardIn {
+  from { opacity: 0; transform: translateY(32px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes cartRowIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+/* =========================================================
+   SCROLL-REVEAL PRIMITIVES  ([data-reveal])
+   ========================================================= */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(44px);
+  transition:
+    opacity   var(--dur-lg) var(--ease-out-expo),
+    transform var(--dur-lg) var(--ease-out-expo);
+  will-change: opacity, transform;
+}
+[data-reveal].is-visible { opacity: 1; transform: translateY(0); }
+
+[data-reveal="fade"]          { transform: none; }
+[data-reveal="fade"].is-visible { opacity: 1; }
+
+[data-reveal="left"]  { transform: translateX(-52px); }
+[data-reveal="left"].is-visible  { opacity: 1; transform: translateX(0); }
+
+[data-reveal="right"] { transform: translateX(52px); }
+[data-reveal="right"].is-visible { opacity: 1; transform: translateX(0); }
+
+[data-reveal="scale"] { transform: scale(.93); }
+[data-reveal="scale"].is-visible { opacity: 1; transform: scale(1); }
+
+/* Delay utilities */
+[data-delay="100"] { transition-delay: .1s;  }
+[data-delay="150"] { transition-delay: .15s; }
+[data-delay="200"] { transition-delay: .2s;  }
+[data-delay="250"] { transition-delay: .25s; }
+[data-delay="300"] { transition-delay: .3s;  }
+[data-delay="400"] { transition-delay: .4s;  }
+[data-delay="500"] { transition-delay: .5s;  }
+[data-delay="600"] { transition-delay: .6s;  }
+
+/* =========================================================
+   STAGGER GROUPS  ([data-reveal-group] + [data-stagger])
+   ========================================================= */
+[data-reveal-group] > [data-stagger] {
+  opacity: 0;
+  transform: translateY(36px);
+  transition:
+    opacity   var(--dur-md) var(--ease-out-expo),
+    transform var(--dur-md) var(--ease-out-expo);
+  transition-delay: calc(var(--stagger-i, 0) * 90ms + 50ms);
+  will-change: opacity, transform;
+}
+[data-reveal-group].is-visible > [data-stagger] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================================
+   SECTION HEADINGS
+   ========================================================= */
+.section-head h2,
+.section-head .heading,
+.section-head p,
+.section-head .sub,
+.section-head a {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity   var(--dur-md) var(--ease-out-expo),
+    transform var(--dur-md) var(--ease-out-expo);
+}
+.section-head.is-visible h2,
+.section-head.is-visible .heading { transition-delay: .05s; opacity: 1; transform: none; }
+.section-head.is-visible p,
+.section-head.is-visible .sub     { transition-delay: .18s; opacity: 1; transform: none; }
+.section-head.is-visible a        { transition-delay: .28s; opacity: 1; transform: none; }
+
+/* =========================================================
+   PRODUCT CARDS — stagger via --card-i
+   ========================================================= */
+.product-card {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity   var(--dur-md) var(--ease-out-expo),
+    transform var(--dur-md) var(--ease-out-expo);
+  transition-delay: calc(var(--card-i, 0) * 80ms + 60ms);
+  will-change: opacity, transform;
+}
+.product-card.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* =========================================================
+   CATEGORY BLOCKS — stagger via --cat-i
+   ========================================================= */
+.category-block {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity   var(--dur-md) var(--ease-out-expo),
+    transform var(--dur-md) var(--ease-out-expo),
+    box-shadow var(--dur-md) var(--ease-out-expo);
+  transition-delay: calc(var(--cat-i, 0) * 80ms + 50ms);
+  will-change: opacity, transform;
+}
+.category-block.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.category-block:nth-child(2) { transform: translateY(calc(clamp(0px,3vw,26px) + 28px)); }
+.category-block:nth-child(2).is-visible { transform: translateY(clamp(0px,3vw,26px)); }
+.category-block:nth-child(4) { transform: translateY(calc(clamp(0px,-2vw,-18px) + 28px)); }
+.category-block:nth-child(4).is-visible { transform: translateY(clamp(0px,-2vw,-18px)); }
+
+@media (max-width: 560px) {
+  .category-block,
+  .category-block:nth-child(2),
+  .category-block:nth-child(4) { transform: translateY(28px); }
+  .category-block.is-visible,
+  .category-block:nth-child(2).is-visible,
+  .category-block:nth-child(4).is-visible { transform: translateY(0); }
+}
+
+/* =========================================================
+   LOOKBOOK ITEMS — stagger via --look-i
+   ========================================================= */
+.look-item {
+  opacity: 0;
+  transform: translateY(28px) scale(.98);
+  transition:
+    opacity   var(--dur-lg) var(--ease-out-expo),
+    transform var(--dur-lg) var(--ease-out-expo);
+  transition-delay: calc(var(--look-i, 0) * 100ms + 60ms);
+  will-change: opacity, transform;
+}
+.look-item.is-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* =========================================================
+   SPLIT SECTION
+   ========================================================= */
+.split-media {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition:
+    opacity   var(--dur-xl) var(--ease-out-expo),
+    transform var(--dur-xl) var(--ease-out-expo);
+}
+.split-media.is-visible { opacity: 1; transform: translateX(0); }
+
+.split-text {
+  opacity: 0;
+  transform: translateX(36px);
+  transition:
+    opacity   var(--dur-xl) var(--ease-out-expo) .18s,
+    transform var(--dur-xl) var(--ease-out-expo) .18s;
+}
+.split-text.is-visible { opacity: 1; transform: translateX(0); }
+
+.split-text.is-visible .eyebrow { opacity:0; animation: fadeSlideUp .5s  var(--ease-out-expo) .28s forwards; }
+.split-text.is-visible h2       { opacity:0; animation: fadeSlideUp .55s var(--ease-out-expo) .4s  forwards; }
+.split-text.is-visible p        { opacity:0; animation: fadeSlideUp .55s var(--ease-out-expo) .52s forwards; }
+.split-text.is-visible a        { opacity:0; animation: fadeSlideUp .5s  var(--ease-out-expo) .64s forwards; }
+
+/* =========================================================
+   FEATURE BAND
+   ========================================================= */
+.feature-band {
+  opacity: 0;
+  transform: translateY(24px) scale(.985);
+  transition:
+    opacity   var(--dur-lg) var(--ease-out-expo),
+    transform var(--dur-lg) var(--ease-out-expo);
+}
+.feature-band.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+.feature-band-content h2 {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity var(--dur-md) var(--ease-out-expo) .2s, transform var(--dur-md) var(--ease-out-expo) .2s;
+}
+.feature-band.is-visible .feature-band-content h2 { opacity: 1; transform: none; }
+
+.feature-band-content p {
+  opacity: 0; transform: translateY(20px);
+  transition: opacity var(--dur-md) var(--ease-out-expo) .35s, transform var(--dur-md) var(--ease-out-expo) .35s;
+}
+.feature-band.is-visible .feature-band-content p { opacity: 1; transform: none; }
+
+.feature-band-content .btn {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity var(--dur-md) var(--ease-out-expo) .5s, transform var(--dur-md) var(--ease-out-expo) .5s;
+}
+.feature-band.is-visible .feature-band-content .btn { opacity: 1; transform: none; }
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.site-footer {
+  opacity: 0;
+  transform: translateY(32px);
+  transition:
+    opacity   var(--dur-xl) var(--ease-out-expo),
+    transform var(--dur-xl) var(--ease-out-expo);
+}
+.site-footer.is-visible { opacity: 1; transform: none; }
+
+.site-footer.is-visible .footer-brand       { opacity:0; animation: fadeSlideUp .6s var(--ease-out-expo) .10s forwards; }
+.site-footer.is-visible .footer-col:nth-child(2) { opacity:0; animation: fadeSlideUp .6s var(--ease-out-expo) .2s forwards; }
+.site-footer.is-visible .footer-col:nth-child(3) { opacity:0; animation: fadeSlideUp .6s var(--ease-out-expo) .3s forwards; }
+.site-footer.is-visible .footer-col:nth-child(4) { opacity:0; animation: fadeSlideUp .6s var(--ease-out-expo) .4s forwards; }
+.site-footer.is-visible .footer-col:nth-child(5) { opacity:0; animation: fadeSlideUp .6s var(--ease-out-expo) .5s forwards; }
+.site-footer.is-visible .footer-bottom      { opacity:0; animation: fadeSlideUp .5s var(--ease-out-expo) .60s forwards; }
+
+/* =========================================================
+   PAGE HEADERS (shop, about, etc.)
+   ========================================================= */
+.shop-header h1, .na-header h1,
+.collections-header h1, .about-header h1,
+.contact-header h1, .page-title {
+  opacity: 0;
+  animation: heroItemIn var(--dur-lg) var(--ease-out-expo) .15s both;
+}
+.shop-header p, .na-header p, .page-subtitle {
+  opacity: 0;
+  animation: heroItemIn var(--dur-md) var(--ease-out-expo) .3s both;
+}
+
+/* =========================================================
+   FILTER CHIPS
+   ========================================================= */
+.filter-chip {
+  opacity: 0;
+  animation: fadeSlideUp var(--dur-sm) var(--ease-out-expo) both;
+}
+
+/* =========================================================
+   PRODUCT DETAIL PAGE
+   ========================================================= */
+.pdp-gallery {
+  opacity: 0;
+  transform: translateX(-30px);
+  transition:
+    opacity   var(--dur-lg) var(--ease-out-expo) .1s,
+    transform var(--dur-lg) var(--ease-out-expo) .1s;
+}
+.pdp-gallery.is-visible { opacity: 1; transform: none; }
+
+.pdp-info {
+  opacity: 0;
+  transform: translateX(30px);
+  transition:
+    opacity   var(--dur-lg) var(--ease-out-expo) .22s,
+    transform var(--dur-lg) var(--ease-out-expo) .22s;
+}
+.pdp-info.is-visible { opacity: 1; transform: none; }
+
+.pdp-info.is-visible .eyebrow   { opacity:0; animation: fadeSlideUp .45s var(--ease-out-expo) .3s  forwards; }
+.pdp-info.is-visible h1         { opacity:0; animation: fadeSlideUp .5s  var(--ease-out-expo) .42s forwards; }
+.pdp-info.is-visible .pdp-price { opacity:0; animation: fadeSlideUp .45s var(--ease-out-expo) .52s forwards; }
+.pdp-info.is-visible .pdp-meta  { opacity:0; animation: fadeSlideUp .45s var(--ease-out-expo) .62s forwards; }
+
+/* =========================================================
+   AUTH PAGES
+   ========================================================= */
+.auth-card {
+  opacity: 0;
+  animation: authCardIn var(--dur-lg) var(--ease-out-expo) .1s both;
+}
+
+/* =========================================================
+   CART DRAWER ROWS
+   ========================================================= */
+.cart-row {
+  opacity: 0;
+  transform: translateX(16px);
+  animation: cartRowIn .4s var(--ease-out-expo) both;
+}
+
+/* =========================================================
+   HOVER MICRO-ANIMATIONS
+   ========================================================= */
+
+/* Product card lift */
+.product-card:hover { transform: translateY(-4px); }
+.product-card:hover .product-media { box-shadow: 0 16px 48px rgba(20,36,75,.12); }
+.product-media { transition: box-shadow var(--dur-md) var(--ease-out-expo); }
+.product-info { transition: transform var(--dur-sm) var(--ease-out-expo); }
+.product-card:hover .product-info { transform: translateY(-3px); }
+
+/* Wishlist pulse */
+.wish-toggle {
+  transition: background var(--dur-xs) var(--ease-spring), transform var(--dur-xs) var(--ease-spring);
+}
+.wish-toggle:hover { background: #fff; transform: scale(1.15); }
+.wish-toggle.active { animation: wishPulse .35s var(--ease-spring); }
+
+/* Category label slide */
+.category-label {
+  transform: translateY(6px);
+  transition: transform var(--dur-sm) var(--ease-out-expo);
+}
+.category-block:hover .category-label { transform: translateY(0); }
+.category-block:hover { z-index: 2; box-shadow: 0 20px 60px rgba(20,36,75,.18); }
+
+/* Lookbook hover */
+.look-item img { transition: transform var(--dur-lg) var(--ease-out-expo); }
+.look-item:hover img { transform: scale(1.07); }
+
+/* Split media hover */
+.split-media img { transition: transform var(--dur-xl) var(--ease-out-expo); }
+.split-media:hover img { transform: scale(1.035); }
+
+/* Buttons */
+.btn {
+  transition:
+    background   var(--dur-sm) var(--ease-out-expo),
+    color        var(--dur-sm) var(--ease-out-expo),
+    border-color var(--dur-sm) var(--ease-out-expo),
+    transform    var(--dur-xs) var(--ease-spring),
+    box-shadow   var(--dur-sm) var(--ease-out-expo);
+}
+.btn:hover   { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(20,36,75,.14); }
+.btn:active  { transform: translateY(0); box-shadow: none; }
+
+/* Filter chips */
+.filter-chip { transition: all var(--dur-xs) var(--ease-out-expo), transform var(--dur-xs) var(--ease-spring); }
+.filter-chip:hover { transform: translateY(-2px); }
+
+/* Link underline */
+.link-underline {
+  transition: color var(--dur-sm) var(--ease-out-expo), border-color var(--dur-sm) var(--ease-out-expo), transform var(--dur-xs) var(--ease-spring);
+}
+.link-underline:hover { transform: translateX(3px); }
+
+/* PDP thumbnails */
+.pdp-thumbs button {
+  transition: border-color var(--dur-xs) var(--ease-out-expo), transform var(--dur-xs) var(--ease-spring);
+}
+.pdp-thumbs button:hover { transform: scale(1.06); }
+
+/* Footer links */
+.footer-col a {
+  display: inline-block;
+  transition: color var(--dur-xs) var(--ease-out-expo), transform var(--dur-xs) var(--ease-spring);
+}
+.footer-col a:hover { transform: translateX(4px); color: #fff; }
+
+/* Mobile nav stagger */
+.mobile-nav-links a {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--dur-sm) var(--ease-out-expo), transform var(--dur-sm) var(--ease-out-expo), color var(--dur-xs) var(--ease-out-expo);
+}
+.mobile-nav.open .mobile-nav-links a:nth-child(1) { opacity:1; transform:none; transition-delay:.05s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(2) { opacity:1; transform:none; transition-delay:.1s;  }
+.mobile-nav.open .mobile-nav-links a:nth-child(3) { opacity:1; transform:none; transition-delay:.15s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(4) { opacity:1; transform:none; transition-delay:.2s;  }
+.mobile-nav.open .mobile-nav-links a:nth-child(5) { opacity:1; transform:none; transition-delay:.25s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(6) { opacity:1; transform:none; transition-delay:.3s;  }
+
+/* =========================================================
+   CAROUSEL — ken-burns + smooth track
+   ========================================================= */
+.carousel-track { transition: transform .65s var(--ease-out-expo); }
+.carousel-slide img { transition: transform 7s linear; transform: scale(1.06); }
+.carousel-slide.active img { transform: scale(1); }
+.carousel-dot {
+  transition: transform var(--dur-xs) var(--ease-spring), opacity var(--dur-xs) var(--ease-out-expo),
+              background var(--dur-xs) var(--ease-out-expo), width var(--dur-sm) var(--ease-out-expo);
+}
+.carousel-dot:hover { transform: scale(1.4); }
+
+/* =========================================================
+   HEADER SCROLL
+   ========================================================= */
+.site-header {
+  transition: height .35s var(--ease-out-expo), background .35s var(--ease-out-expo),
+              box-shadow .35s var(--ease-out-expo), border-color .35s var(--ease-out-expo);
+}
+.site-header.is-compact { box-shadow: 0 2px 20px rgba(20,36,75,.07); }
+
+/* =========================================================
+   CART DRAWER
+   ========================================================= */
+.cart-drawer { transition: transform .45s var(--ease-out-expo); }
+.drawer-overlay { transition: opacity .35s var(--ease-out-expo); }
+
+/* =========================================================
+   IMAGE SHIMMER LOADING
+   ========================================================= */
+.product-media,
+.split-media,
+.look-item,
+.pdp-main-img {
+  background: linear-gradient(90deg, var(--fog) 25%, var(--line) 50%, var(--fog) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+/* =========================================================
+   SCROLL PROGRESS BAR
+   ========================================================= */
+.scroll-progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0%;
+  background: var(--accent);
+  z-index: 9999;
+  pointer-events: none;
+  transition: width .08s linear;
+}
+
+/* =========================================================
+   BACK-TO-TOP BUTTON
+   ========================================================= */
+.back-to-top {
+  position: fixed;
+  bottom: 32px; right: 32px;
+  width: 44px; height: 44px;
+  background: var(--black);
+  color: var(--white);
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--dur-sm) var(--ease-out-expo), transform var(--dur-sm) var(--ease-out-expo), background var(--dur-xs) var(--ease-out-expo);
+  pointer-events: none;
+}
+.back-to-top.visible { opacity:1; transform:translateY(0); pointer-events:auto; }
+.back-to-top:hover   { background: var(--charcoal); transform: translateY(-3px); }
+.back-to-top svg     { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; }
+
+/* =========================================================
+   OVERFLOW GUARD
+   ========================================================= */
+main { overflow-x: hidden; }
