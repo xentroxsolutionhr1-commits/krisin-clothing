@@ -44,11 +44,13 @@ const allowedAdminIps = (process.env.ADMIN_ALLOWED_IPS || "")
   .filter(Boolean);
 
 app.use((req, res, next) => {
-  const isAdminPath =
-    req.path === "/admin" ||
-    req.path.startsWith("/admin/") ||
-    req.path === "/api/admin" ||
-    req.path.startsWith("/api/admin/");
+const isAdminPath =
+  req.path === "/admin" ||
+  req.path.startsWith("/admin/") ||
+  req.path === "/admin05" ||
+  req.path.startsWith("/admin05/") ||
+  req.path === "/api/admin" ||
+  req.path.startsWith("/api/admin/");
 
   if (!isAdminPath) {
     return next();
@@ -73,19 +75,41 @@ app.use((req, res, next) => {
   next();
 });
 
-// Admin Page Routes (defined before static middleware so they serve directly without directory listing/redirects)
-app.get(["/admin/login", "/admin/login/"], (req, res) => {
+/* New admin URLs */
+app.get(["/admin05/login", "/admin05/login/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "login.html"));
 });
 
-app.get(["/admin/dashboard", "/admin/dashboard/"], (req, res) => {
+app.get(["/admin05/dashboard", "/admin05/dashboard/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "dashboard.html"));
 });
 
-app.get(["/admin", "/admin/"], (req, res) => {
-  res.redirect("/admin/login");
+app.get(["/admin05", "/admin05/"], (req, res) => {
+  res.redirect("/admin05/login");
 });
 
+/* Old admin page URLs should return 404 */
+app.use((req, res, next) => {
+  const oldAdminPaths = [
+    "/admin",
+    "/admin/",
+    "/admin/index.html",
+    "/admin/login",
+    "/admin/login/",
+    "/admin/login.html",
+    "/admin/login/index.html",
+    "/admin/dashboard",
+    "/admin/dashboard/",
+    "/admin/dashboard.html",
+    "/admin/dashboard/index.html"
+  ];
+
+  if (oldAdminPaths.includes(req.path)) {
+    return res.sendStatus(404);
+  }
+
+  next();
+});
 // Serve static frontend files from parent directory
 app.use(express.static(staticRoot));
 
