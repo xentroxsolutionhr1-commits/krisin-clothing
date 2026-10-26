@@ -20,7 +20,7 @@
     const hasAdminSession = sessionStorage.getItem("krisin_admin_session") === "1" || localStorage.getItem("krisin_admin_session") === "1";
     const hasAdminToken = sessionStorage.getItem("krisin_admin_token") || localStorage.getItem("krisin_admin_token");
     if (!hasAdminSession || !hasAdminToken) {
-      window.location.href = "/admin/login";
+      window.location.href = "/admin05/login";
     }
   </script>
 
@@ -592,7 +592,7 @@
         sessionStorage.removeItem(k);
         localStorage.removeItem(k);
       });
-      window.location.href = "/admin/login";
+      window.location.href = "/admin05/login";
     });
 
     /* =========================================================
@@ -1405,7 +1405,7 @@
       const token = getAdminToken();
       if (!token) {
         document.getElementById('users-body').innerHTML =
-          `<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">No admin session. Please <a href="/admin/login">sign in again</a>.</div></td></tr>`;
+          `<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">No admin session. Please <a href="/admin05/login">sign in again</a>.</div></td></tr>`;
         return;
       }
       fetch(`${ADMIN_API}/api/admin/users`, {
@@ -1425,7 +1425,7 @@
         })
         .catch(err => {
           const msg = err.message === 'auth'
-            ? 'Session expired. Please <a href="/admin/login">sign in again</a>.'
+            ? 'Session expired. Please <a href="/admin05/login">sign in again</a>.'
             : 'Failed to load users. Is the backend running on port 4000?';
           document.getElementById('users-body').innerHTML =
             `<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">${msg}</div></td></tr>`;
@@ -1517,7 +1517,7 @@
           localStorage.removeItem(k);
           sessionStorage.removeItem(k);
         });
-        window.location.href = "/admin/login";
+        window.location.href = "/admin05/login";
       });
     }
 
@@ -1525,7 +1525,7 @@
     (async () => {
       const token = getAdminToken();
       if (!token) {
-        window.location.href = "/admin/login";
+        window.location.href = "/admin05/login";
         return;
       }
       try {
@@ -1537,7 +1537,7 @@
             localStorage.removeItem(k);
             sessionStorage.removeItem(k);
           });
-          window.location.href = "/admin/login";
+          window.location.href = "/admin05/login";
         }
       } catch (e) {
         // Network error — keep session alive (offline mode)
