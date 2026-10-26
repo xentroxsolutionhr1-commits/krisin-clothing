@@ -32,48 +32,6 @@ if (!JWT_SECRET) {
 // Serve static root path
 const staticRoot = path.join(__dirname, "..");
 
-/* Restrict admin pages and APIs to approved public IP addresses */
-app.set("trust proxy", 3);
-
-const normalizeIp = (ip = "") =>
-  ip.startsWith("::ffff:") ? ip.slice(7) : ip;
-
-const allowedAdminIps = (process.env.ADMIN_ALLOWED_IPS || "")
-  .split(",")
-  .map((ip) => normalizeIp(ip.trim()))
-  .filter(Boolean);
-
-app.use((req, res, next) => {
-const isAdminPath =
-  req.path === "/admin" ||
-  req.path.startsWith("/admin/") ||
-  req.path === "/admin05" ||
-  req.path.startsWith("/admin05/") ||
-  req.path === "/api/admin" ||
-  req.path.startsWith("/api/admin/");
-
-  if (!isAdminPath) {
-    return next();
-  }
-
-  if (allowedAdminIps.length === 0) {
-    return res.status(503).send(
-      "Admin access is not configured. Contact the site administrator."
-    );
-  }
-
-  const clientIp = normalizeIp(req.ip || "");
-  console.log("[Admin IP Debug]", {
-  clientIp: req.ip,
-  forwardedFor: req.get("x-forwarded-for"),
-  allowed: allowedAdminIps
-});
-  if (!allowedAdminIps.includes(clientIp)) {
-    return res.status(403).send("Access denied: IP address not allowed.");
-  }
-
-  next();
-});
 
 /* New admin URLs */
 app.get(["/admin05/login", "/admin05/login/"], (req, res) => {
