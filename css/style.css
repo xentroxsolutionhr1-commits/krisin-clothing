@@ -1451,13 +1451,23 @@ p {
   width: 78px;
   aspect-ratio: 4/5;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 2px solid transparent;
+  outline: 1px solid var(--line);
   padding: 0;
   background: var(--fog);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: border-color .15s var(--ease, ease), transform .15s var(--ease, ease);
+}
+
+.pdp-thumbs button:hover {
+  border-color: var(--stone);
+  transform: translateY(-2px);
 }
 
 .pdp-thumbs button.active {
-  border-color: var(--black);
+  border-color: var(--ink);
+  outline: none;
 }
 
 .pdp-thumbs img {
@@ -2476,7 +2486,8 @@ fieldset {
 
   .category-block:nth-child(4),
   .category-block:nth-child(5) {
-    display: block; /* ensure categories stay visible */
+    display: block;
+    /* ensure categories stay visible */
   }
 
   .category-block {
@@ -2897,8 +2908,13 @@ fieldset {
 }
 
 @keyframes carouselProgress {
-  from { width: 0; }
-  to { width: 100%; }
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 100%;
+  }
 }
 
 .carousel-progress-bar.animating {
@@ -2987,6 +3003,7 @@ fieldset {
 [data-scroll-reveal] {
   transition: opacity .8s var(--ease), transform .8s var(--ease);
 }
+
 [data-scroll-reveal].revealed {
   opacity: 1;
   transform: none;

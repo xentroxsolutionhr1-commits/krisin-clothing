@@ -331,7 +331,7 @@
           if (em && !em.value) em.value = loggedUser.email || "";
           if (ph && !ph.value && loggedUser.phone) ph.value = loggedUser.phone || "";
         }
-      } catch (e) {}
+      } catch (e) { }
 
       function completeOrder(orderId, paymentRef) {
         const method = getSelectedMethod();
@@ -415,7 +415,7 @@
             });
           }
           localStorage.setItem("krisin_customers_v1", JSON.stringify(customers));
-        } catch (e) {}
+        } catch (e) { }
 
         // 3. Deduct stock in overrides
         try {
@@ -431,7 +431,7 @@
             }
           });
           localStorage.setItem(LS_OVERRIDES, JSON.stringify(overrides));
-        } catch (e) {}
+        } catch (e) { }
 
         // 4. Send to backend API
         try {
@@ -444,7 +444,7 @@
             headers,
             body: JSON.stringify(orderData)
           }).catch(err => console.error("Order API sync:", err));
-        } catch (e) {}
+        } catch (e) { }
 
         document.getElementById("order-id").textContent = "#" + orderId;
         document.getElementById("payment-ref").textContent = paymentRef ? `Payment reference: ${paymentRef}` : "Payment on delivery";

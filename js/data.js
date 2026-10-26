@@ -135,7 +135,7 @@ const PRODUCTS = [
     sizes: ["One Size"],
     outOfStock: [],
     stock: 30,
-    images: [IMG("photo-1591047139829-d91aecb6caea"), IMG("photo-1483985988355-763728e1935b")],
+    images: [IMG("photo-1511499767150-a48a237f0083"), IMG("photo-1508296695146-257a814070b4")],
     description: "Hand-finished acetate frames with UV400 lenses. A rounded silhouette that keeps the everyday edit sharp.",
     fit: "One size. 145mm temple length.",
     material: "Italian acetate frame, polarized UV400 lenses.",
@@ -236,9 +236,9 @@ function getStoreCategories() {
     var customCats = JSON.parse(localStorage.getItem("krisin_admin_categories_v1") || "[]");
     var set = new Set(CATEGORIES);
     if (Array.isArray(customCats)) {
-      customCats.forEach(function(c) { if (c && typeof c === "string") set.add(c.trim()); });
+      customCats.forEach(function (c) { if (c && typeof c === "string") set.add(c.trim()); });
     }
-    getAdminProducts().forEach(function(p) { if (p && p.category) set.add(p.category.trim()); });
+    getAdminProducts().forEach(function (p) { if (p && p.category) set.add(p.category.trim()); });
     return Array.from(set);
   } catch (e) {
     return CATEGORIES.slice();
@@ -261,15 +261,15 @@ function formatPrice(n) {
 function getAdminProducts() {
   try {
     var overrides = JSON.parse(localStorage.getItem("krisin_admin_product_overrides_v1") || "{}");
-    var custom    = JSON.parse(localStorage.getItem("krisin_admin_custom_products_v1")   || "[]");
-    var deleted   = JSON.parse(localStorage.getItem("krisin_admin_deleted_ids_v1")       || "[]");
+    var custom = JSON.parse(localStorage.getItem("krisin_admin_custom_products_v1") || "[]");
+    var deleted = JSON.parse(localStorage.getItem("krisin_admin_deleted_ids_v1") || "[]");
     var deletedSet = new Set(deleted);
 
     var base = PRODUCTS
-      .filter(function(p) { return !deletedSet.has(p.id); })
-      .map(function(p) { return overrides[p.id] ? Object.assign({}, p, overrides[p.id]) : p; });
+      .filter(function (p) { return !deletedSet.has(p.id); })
+      .map(function (p) { return overrides[p.id] ? Object.assign({}, p, overrides[p.id]) : p; });
 
-    var extra = custom.filter(function(p) { return !deletedSet.has(p.id); });
+    var extra = custom.filter(function (p) { return !deletedSet.has(p.id); });
 
     return base.concat(extra);
   } catch (e) {
@@ -284,20 +284,20 @@ function syncProductsFromBackend() {
   try {
     var apiBase = (typeof AUTH !== "undefined" && AUTH.getApiBase) ? AUTH.getApiBase() : "https://krisin-clothing-1.onrender.com";
     fetch(apiBase + "/api/products")
-      .then(function(res) { if (!res.ok) throw new Error("Status " + res.status); return res.json(); })
-      .then(function(data) {
+      .then(function (res) { if (!res.ok) throw new Error("Status " + res.status); return res.json(); })
+      .then(function (data) {
         if (Array.isArray(data) && data.length) {
           // Store in custom products
           var existing = JSON.parse(localStorage.getItem("krisin_admin_custom_products_v1") || "[]");
           var map = {};
-          existing.forEach(function(p) { map[p.id] = p; });
-          data.forEach(function(p) { map[p.id] = p; });
+          existing.forEach(function (p) { map[p.id] = p; });
+          data.forEach(function (p) { map[p.id] = p; });
           var merged = Object.values(map);
           localStorage.setItem("krisin_admin_custom_products_v1", JSON.stringify(merged));
         }
       })
-      .catch(function() {});
-  } catch (e) {}
+      .catch(function () { });
+  } catch (e) { }
 }
 
 if (typeof window !== "undefined") {

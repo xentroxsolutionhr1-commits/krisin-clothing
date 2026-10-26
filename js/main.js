@@ -113,9 +113,6 @@ function productCardHTML(p) {
       <div class="product-info">
         <span class="name">${p.name}</span>
         <span class="price mono-price">${priceHTML}</span>
-        <div class="swatches">
-          ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
-        </div>
       </div>
     </a>
   </div>`;
@@ -256,7 +253,7 @@ function renderDrawer() {
         <img src="${p.images[0]}" alt="${p.name}">
         <div>
           <div class="name">${p.name}</div>
-          <div class="meta">${item.color}, size ${item.size}, qty ${item.qty}</div>
+          <div class="meta">${item.size ? `Size ${item.size}, ` : ""}qty ${item.qty}</div>
           <button class="cart-remove" onclick="STORE.removeFromCart(${i});renderDrawer();">Remove</button>
         </div>
         <div class="price mono-price">${formatPrice(p.price * item.qty)}</div>

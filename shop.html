@@ -129,8 +129,6 @@
       <aside class="shop-sidebar">
         <h5>Size</h5>
         <div id="size-filters"></div>
-        <h5>Color</h5>
-        <div id="color-filters"></div>
         <h5>Price</h5>
         <label class="check-row"><input type="radio" name="price" value="all" checked> All Prices</label>
         <label class="check-row"><input type="radio" name="price" value="0-1000"> Under ₹1,000</label>
@@ -194,15 +192,14 @@
     </div>
   </footer>
 
-  <script src="js/data.js?v=2"></script>
-  <script src="js/auth.js?v=2"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/data.js?v=3"></script>
+  <script src="js/auth.js?v=3"></script>
+  <script src="js/main.js?v=3"></script>
   <script>
     (function () {
       const params = new URLSearchParams(window.location.search);
       const chipsEl = document.getElementById("category-chips");
       const sizeEl = document.getElementById("size-filters");
-      const colorEl = document.getElementById("color-filters");
       const grid = document.getElementById("shop-grid");
       const sortSelect = document.getElementById("sort-select");
       const searchInput = document.getElementById("shop-search");
@@ -210,7 +207,6 @@
       let state = {
         cat: params.get("cat") || "all",
         sizes: new Set(),
-        colors: new Set(),
         price: "all",
         sort: "featured",
         q: params.get("q") || "",
@@ -262,19 +258,6 @@
         render();
       });
 
-      const allColors = [...new Map(getAdminProducts().flatMap(p => p.colors).map(c => [c.name, c])).values()];
-      allColors.forEach(c => {
-        const label = document.createElement("label");
-        label.className = "check-row";
-        label.innerHTML = `<input type="checkbox" value="${c.name}"><span class="swatch" style="background:${c.hex}"></span> ${c.name}`;
-        colorEl.appendChild(label);
-      });
-      colorEl.addEventListener("change", (e) => {
-        const cb = e.target;
-        if (cb.checked) state.colors.add(cb.value); else state.colors.delete(cb.value);
-        render();
-      });
-
       document.querySelectorAll('input[name="price"]').forEach(r => {
         r.addEventListener("change", () => { state.price = r.value; render(); });
       });
@@ -290,7 +273,6 @@
         }
         if (state.cat !== "all") list = list.filter(p => p.category === state.cat);
         if (state.sizes.size) list = list.filter(p => p.sizes.some(s => state.sizes.has(s)));
-        if (state.colors.size) list = list.filter(p => p.colors.some(c => state.colors.has(c.name)));
         if (state.price !== "all") {
           const [min, max] = state.price.split("-").map(Number);
           list = list.filter(p => p.price >= min && p.price <= max);

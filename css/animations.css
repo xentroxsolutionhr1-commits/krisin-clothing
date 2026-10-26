@@ -336,8 +336,8 @@ body {
    PRODUCT DETAIL PAGE
    ========================================================= */
 .pdp-gallery {
-  opacity: 0;
-  transform: translateX(-30px);
+  opacity: 1;
+  transform: none;
   transition:
     opacity   var(--dur-lg) var(--ease-out-expo) .1s,
     transform var(--dur-lg) var(--ease-out-expo) .1s;
@@ -345,18 +345,20 @@ body {
 .pdp-gallery.is-visible { opacity: 1; transform: none; }
 
 .pdp-info {
-  opacity: 0;
-  transform: translateX(30px);
+  opacity: 1;
+  transform: none;
   transition:
     opacity   var(--dur-lg) var(--ease-out-expo) .22s,
     transform var(--dur-lg) var(--ease-out-expo) .22s;
 }
 .pdp-info.is-visible { opacity: 1; transform: none; }
 
-.pdp-info.is-visible .eyebrow   { opacity:0; animation: fadeSlideUp .45s var(--ease-out-expo) .3s  forwards; }
-.pdp-info.is-visible h1         { opacity:0; animation: fadeSlideUp .5s  var(--ease-out-expo) .42s forwards; }
-.pdp-info.is-visible .pdp-price { opacity:0; animation: fadeSlideUp .45s var(--ease-out-expo) .52s forwards; }
-.pdp-info.is-visible .pdp-meta  { opacity:0; animation: fadeSlideUp .45s var(--ease-out-expo) .62s forwards; }
+.pdp-info .eyebrow,
+.pdp-info h1,
+.pdp-info .pdp-price,
+.pdp-info .pdp-meta {
+  opacity: 1;
+}
 
 /* =========================================================
    AUTH PAGES

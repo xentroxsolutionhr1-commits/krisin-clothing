@@ -145,7 +145,7 @@
         <img src="${p.images[0]}" alt="${p.name}">
         <div>
           <div class="name">${p.name}</div>
-          <div class="meta">${item.color}, size ${item.size}</div>
+          <div class="meta">${item.size ? `Size ${item.size}` : ""}</div>
           <div class="qty-row" style="margin-top:8px">
             <button data-dec="${i}">−</button>
             <span>${item.qty}</span>
