@@ -113,9 +113,6 @@ function productCardHTML(p) {
       <div class="product-info">
         <span class="name">${p.name}</span>
         <span class="price mono-price">${priceHTML}</span>
-        <div class="swatches">
-          ${p.colors.map(c => `<span class="swatch" style="background:${c.hex}" title="${c.name}"></span>`).join("")}
-        </div>
       </div>
     </a>
   </div>`;
@@ -166,7 +163,11 @@ function initHeader() {
 
     toggle.addEventListener("click", (e) => {
       e.stopPropagation();
-      mobileNav.classList.contains("open") ? closeDrawer() : openDrawer();
+      if (mobileNav.classList.contains("open")) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
     });
 
     overlay.addEventListener("click", closeDrawer);
@@ -187,12 +188,22 @@ function initHeader() {
       }
     });
   }
+
   const searchBtn = document.querySelector("[data-search-toggle]");
   const searchBar = document.querySelector(".search-bar");
   if (searchBtn && searchBar) {
-    searchBtn.addEventListener("click", () => {
+    searchBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       searchBar.classList.toggle("open");
-      if (searchBar.classList.contains("open")) searchBar.querySelector("input").focus();
+      if (searchBar.classList.contains("open")) {
+        const input = searchBar.querySelector("input");
+        if (input) input.focus();
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (searchBar.classList.contains("open") && !searchBar.contains(e.target) && !searchBtn.contains(e.target)) {
+        searchBar.classList.remove("open");
+      }
     });
     const searchInput = searchBar.querySelector("input");
     if (searchInput) {
@@ -242,7 +253,7 @@ function renderDrawer() {
         <img src="${p.images[0]}" alt="${p.name}">
         <div>
           <div class="name">${p.name}</div>
-          <div class="meta">${item.color}, size ${item.size}, qty ${item.qty}</div>
+          <div class="meta">${item.size ? `Size ${item.size}, ` : ""}qty ${item.qty}</div>
           <button class="cart-remove" onclick="STORE.removeFromCart(${i});renderDrawer();">Remove</button>
         </div>
         <div class="price mono-price">${formatPrice(p.price * item.qty)}</div>
@@ -250,6 +261,16 @@ function renderDrawer() {
     }).join("");
   }
   if (footTotal) footTotal.textContent = formatPrice(STORE.cartTotal());
+  updateCheckoutButtons();
+}
+
+/* ---------- Dynamic checkout button (login guard) ---------- */
+function updateCheckoutButtons() {
+  const isLoggedIn = typeof AUTH !== "undefined" && AUTH.isCustomerLoggedIn();
+  const target = isLoggedIn ? "checkout.html" : "login.html";
+  document.querySelectorAll("[data-checkout-btn]").forEach(btn => {
+    btn.setAttribute("href", target);
+  });
 }
 
 /* ---------- Hero Carousel ---------- */
@@ -423,4 +444,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initHeader();
   initCarousel();
   initScrollReveal();
+  updateCheckoutButtons();
 });

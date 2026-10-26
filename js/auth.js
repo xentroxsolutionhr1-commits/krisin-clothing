@@ -371,10 +371,11 @@
         }
       });
 
-     // Update desktop main navigation bar
-const isOrdersPage = (typeof window !== "undefined" && window.location.pathname)
-  ? window.location.pathname.toLowerCase().endsWith("orders.html")
-  : false;
+      // Update desktop main navigation bar
+      const isOrdersPage = (typeof window !== "undefined" && window.location.pathname) 
+        ? window.location.pathname.toLowerCase().endsWith("orders.html") 
+        : false;
+
       document.querySelectorAll(".main-nav").forEach(nav => {
         let navOrders = nav.querySelector(".nav-my-orders-item");
         if (isCustomer && customer) {
@@ -395,7 +396,7 @@ const isOrdersPage = (typeof window !== "undefined" && window.location.pathname)
         }
       });
 
-      // Update mobile navigation links
+      // Update mobile navigation links (cleanly, without duplicate "My Orders")
       document.querySelectorAll(".mobile-nav-links").forEach(mobileNav => {
         let mobileOrders = mobileNav.querySelector(".mobile-my-orders-item");
         if (isCustomer && customer) {
@@ -412,40 +413,73 @@ const isOrdersPage = (typeof window !== "undefined" && window.location.pathname)
         }
       });
 
-      // Update mobile nav links if present
-      const mobileNavFoot = document.querySelector(".mobile-nav-foot");
-      if (mobileNavFoot) {
-        let ordersMobileLink = document.getElementById("mobile-orders-link");
-        let authMobileLink = document.getElementById("mobile-auth-link");
-
-        if (!authMobileLink) {
-          authMobileLink = document.createElement("a");
-          authMobileLink.id = "mobile-auth-link";
-          mobileNavFoot.appendChild(authMobileLink);
+      // Update mobile nav drawer account card
+      document.querySelectorAll(".mobile-nav").forEach(drawer => {
+        let accountBox = drawer.querySelector(".mobile-nav-account");
+        if (!accountBox) {
+          accountBox = document.createElement("div");
+          accountBox.className = "mobile-nav-account";
+          const linksNav = drawer.querySelector(".mobile-nav-links");
+          if (linksNav) {
+            linksNav.after(accountBox);
+          } else {
+            drawer.appendChild(accountBox);
+          }
         }
 
         if (isCustomer && customer) {
-          if (!ordersMobileLink) {
-            ordersMobileLink = document.createElement("a");
-            ordersMobileLink.id = "mobile-orders-link";
-            ordersMobileLink.textContent = "My Orders";
-            ordersMobileLink.href = "orders.html";
-            mobileNavFoot.insertBefore(ordersMobileLink, mobileNavFoot.firstChild);
+          const firstName = (customer.name || "Customer").split(" ")[0];
+          const initial = firstName.charAt(0).toUpperCase();
+          accountBox.innerHTML = `
+            <div class="mobile-user-card">
+              <div class="mobile-user-header">
+                <span class="mobile-user-avatar">${initial}</span>
+                <span>Hello, ${this._escapeHtml(firstName)}</span>
+              </div>
+              <div class="mobile-user-actions">
+                <a href="shop.html?filter=wishlist" class="mobile-user-action">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z"/></svg>
+                  <span>Wishlist</span>
+                </a>
+                <a href="cart.html" class="mobile-user-action">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg>
+                  <span>Bag</span>
+                </a>
+              </div>
+              <button class="btn btn-outline btn-block" id="mobile-signout-btn" style="font-size:12px; padding:7px 10px; margin-top:2px;">Sign Out</button>
+            </div>
+          `;
+          const signoutBtn = accountBox.querySelector("#mobile-signout-btn");
+          if (signoutBtn) {
+            signoutBtn.onclick = (e) => {
+              e.preventDefault();
+              if (confirm("Do you want to sign out?")) {
+                AUTH.customerLogout();
+              }
+            };
           }
-          authMobileLink.textContent = `Sign Out (${customer.name.split(" ")[0]})`;
-          authMobileLink.href = "#";
-          authMobileLink.onclick = (e) => {
-            e.preventDefault();
-            if (confirm("Do you want to sign out?")) {
-              AUTH.customerLogout();
-            }
-          };
         } else {
-          if (ordersMobileLink) ordersMobileLink.remove();
-          authMobileLink.textContent = "Sign In / Register";
-          authMobileLink.href = "login.html";
-          authMobileLink.onclick = null;
+          accountBox.innerHTML = `
+            <div class="mobile-guest-card">
+              <p>Sign in to access your orders and wishlist</p>
+              <a href="login.html" class="btn btn-primary btn-block">Sign In / Register</a>
+              <div class="mobile-guest-links">
+                <a href="shop.html?filter=wishlist">♡ Wishlist</a>
+                <a href="cart.html">🛍️ Bag</a>
+              </div>
+            </div>
+          `;
         }
+      });
+
+      // Update mobile-nav-foot with brand motto & support info instead of raw squished links
+      const mobileNavFoot = document.querySelector(".mobile-nav-foot");
+      if (mobileNavFoot) {
+        mobileNavFoot.innerHTML = `
+          <span class="foot-tagline">KRISIN — Everyday Essentials</span>
+          <span>Designed with intention in Tamil Nadu</span>
+          <span style="opacity:0.75">Need help? care@krisinclothing.com</span>
+        `;
       }
     },
 
