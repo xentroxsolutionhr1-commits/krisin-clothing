@@ -28,6 +28,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "krisin_jwt_secret_key_2026_super_s
 // Serve static root path
 const staticRoot = path.join(__dirname, "..");
 
+
 /* Restrict admin pages and APIs to approved public IP addresses */
 app.set("trust proxy", 3);
 
@@ -43,6 +44,8 @@ app.use((req, res, next) => {
   const isAdminPath =
     req.path === "/admin" ||
     req.path.startsWith("/admin/") ||
+    req.path === "/admin05" ||
+    req.path.startsWith("/admin05/") ||
     req.path === "/api/admin" ||
     req.path.startsWith("/api/admin/");
 
@@ -57,11 +60,7 @@ app.use((req, res, next) => {
   }
 
   const clientIp = normalizeIp(req.ip || "");
-  console.log("[Admin IP Debug]", {
-  clientIp: req.ip,
-  forwardedFor: req.get("x-forwarded-for"),
-  allowed: allowedAdminIps
-});
+
   if (!allowedAdminIps.includes(clientIp)) {
     return res.status(403).send("Access denied: IP address not allowed.");
   }
@@ -69,20 +68,41 @@ app.use((req, res, next) => {
   next();
 });
 
-// Admin Page Routes (defined before static middleware so they serve directly without directory listing/redirects)
-app.get(["/admin/login", "/admin/login/"], (req, res) => {
+/* New admin URLs */
+app.get(["/admin05/login", "/admin05/login/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "login.html"));
 });
 
-app.get(["/admin/dashboard", "/admin/dashboard/"], (req, res) => {
+app.get(["/admin05/dashboard", "/admin05/dashboard/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "dashboard.html"));
 });
 
-app.get(["/admin", "/admin/"], (req, res) => {
-  res.redirect("/admin/login");
+app.get(["/admin05", "/admin05/"], (req, res) => {
+  res.redirect("/admin05/login");
+});
+// Serve static frontend files from parent directory
+app.use((req, res, next) => {
+  const oldAdminPaths = [
+    "/admin",
+    "/admin/",
+    "/admin/index.html",
+    "/admin/login",
+    "/admin/login/",
+    "/admin/login.html",
+    "/admin/login/index.html",
+    "/admin/dashboard",
+    "/admin/dashboard/",
+    "/admin/dashboard.html",
+    "/admin/dashboard/index.html"
+  ];
+
+  if (oldAdminPaths.includes(req.path)) {
+    return res.sendStatus(404);
+  }
+
+  next();
 });
 
-// Serve static frontend files from parent directory
 app.use(express.static(staticRoot));
 
 // Initialize SQLite database
@@ -731,4 +751,3 @@ const startServer = (port) => {
 
 // Start server on env PORT or default 4000 with fallback handling
 startServer(process.env.PORT ? parseInt(process.env.PORT) : 4000);
-
