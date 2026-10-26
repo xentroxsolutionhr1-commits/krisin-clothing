@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Collections | Krisin Clothing</title>
-  <meta name="description" content="Browse Krisin Clothing collections — T-Shirts, Shirts, Pants, Hoodies, Glasses and Accessories.">
+  <meta name="description"
+    content="Browse Krisin Clothing collections — T-Shirts, Shirts, Pants, Hoodies, Glasses and Accessories.">
   <link rel="icon" href="assets/logo-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
@@ -17,6 +18,7 @@
     .collection-section {
       margin-bottom: 72px;
     }
+
     .collection-heading {
       display: flex;
       align-items: baseline;
@@ -25,6 +27,7 @@
       padding-bottom: 12px;
       margin-bottom: 28px;
     }
+
     .collection-heading h2 {
       font-family: var(--font-display);
       font-size: clamp(22px, 2.4vw, 30px);
@@ -32,6 +35,7 @@
       letter-spacing: -.01em;
       color: var(--ink);
     }
+
     .collection-heading a {
       font-size: 13px;
       letter-spacing: .05em;
@@ -40,34 +44,41 @@
       padding-bottom: 1px;
       transition: color .2s, border-color .2s;
     }
+
     .collection-heading a:hover {
       color: var(--black);
       border-color: var(--black);
     }
+
     .collections-hero {
       background: var(--black);
       color: var(--white);
       padding: clamp(48px, 8vw, 100px) 0;
       margin-bottom: 64px;
     }
+
     .collections-hero .eyebrow {
       color: var(--accent);
     }
+
     .collections-hero h1 {
       color: var(--white);
       margin-top: 12px;
     }
+
     .collections-hero p {
-      color: rgba(255,255,255,.75);
+      color: rgba(255, 255, 255, .75);
       margin-top: 14px;
       max-width: 44ch;
     }
+
     .collection-tabs {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
       margin-bottom: 48px;
     }
+
     .col-tab {
       padding: 8px 18px;
       border: 1px solid var(--line);
@@ -79,6 +90,7 @@
       background: transparent;
       transition: background .2s, color .2s, border-color .2s;
     }
+
     .col-tab:hover,
     .col-tab.active {
       background: var(--black);
@@ -173,7 +185,7 @@
     <div class="drawer-foot">
       <div class="summary-line total"><span>Subtotal</span><span data-drawer-total>₹0</span></div>
       <a href="cart.html" class="btn btn-outline btn-block" style="margin-top:12px">View Bag</a>
-      <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px">Checkout</a>
+      <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px" data-checkout-btn>Checkout</a>
     </div>
   </aside>
 
@@ -254,8 +266,8 @@
 
       // Build one section per category using live products
       const allProducts = getAdminProducts();
-      const dynamicCategories = typeof getStoreCategories === "function" 
-        ? getStoreCategories() 
+      const dynamicCategories = typeof getStoreCategories === "function"
+        ? getStoreCategories()
         : [...new Set([...CATEGORIES, ...allProducts.map(p => p.category)])];
       dynamicCategories.forEach(cat => {
         const products = allProducts.filter(p => p.category === cat);

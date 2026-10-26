@@ -254,6 +254,11 @@
   <script src="js/auth.js"></script>
   <script>
     (function () {
+      // Guard: redirect to login if customer is not authenticated
+      if (typeof AUTH !== "undefined" && !AUTH.isCustomerLoggedIn()) {
+        window.location.href = "login.html";
+        return;
+      }
       /* =========================================================
          RAZORPAY SETUP
          -----------------------------------------------------------

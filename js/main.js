@@ -214,6 +214,16 @@ function renderDrawer() {
     }).join("");
   }
   if (footTotal) footTotal.textContent = formatPrice(STORE.cartTotal());
+  updateCheckoutButtons();
+}
+
+/* ---------- Dynamic checkout button (login guard) ---------- */
+function updateCheckoutButtons() {
+  const isLoggedIn = typeof AUTH !== "undefined" && AUTH.isCustomerLoggedIn();
+  const target = isLoggedIn ? "checkout.html" : "login.html";
+  document.querySelectorAll("[data-checkout-btn]").forEach(btn => {
+    btn.setAttribute("href", target);
+  });
 }
 
 /* ---------- Hero Carousel ---------- */
@@ -387,4 +397,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initHeader();
   initCarousel();
   initScrollReveal();
+  updateCheckoutButtons();
 });
