@@ -453,13 +453,35 @@
     </div>
   </div>
 
+  <!-- ================= ORDER DETAILS MODAL ================= -->
+  <div class="a-modal-backdrop" id="order-details-modal-backdrop">
+    <div class="a-modal" style="max-width:760px;max-height:90vh;overflow-y:auto;">
+      <div class="a-modal-head">
+        <div>
+          <h3 id="adm-modal-order-id" style="font-size:20px;color:var(--a-navy);">Order Details</h3>
+          <div id="adm-modal-order-date" style="font-size:12px;color:var(--a-muted);margin-top:2px;"></div>
+        </div>
+        <button class="a-modal-close" id="order-details-modal-close" aria-label="Close">
+          <svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg>
+        </button>
+      </div>
+
+      <div id="adm-modal-order-content"></div>
+
+      <div class="a-modal-foot" style="justify-content:flex-end;">
+        <button type="button" class="a-btn" id="order-details-modal-dismiss">Close</button>
+      </div>
+    </div>
+  </div>
+
+
   <div class="a-toast-stack" id="a-toast-stack"></div>
 
   <script src="/js/data.js"></script>
   <script src="/js/auth.js"></script>
   <script>
     /* Backend API helpers (used by Users tab and session verification) */
-    const ADMIN_API = window.location.port === "4000" ? "" : "https://krisin-clothing-1.onrender.com";
+    const ADMIN_API = window.location.port === "4000" ? "" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:4000" : "https://krisin-clothing-1.onrender.com");
     function getAdminToken() {
       return localStorage.getItem("krisin_admin_token") || sessionStorage.getItem("krisin_admin_token") || "";
     }
@@ -690,39 +712,102 @@
         const id = o.id || o.orderId;
         if (id && !seen.has(id)) {
           seen.add(id);
-          localOrders.push(o);
+          const parsed = parseOrderItems(o.items || o.items_json);
+          const custName = o.customerName || o.customer_name || o.customer || "Customer";
+          const custEmail = o.customerEmail || o.customer_email || o.email || "";
+          const custPhone = o.customerPhone || o.customer_phone || o.phone || "";
+          const shippingAddress = o.shippingAddress || o.shipping_address || {};
+          const totalVal = (o.totalAmount !== undefined) ? Number(o.totalAmount) : (o.total_amount !== undefined ? Number(o.total_amount) : Number(o.total || 0));
+          localOrders.push({
+            ...o,
+            id,
+            orderId: id,
+            customer: custName,
+            customerName: custName,
+            customer_name: custName,
+            customerEmail: custEmail,
+            customer_email: custEmail,
+            customerPhone: custPhone,
+            customer_phone: custPhone,
+            shippingAddress,
+            shipping_address: shippingAddress,
+            items: parsed,
+            items_count: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            itemsCount: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            subtotal: o.subtotal !== undefined ? Number(o.subtotal) : totalVal,
+            shippingFee: o.shippingFee !== undefined ? Number(o.shippingFee) : (o.shipping_fee !== undefined ? Number(o.shipping_fee) : 0),
+            codFee: o.codFee !== undefined ? Number(o.codFee) : (o.cod_fee !== undefined ? Number(o.cod_fee) : 0),
+            total: totalVal,
+            total_amount: totalVal,
+            totalAmount: totalVal,
+            pay: o.pay || o.paymentMethod || o.payment_method || "Online",
+            paymentMethod: o.paymentMethod || o.payment_method || o.pay || "Online",
+            payment_method: o.payment_method || o.paymentMethod || o.pay || "Online",
+            paymentStatus: o.paymentStatus || o.payment_status || "Pending",
+            payment_status: o.payment_status || o.paymentStatus || "Pending",
+            status: o.status || "Order Confirmed",
+            timeline: o.timeline || [],
+            date: o.date || (o.created_at ? o.created_at.split("T")[0] : "Today"),
+            created_at: o.created_at || o.createdAt || new Date().toISOString(),
+            createdAt: o.createdAt || o.created_at || new Date().toISOString()
+          });
         }
       });
 
       // 2. If live orders from backend exist, normalize and merge
       if (liveOrders && Array.isArray(liveOrders)) {
         const liveNormalized = liveOrders.map(o => {
-          const parsed = parseOrderItems(o.items_json || o.items);
-          const totalVal = o.total_amount !== undefined ? o.total_amount : (o.total || 0);
-          const isPaid = (o.status || "").toLowerCase() === "paid" || (o.status || "").toLowerCase() === "confirmed";
+          const parsed = parseOrderItems(o.items || o.items_json);
+          const totalVal = (o.totalAmount !== undefined) ? Number(o.totalAmount) : (o.total_amount !== undefined ? Number(o.total_amount) : Number(o.total || 0));
+          const custName = o.customerName || o.customer_name || o.customer || "Customer";
+          const custEmail = o.customerEmail || o.customer_email || o.email || "";
+          const custPhone = o.customerPhone || o.customer_phone || o.phone || "";
+          const createdAt = o.createdAt || o.created_at || new Date().toISOString();
+          const orderDate = o.date || (createdAt ? createdAt.split(" ")[0].split("T")[0] : "Today");
+          const payMethod = o.paymentMethod || o.payment_method || o.pay || "Online";
+          const payId = o.paymentId || o.payment_id || null;
+          const status = o.status || "Order Confirmed";
+          const shippingAddress = o.shippingAddress || o.shipping_address || {};
+          const timeline = o.timeline || [];
           return {
-            id: o.id,
-            orderId: o.id,
-            customer: o.customer_name || o.customer || "Customer",
-            customer_name: o.customer_name || o.customer || "Customer",
-            customer_email: o.customer_email || o.email || "",
-            customer_phone: o.customer_phone || o.phone || "",
+            id: o.id || o.orderId,
+            orderId: o.id || o.orderId,
+            customer: custName,
+            customer_name: custName,
+            customerName: custName,
+            customer_email: custEmail,
+            customerEmail: custEmail,
+            customer_phone: custPhone,
+            customerPhone: custPhone,
+            shippingAddress,
+            shipping_address: shippingAddress,
             items: parsed,
-            items_count: parsed.length ? parsed.reduce((s, i) => s + (i.qty || 1), 0) : (o.items_count || 1),
+            items_count: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            itemsCount: parsed.length ? parsed.reduce((s, i) => s + (Number(i.qty) || 1), 0) : (o.itemsCount || o.items_count || 1),
+            subtotal: o.subtotal !== undefined ? Number(o.subtotal) : totalVal,
+            shippingFee: o.shippingFee !== undefined ? Number(o.shippingFee) : (o.shipping_fee !== undefined ? Number(o.shipping_fee) : 0),
+            codFee: o.codFee !== undefined ? Number(o.codFee) : (o.cod_fee !== undefined ? Number(o.cod_fee) : 0),
             total: totalVal,
             total_amount: totalVal,
-            pay: o.payment_method || o.pay || "Online",
-            payment_method: o.payment_method || o.pay || "Online",
-            payment_id: o.payment_id || null,
-            status: isPaid ? "paid" : "pending",
-            date: o.created_at ? o.created_at.split("T")[0] : "Today",
-            created_at: o.created_at || new Date().toISOString()
+            totalAmount: totalVal,
+            pay: payMethod,
+            payment_method: payMethod,
+            paymentMethod: payMethod,
+            payment_id: payId,
+            paymentId: payId,
+            payment_status: o.paymentStatus || o.payment_status || "Pending",
+            paymentStatus: o.paymentStatus || o.payment_status || "Pending",
+            status: status,
+            timeline: timeline,
+            date: orderDate,
+            created_at: createdAt,
+            createdAt: createdAt
           };
         });
 
         const liveIds = new Set(liveNormalized.map(o => o.id));
         const extraLocal = localOrders.filter(o => !liveIds.has(o.id));
-        return [...extraLocal, ...liveNormalized];
+        return [...liveNormalized, ...extraLocal];
       }
 
       // 3. Fallback when no backend: real user orders first, then mock orders
@@ -804,19 +889,30 @@
       // Render Recent Orders (latest 5)
       document.getElementById("recent-orders-body").innerHTML = allOrders.slice(0, 5).map(o => {
         const orderId = o.id || o.orderId || "";
-        const custName = o.customer || o.customer_name || "Customer";
-        const itemCount = o.items_count || (Array.isArray(o.items) ? o.items.reduce((s, i) => s + (i.qty || 1), 0) : o.items) || 1;
-        const total = o.total || o.total_amount || 0;
-        const isPaid = (o.status || "").toLowerCase() === "paid" || (o.status || "").toLowerCase() === "confirmed";
+        const custName = o.customer || o.customerName || o.customer_name || "Customer";
+        const custEmail = o.customerEmail || o.customer_email || "";
+        const itemCount = o.itemsCount || o.items_count || (Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.qty) || 1), 0) : 1);
+        const total = o.total || o.totalAmount || o.total_amount || 0;
+        const currentStatus = o.status || "Order Confirmed";
+        const statusLower = currentStatus.toLowerCase();
+        let statusClass = "pending";
+        if (statusLower === "delivered") statusClass = "ok";
+        else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
+        else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
+        else if (statusLower === "cancelled") statusClass = "disabled";
+
         return `
-    <tr>
-      <td>#${orderId}</td>
-      <td>${escapeHtml(custName)}</td>
-      <td>${itemCount}</td>
-      <td>${money(total)}</td>
-      <td><span class="a-status ${isPaid ? "paid" : "pending"}">${isPaid ? "Paid" : "Pending"}</span></td>
+    <tr style="cursor:pointer;" data-order-view="${orderId}">
+      <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
+      <td>
+        <div style="font-weight:600;">${escapeHtml(custName)}</div>
+        ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
+      </td>
+      <td>${itemCount} items</td>
+      <td><strong>${money(total)}</strong></td>
+      <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
     </tr>`;
-      }).join("");
+      }).join("") || `<tr><td colspan="5"><div class="a-empty">No recent orders yet.</div></td></tr>`;
 
       document.getElementById("low-stock-body").innerHTML = lowStockProducts.map(p => `
     <tr><td>${escapeHtml(p.name)}</td><td><span class="a-status low">${p.stock} units</span></td></tr>`).join("") ||
@@ -1092,8 +1188,206 @@
     });
 
     /* =========================================================
-       Orders tab
+       Orders tab & Order Details Modal
        ========================================================= */
+    let currentViewingOrder = null;
+
+    function openOrderDetailsModal(order) {
+      if (!order) return;
+      currentViewingOrder = order;
+
+      const orderId = order.id || order.orderId || "";
+      const custName = order.customerName || order.customer_name || order.customer || "Customer";
+      const custEmail = order.customerEmail || order.customer_email || "—";
+      const custPhone = order.customerPhone || order.customer_phone || "—";
+      const addr = order.shippingAddress || order.shipping_address || {};
+      const addrLine = [addr.address, addr.city, addr.state, addr.pincode].filter(Boolean).join(", ") || "No address provided";
+      const payMethod = order.paymentMethod || order.payment_method || order.pay || "Online";
+      const payStatus = order.paymentStatus || order.payment_status || "Pending";
+      const payId = order.paymentId || order.payment_id;
+      const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString("en-IN", {
+        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+      }) : (order.date || "Today");
+      const currentStatus = order.status || "Order Confirmed";
+      const items = Array.isArray(order.items) ? order.items : [];
+
+      document.getElementById("adm-modal-order-id").textContent = `Order #${orderId}`;
+      document.getElementById("adm-modal-order-date").textContent = `Placed on ${orderDate}`;
+
+      const itemsRowsHTML = items.map(item => {
+        const itemImg = item.image || item.thumbnail || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=200&auto=format&fit=crop";
+        const unitPrice = Number(item.price) || 0;
+        const qty = Number(item.qty) || 1;
+        const lineTotal = unitPrice * qty;
+        const variantText = [item.size ? `Size: ${item.size}` : null, item.color ? `Color: ${item.color}` : null].filter(Boolean).join(" • ");
+
+        return `
+          <tr style="border-bottom:1px solid #edf0f5;">
+            <td style="padding:10px 8px;width:54px;">
+              <img src="${itemImg}" alt="${escapeHtml(item.name || 'Product')}" style="width:48px;height:58px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">
+            </td>
+            <td style="padding:10px 8px;">
+              <div style="font-weight:600;color:var(--a-ink);font-size:13.5px;">${escapeHtml(item.name || 'Product')}</div>
+              ${variantText ? `<div style="font-size:12px;color:var(--a-muted);margin-top:2px;">${escapeHtml(variantText)}</div>` : ''}
+            </td>
+            <td style="padding:10px 8px;text-align:right;font-size:13px;">${money(unitPrice)}</td>
+            <td style="padding:10px 8px;text-align:center;font-size:13px;font-weight:600;">× ${qty}</td>
+            <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--a-navy);font-size:13.5px;">${money(lineTotal)}</td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--a-muted);">No items found</td></tr>`;
+
+      const subtotal = order.subtotal !== undefined ? Number(order.subtotal) : items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
+      const shippingFee = order.shippingFee !== undefined ? Number(order.shippingFee) : (subtotal >= 1999 ? 0 : 99);
+      const codFee = order.codFee !== undefined ? Number(order.codFee) : ((payMethod.toUpperCase() === "COD") ? 49 : 0);
+      const grandTotal = order.totalAmount !== undefined ? Number(order.totalAmount) : (order.total || (subtotal + shippingFee + codFee));
+
+      const stages = [
+        "Order Placed",
+        "Order Confirmed",
+        "Processing",
+        "Shipped",
+        "Out for Delivery",
+        "Delivered",
+        "Cancelled"
+      ];
+
+      const stageOptions = stages.map(s => {
+        const isSel = s.toLowerCase() === currentStatus.toLowerCase();
+        return `<option value="${s}" ${isSel ? "selected" : ""}>${s}</option>`;
+      }).join("");
+
+      document.getElementById("adm-modal-order-content").innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;background:#f8f9fc;border:1px solid #e7ebf2;border-radius:10px;padding:14px 16px;margin-bottom:18px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:4px;">Customer & Shipping Address</div>
+            <div style="font-weight:700;color:var(--a-ink);font-size:14px;">${escapeHtml(custName)}</div>
+            <div style="font-size:12.5px;color:var(--a-ink);margin-top:2px;">${escapeHtml(addrLine)}</div>
+            <div style="font-size:12px;color:var(--a-muted);margin-top:4px;">
+              ✉️ ${escapeHtml(custEmail)} &nbsp;•&nbsp; 📞 ${escapeHtml(custPhone)}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:4px;">Payment & Fulfillment</div>
+            <div style="font-size:13px;color:var(--a-ink);">
+              Method: <strong>${escapeHtml(payMethod)}</strong>
+            </div>
+            <div style="font-size:13px;color:var(--a-ink);margin-top:2px;">
+              Payment Status: <span style="font-weight:600;color:${payStatus.toLowerCase() === 'paid' ? '#059669' : '#d97706'}">${escapeHtml(payStatus)}</span>
+            </div>
+            ${payId ? `<div style="font-size:11.5px;color:var(--a-muted);margin-top:2px;">Ref: <code>${escapeHtml(payId)}</code></div>` : ''}
+            <div style="margin-top:8px;">
+              <span class="a-status ${currentStatus.toLowerCase() === 'delivered' ? 'ok' : (currentStatus.toLowerCase() === 'cancelled' ? 'disabled' : 'active')}">${escapeHtml(currentStatus)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:18px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:8px;">Ordered Items (${items.length})</div>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="border-bottom:2px solid #e5e7eb;color:var(--a-muted);font-size:11.5px;text-transform:uppercase;">
+                <th style="padding:6px 8px;text-align:left;">Item</th>
+                <th style="padding:6px 8px;text-align:left;">Description</th>
+                <th style="padding:6px 8px;text-align:right;">Price</th>
+                <th style="padding:6px 8px;text-align:center;">Qty</th>
+                <th style="padding:6px 8px;text-align:right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsRowsHTML}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
+          <div style="width:260px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+              <span>Subtotal:</span>
+              <span style="font-weight:600;color:var(--a-ink);">${money(subtotal)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+              <span>Shipping Fee:</span>
+              <span style="font-weight:600;color:var(--a-ink);">${shippingFee === 0 ? "FREE" : money(shippingFee)}</span>
+            </div>
+            ${codFee ? `
+              <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+                <span>COD Handling:</span>
+                <span style="font-weight:600;color:var(--a-ink);">${money(codFee)}</span>
+              </div>
+            ` : ''}
+            <div style="display:flex;justify-content:space-between;padding:6px 0 0;margin-top:6px;border-top:1px solid #e5e7eb;font-size:15px;font-weight:700;color:var(--a-navy);">
+              <span>Grand Total:</span>
+              <span>${money(grandTotal)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--a-muted);margin-bottom:8px;">Update Fulfillment Status</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="modal-status-select" style="flex:1;min-width:140px;padding:8px 12px;font-size:13px;border:1px solid var(--a-line);border-radius:6px;background:#fff;">
+              ${stageOptions}
+            </select>
+            <input type="text" id="modal-status-note" placeholder="Status note (e.g. Dispatched via BlueDart)" style="flex:1.5;min-width:180px;padding:8px 12px;font-size:13px;border:1px solid var(--a-line);border-radius:6px;">
+            <button type="button" class="a-btn primary" id="btn-update-modal-status" style="white-space:nowrap;">Update Status</button>
+          </div>
+        </div>
+      `;
+
+      const modalBackdrop = document.getElementById("order-details-modal-backdrop");
+      if (modalBackdrop) modalBackdrop.classList.add("open");
+
+      const updateBtn = document.getElementById("btn-update-modal-status");
+      if (updateBtn) {
+        updateBtn.onclick = async () => {
+          const newStatus = document.getElementById("modal-status-select").value;
+          const note = document.getElementById("modal-status-note").value.trim();
+          updateBtn.disabled = true;
+          updateBtn.textContent = "Updating…";
+
+          const token = getAdminToken();
+
+          ['krisin_orders_v1', 'kc_orders'].forEach(key => {
+            const list = lsGet(key, []);
+            const updated = list.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+            lsSet(key, updated);
+          });
+
+          if (liveOrders) {
+            liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+          }
+
+          if (token) {
+            try {
+              await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ status: newStatus, note })
+              });
+            } catch (err) {}
+          }
+
+          renderOrders();
+          renderDashboardStats();
+          toast(`Order #${orderId} updated to "${newStatus}".`);
+          closeOrderDetailsModal();
+        };
+      }
+    }
+
+    function closeOrderDetailsModal() {
+      const modal = document.getElementById("order-details-modal-backdrop");
+      if (modal) modal.classList.remove("open");
+      currentViewingOrder = null;
+    }
+
+    document.getElementById("order-details-modal-close").addEventListener("click", closeOrderDetailsModal);
+    document.getElementById("order-details-modal-dismiss").addEventListener("click", closeOrderDetailsModal);
+    document.getElementById("order-details-modal-backdrop").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("order-details-modal-backdrop")) closeOrderDetailsModal();
+    });
+
     function renderOrders(list) {
       const orders = list || getAllOrders();
       const body = document.getElementById("orders-body");
@@ -1101,38 +1395,60 @@
 
       body.innerHTML = orders.length ? orders.map(o => {
         const orderId = o.id || o.orderId || "";
-        const custName = o.customer || o.customer_name || "Customer";
+        const custName = o.customer || o.customerName || o.customer_name || "Customer";
+        const custEmail = o.customerEmail || o.customer_email || "";
         const orderDate = o.date || (o.created_at ? o.created_at.split("T")[0] : "Today");
         const itemsText = Array.isArray(o.items) && o.items.length
           ? o.items.map(i => `${i.name || 'Item'} × ${i.qty || 1}`).join(", ") 
           : (o.items_count ? `${o.items_count} items` : (o.items || "1 item"));
-        const total = o.total || o.total_amount || 0;
-        const payMethod = o.pay || o.payment_method || "Online";
-        const statusLower = (o.status || "").toLowerCase();
-        const isPaid = statusLower === "paid" || statusLower === "confirmed";
-        const isDelivered = statusLower === "delivered";
-        const statusClass = isDelivered ? "ok" : (isPaid ? "paid" : "pending");
-        const statusLabel = isDelivered ? "Delivered" : (isPaid ? "Paid" : "Pending");
+        const total = o.total || o.totalAmount || o.total_amount || 0;
+        const payMethod = o.pay || o.paymentMethod || o.payment_method || "Online";
+        const currentStatus = o.status || "Order Confirmed";
+        const statusLower = currentStatus.toLowerCase();
+        let statusClass = "pending";
+        if (statusLower === "delivered") statusClass = "ok";
+        else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
+        else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
+        else if (statusLower === "cancelled") statusClass = "disabled";
 
-        let statusActionBtn = "";
-        if (!isPaid && !isDelivered) {
-          statusActionBtn = `<button class="a-btn small" data-order-status="${orderId}" data-target-status="Paid" style="padding:4px 8px;font-size:11.5px">Mark Paid</button>`;
-        } else if (isPaid && !isDelivered) {
-          statusActionBtn = `<button class="a-btn small" data-order-status="${orderId}" data-target-status="Delivered" style="padding:4px 8px;font-size:11.5px">Mark Delivered</button>`;
-        }
+        const stages = [
+          "Order Placed",
+          "Order Confirmed",
+          "Processing",
+          "Shipped",
+          "Out for Delivery",
+          "Delivered",
+          "Cancelled"
+        ];
+
+        const selectOptions = stages.map(s => {
+          const isSel = s.toLowerCase() === statusLower;
+          return `<option value="${s}" ${isSel ? "selected" : ""}>${s}</option>`;
+        }).join("");
 
         return `
     <tr>
-      <td>#${orderId}</td>
-      <td>${escapeHtml(custName)}</td>
+      <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
+      <td>
+        <div style="font-weight:600;">${escapeHtml(custName)}</div>
+        ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
+      </td>
       <td>${orderDate}</td>
-      <td>${escapeHtml(itemsText)}</td>
-      <td>${money(total)}</td>
-      <td>${escapeHtml(payMethod)}</td>
-      <td><span class="a-status ${statusClass}">${statusLabel}</span></td>
+      <td>
+        <span style="font-size:12.5px;cursor:pointer;color:var(--a-navy);" data-order-view="${orderId}" title="Click to view all items">${escapeHtml(itemsText)}</span>
+      </td>
+      <td><strong>${money(total)}</strong></td>
+      <td>
+        <div>${escapeHtml(payMethod)}</div>
+        <div style="font-size:11px;color:var(--a-muted);">${escapeHtml(o.paymentStatus || o.payment_status || "Pending")}</div>
+      </td>
+      <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
       <td>
         <div style="display:flex;align-items:center;gap:6px;">
-          ${statusActionBtn}
+          <button class="a-btn small" data-order-view="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#f0f3fa;color:var(--a-navy);border:1px solid #d5dded;cursor:pointer;">View</button>
+          <select class="a-btn small" data-order-status-select="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#1b2234;color:#fff;border:1px solid #323b54;border-radius:4px;cursor:pointer;">
+            ${selectOptions}
+          </select>
           <button class="a-icon-btn del" title="Delete order" data-order-delete="${orderId}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
         </div>
       </td>
@@ -1144,10 +1460,60 @@
       const q = e.target.value.toLowerCase();
       const currentList = getAllOrders();
       renderOrders(currentList.filter(o => {
-        const cName = (o.customer || o.customer_name || "").toLowerCase();
+        const cName = (o.customer || o.customerName || o.customer_name || "").toLowerCase();
         const oId = String(o.id || o.orderId || "").toLowerCase();
         return cName.includes(q) || oId.includes(q);
       }));
+    });
+
+    // Handle Click on Order Rows to View Details (Recent Orders & Orders table)
+    document.addEventListener("click", (e) => {
+      const viewTrigger = e.target.closest("[data-order-view]");
+      if (viewTrigger) {
+        e.preventDefault();
+        const orderId = viewTrigger.dataset.orderView;
+        const allOrders = getAllOrders();
+        const found = allOrders.find(o => (o.id === orderId || o.orderId === orderId));
+        if (found) {
+          openOrderDetailsModal(found);
+        }
+      }
+    });
+
+    // Handle Order Status Select Change
+    document.getElementById("orders-body").addEventListener("change", async (e) => {
+      const select = e.target.closest("[data-order-status-select]");
+      if (!select) return;
+
+      const orderId = select.dataset.orderStatusSelect;
+      const newStatus = select.value;
+      const token = getAdminToken();
+
+      ['krisin_orders_v1', 'kc_orders'].forEach(key => {
+        const list = lsGet(key, []);
+        const updated = list.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+        lsSet(key, updated);
+      });
+
+      if (liveOrders) {
+        liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
+      }
+
+      renderOrders();
+      renderDashboardStats();
+
+      if (token) {
+        try {
+          await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (err) {
+          console.error("Admin order status update error:", err);
+        }
+      }
+      toast(`Order #${orderId} updated to "${newStatus}".`);
     });
 
     document.getElementById("orders-body").addEventListener("click", async (e) => {

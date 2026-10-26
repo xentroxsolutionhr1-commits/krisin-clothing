@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
 </head>
 
 <body>
@@ -210,8 +211,10 @@
         const res = await AUTH.customerRegister({ name, email, phone, password });
 
         if (res.success) {
-          // After successful registration, redirect to login page with success flag.
-          window.location.href = "login.html?registered=1";
+          // Clear the auto-login session set by customerRegister so user lands on login page
+          AUTH.clearCustomerSession();
+          const redirectTarget = urlParams.get("redirect");
+          window.location.href = redirectTarget ? `login.html?registered=1&redirect=${encodeURIComponent(redirectTarget)}` : "login.html?registered=1";
         } else {
           submitBtn.disabled = false;
           submitBtn.textContent = "Create Account";
@@ -221,6 +224,7 @@
       });
     })();
   </script>
+  <script src="js/animations.js"></script>
 </body>
 
 </html>

@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
 </head>
 
 <body>
@@ -130,10 +131,34 @@
               <div class="profile-field-value" id="user-phone"></div>
             </div>
           </div>
+          <div class="profile-field" style="cursor:pointer;" onclick="window.location.href='orders.html'">
+            <div>
+              <div class="profile-field-label">Orders &amp; Shipment Tracking</div>
+              <div class="profile-field-value" style="display:flex;align-items:center;gap:6px;color:var(--black);font-weight:600;">
+                <span>View past purchases &amp; track active deliveries</span>
+                <svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+            </div>
+            <a href="orders.html" class="btn btn-outline" style="padding:6px 14px;font-size:12.5px;white-space:nowrap;">Open Orders</a>
+          </div>
         </div>
-        <div class="profile-card-footer">
-          <button id="logout-btn" class="btn btn-primary">Sign Out</button>
-          <a href="shop.html" class="btn btn-outline">Continue Shopping</a>
+        <div class="profile-card-footer" style="flex-wrap:wrap;">
+          <a href="orders.html" class="btn btn-primary" style="flex:1 1 auto;text-align:center;">My Orders &amp; Tracking</a>
+          <a href="shop.html" class="btn btn-outline" style="flex:1 1 auto;text-align:center;">Continue Shopping</a>
+          <button id="logout-btn" class="btn btn-outline" style="color:#c0392b;border-color:var(--line);">Sign Out</button>
+        </div>
+      </div>
+
+      <!-- Recent Orders on Customer Profile Dashboard -->
+      <div style="margin-top:28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;margin:0;">Recent Orders &amp; Tracking</h2>
+          <a href="orders.html" class="link-underline" style="font-size:13px;font-weight:600;">View All Orders →</a>
+        </div>
+        <div id="profile-orders-container">
+          <div style="padding:22px;text-align:center;color:var(--stone);background:#fff;border:1px solid var(--line);border-radius:8px;">
+            Loading your orders…
+          </div>
         </div>
       </div>
     </div>
@@ -152,6 +177,10 @@
   <script src="js/main.js"></script>
   <script>
     (function () {
+      function escapeHtml(s) {
+        return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+      }
+
       if (!AUTH.isCustomerLoggedIn()) {
         window.location.href = 'login.html?redirect=profile.html';
         return;
@@ -171,8 +200,75 @@
           AUTH.customerLogout();
         }
       });
+
+      // Fetch user's orders and render on customer profile dashboard
+      AUTH.getMyOrders().then(res => {
+        const container = document.getElementById("profile-orders-container");
+        if (!container) return;
+
+        if (res && res.success && Array.isArray(res.orders) && res.orders.length > 0) {
+          const recentOrders = res.orders.slice(0, 3);
+          container.innerHTML = recentOrders.map(order => {
+            const items = Array.isArray(order.items) ? order.items : [];
+            const firstItem = items[0] || {};
+            const itemImg = firstItem.image || firstItem.thumbnail || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=200&auto=format&fit=crop";
+            const dateStr = order.createdAt ? new Date(order.createdAt).toLocaleDateString("en-IN", {
+              day: "numeric", month: "short", year: "numeric"
+            }) : (order.date || "Recently");
+            const statusLower = (order.status || "").toLowerCase();
+            let statusColor = "#2b4c7e";
+            let statusBg = "#f0f4f8";
+            if (statusLower === "delivered") { statusColor = "#065f46"; statusBg = "#ecfdf5"; }
+            else if (statusLower === "cancelled") { statusColor = "#991b1b"; statusBg = "#fef2f2"; }
+            else if (statusLower === "shipped" || statusLower === "out for delivery") { statusColor = "#0369a1"; statusBg = "#e0f2fe"; }
+            else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") { statusColor = "#92540c"; statusBg = "#fef7e6"; }
+
+            return `
+              <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
+                <div style="display:flex;align-items:center;gap:16px;">
+                  <img src="${itemImg}" alt="${escapeHtml(firstItem.name || 'Item')}" style="width:52px;height:62px;object-fit:cover;border-radius:4px;border:1px solid #e5e7eb;">
+                  <div>
+                    <div style="font-weight:700;color:var(--black);font-size:14.5px;">Order #${escapeHtml(order.id)}</div>
+                    <div style="font-size:12.5px;color:var(--stone);margin-top:2px;">
+                      ${escapeHtml(firstItem.name || 'Product')}${items.length > 1 ? ` + ${items.length - 1} more` : ''} • Placed on ${dateStr}
+                    </div>
+                    <div style="display:inline-block;margin-top:6px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:12px;background:${statusBg};color:${statusColor};text-transform:uppercase;">
+                      ${escapeHtml(order.status || 'Order Placed')}
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:16px;">
+                  <div style="text-align:right;">
+                    <div style="font-size:11.5px;color:var(--stone);">Total Amount</div>
+                    <div style="font-weight:700;font-size:16px;color:var(--black);">${formatPrice(order.totalAmount || order.total || 0)}</div>
+                  </div>
+                  <a href="orders.html?orderId=${encodeURIComponent(order.id)}" class="btn btn-primary" style="padding:7px 16px;font-size:12.5px;">Track Order</a>
+                </div>
+              </div>
+            `;
+          }).join("");
+        } else {
+          container.innerHTML = `
+            <div style="padding:26px 20px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:8px;">
+              <div style="font-weight:600;color:var(--black);font-size:15px;margin-bottom:4px;">No orders placed yet</div>
+              <p style="font-size:13px;color:var(--stone);margin:0 0 14px;">Browse our collection and find your next style.</p>
+              <a href="shop.html" class="btn btn-primary" style="padding:8px 20px;font-size:13px;">Start Shopping</a>
+            </div>
+          `;
+        }
+      }).catch(() => {
+        const container = document.getElementById("profile-orders-container");
+        if (container) {
+          container.innerHTML = `
+            <div style="padding:20px;text-align:center;color:var(--stone);background:#fff;border:1px solid var(--line);border-radius:8px;">
+              Unable to load orders at this moment. <a href="orders.html" style="text-decoration:underline;">Go to My Orders</a>
+            </div>
+          `;
+        }
+      });
     })();
   </script>
+  <script src="js/animations.js"></script>
 </body>
 
 </html>

@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
   <style>
     .steps {
       display: flex;
@@ -231,7 +232,10 @@
       <p class="sub" style="margin:16px auto">Your order <strong class="order-id-accent" id="order-id"></strong> has
         been placed. A confirmation has been sent to your email.</p>
       <p class="sub" id="payment-ref" style="margin:6px auto;font-size:13px"></p>
-      <a href="shop.html" class="btn btn-primary" style="margin-top:20px">Continue shopping</a>
+      <div style="display:flex;justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap;">
+        <a href="orders.html" id="track-order-btn" class="btn btn-primary">Track Your Order</a>
+        <a href="shop.html" class="btn btn-outline">Continue shopping</a>
+      </div>
     </div>
   </main>
 
@@ -311,26 +315,42 @@
         });
       });
 
-      function completeOrder(orderId, paymentRef) {
+      // Auto-fill logged-in customer info if available
+      try {
+        const loggedUser = window.AUTH && window.AUTH.getCustomer();
+        if (loggedUser) {
+          const fn = document.getElementById("fname");
+          const em = document.getElementById("email");
+          const ph = document.getElementById("phone");
+          if (fn && !fn.value) fn.value = loggedUser.name || "";
+          if (em && !em.value) em.value = loggedUser.email || "";
+          if (ph && !ph.value && loggedUser.phone) ph.value = loggedUser.phone || "";
+        }
+      } catch (e) {}
+
+      async function completeOrder(orderId, paymentRef) {
         const method = getSelectedMethod();
         const { total, subtotal, shipping, codFee } = totals();
         const name = (document.getElementById("fname")?.value || "").trim() || "Customer";
         const email = (document.getElementById("email")?.value || "").trim() || "customer@example.com";
         const phone = (document.getElementById("phone")?.value || "").trim() || "";
-        const address = (document.getElementById("addr")?.value || "").trim();
+        const address = (document.getElementById("address")?.value || document.getElementById("addr")?.value || "").trim();
         const city = (document.getElementById("city")?.value || "").trim();
         const state = (document.getElementById("state")?.value || "").trim();
-        const pincode = (document.getElementById("pin")?.value || "").trim();
+        const pincode = (document.getElementById("pincode")?.value || document.getElementById("pin")?.value || "").trim();
 
         const orderedItems = cart.map(item => {
           const p = getProduct(item.productId) || {};
+          const itemImg = (p.images && p.images[0]) || p.image || "";
           return {
             id: item.productId,
+            productId: item.productId,
             name: p.name || item.productId,
             price: p.price || 0,
             qty: item.qty,
             color: item.color || null,
-            size: item.size || null
+            size: item.size || null,
+            image: itemImg
           };
         });
         const itemsCount = cart.reduce((n, i) => n + i.qty, 0);
@@ -408,21 +428,72 @@
           localStorage.setItem(LS_OVERRIDES, JSON.stringify(overrides));
         } catch (e) {}
 
-        // 4. Send to backend API
+        // 4. Save order to backend and check the result
         try {
-          const apiBase = (window.AUTH && window.AUTH.getApiBase) ? window.AUTH.getApiBase() : "https://krisin-clothing-1.onrender.com";
-          const token = (window.AUTH && window.AUTH.getCustomerToken) ? window.AUTH.getCustomerToken() : null;
+          const apiBase = (window.AUTH && window.AUTH.getApiBase)
+            ? window.AUTH.getApiBase()
+            : "https://krisin-clothing-1.onrender.com";
+
+          const token = (window.AUTH && window.AUTH.getCustomerToken)
+            ? window.AUTH.getCustomerToken()
+            : null;
+
           const headers = { "Content-Type": "application/json" };
           if (token) headers["Authorization"] = `Bearer ${token}`;
-          fetch(`${apiBase}/api/orders`, {
+
+          const response = await fetch(`${apiBase}/api/orders`, {
             method: "POST",
             headers,
             body: JSON.stringify(orderData)
-          }).catch(() => {});
-        } catch (e) {}
+          });
 
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            localStorage.setItem("krisin_pending_order_v1", JSON.stringify({
+              order: orderData,
+              paymentRef: paymentRef || null,
+              savedAt: new Date().toISOString()
+            }));
+
+            alert(
+              `Order ${orderId} could not be saved on the server.\n` +
+              `Reason: ${result.message || result.error || "Server error"}\n\n` +
+              (paymentRef
+                ? `Payment reference: ${paymentRef}\nDo not pay again. Contact the store with this reference.`
+                : "Your cart has been kept. Contact the store before trying again.")
+            );
+            return;
+          }
+
+          localStorage.removeItem("krisin_pending_order_v1");
+        } catch (error) {
+          console.error("Order API save failed:", error);
+
+          try {
+            localStorage.setItem("krisin_pending_order_v1", JSON.stringify({
+              order: orderData,
+              paymentRef: paymentRef || null,
+              savedAt: new Date().toISOString()
+            }));
+          } catch (storageError) {
+            console.error("Could not preserve pending order:", storageError);
+          }
+
+          alert(
+            `Could not confirm that order ${orderId} was saved on the server.\n` +
+            (paymentRef
+              ? `Payment reference: ${paymentRef}\nDo not pay again. Contact the store with this reference.`
+              : "Your cart has been kept. Contact the store before trying again.")
+          );
+          return;
+        }
         document.getElementById("order-id").textContent = "#" + orderId;
         document.getElementById("payment-ref").textContent = paymentRef ? `Payment reference: ${paymentRef}` : "Payment on delivery";
+        const trackBtn = document.getElementById("track-order-btn");
+        if (trackBtn) {
+          trackBtn.href = "orders.html?orderId=" + encodeURIComponent(orderId);
+        }
         form.classList.add("hidden");
         document.querySelector(".steps").innerHTML = `
       <div class="step done"><span class="dot">✓</span>Bag</div>
@@ -491,6 +562,7 @@
       });
     })();
   </script>
+  <script src="js/animations.js"></script>
 </body>
 
 </html>

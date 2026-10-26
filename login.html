@@ -11,6 +11,7 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
 </head>
 
 <body>
@@ -202,14 +203,16 @@
         successBox.classList.add("show");
       }
 
-      // Always redirect an already logged-in customer to Shop.
+      // Redirect an already logged-in customer.
       if (AUTH.isCustomerLoggedIn()) {
-        window.location.replace("shop.html");
+        const target = params.get("redirect") || "index.html";
+        window.location.replace(target);
         return;
       }
 
-      // Do not preserve checkout redirect parameters during registration.
-      signupLink.href = "register.html";
+      // Preserve redirect parameter during registration if needed.
+      const redirectParam = params.get("redirect");
+      signupLink.href = redirectParam ? `register.html?redirect=${encodeURIComponent(redirectParam)}` : "register.html";
 
       form.addEventListener("submit", async function (event) {
         event.preventDefault();
@@ -227,8 +230,8 @@
           const result = await AUTH.customerLogin(email, password);
 
           if (result && result.success) {
-            // Always go to Shop after successful login.
-            window.location.replace("shop.html");
+            const target = params.get("redirect") || "index.html";
+            window.location.replace(target);
             return;
           }
 
@@ -250,6 +253,7 @@
     })();
   </script>
 
+  <script src="js/animations.js"></script>
 </body>
 
 </html>
