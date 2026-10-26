@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    KRISIN CLOTHING — Premium Animation System
    ========================================================= */
 
@@ -447,15 +447,21 @@ body {
 /* Mobile nav stagger */
 .mobile-nav-links a {
   opacity: 0;
-  transform: translateY(16px);
-  transition: opacity var(--dur-sm) var(--ease-out-expo), transform var(--dur-sm) var(--ease-out-expo), color var(--dur-xs) var(--ease-out-expo);
+  transform: translateX(12px);
+  transition: opacity var(--dur-sm) var(--ease-out-expo), transform var(--dur-sm) var(--ease-out-expo), color var(--dur-xs) var(--ease-out-expo), padding-left var(--dur-xs) var(--ease-out-expo);
 }
-.mobile-nav.open .mobile-nav-links a:nth-child(1) { opacity:1; transform:none; transition-delay:.05s; }
-.mobile-nav.open .mobile-nav-links a:nth-child(2) { opacity:1; transform:none; transition-delay:.1s;  }
-.mobile-nav.open .mobile-nav-links a:nth-child(3) { opacity:1; transform:none; transition-delay:.15s; }
-.mobile-nav.open .mobile-nav-links a:nth-child(4) { opacity:1; transform:none; transition-delay:.2s;  }
-.mobile-nav.open .mobile-nav-links a:nth-child(5) { opacity:1; transform:none; transition-delay:.25s; }
-.mobile-nav.open .mobile-nav-links a:nth-child(6) { opacity:1; transform:none; transition-delay:.3s;  }
+.mobile-nav.open .mobile-nav-links a {
+  opacity: 1;
+  transform: none;
+}
+.mobile-nav.open .mobile-nav-links a:nth-child(1) { transition-delay: .03s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(2) { transition-delay: .06s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(3) { transition-delay: .09s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(4) { transition-delay: .12s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(5) { transition-delay: .15s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(6) { transition-delay: .18s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(7) { transition-delay: .21s; }
+.mobile-nav.open .mobile-nav-links a:nth-child(8) { transition-delay: .24s; }
 
 /* =========================================================
    CAROUSEL — ken-burns + smooth track

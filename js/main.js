@@ -145,18 +145,68 @@ function initHeader() {
   const toggle = document.querySelector(".menu-toggle");
   const mobileNav = document.querySelector(".mobile-nav");
   if (toggle && mobileNav) {
-    toggle.addEventListener("click", () => mobileNav.classList.toggle("open"));
-    mobileNav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => mobileNav.classList.remove("open")));
+    let overlay = document.querySelector(".mobile-nav-overlay");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.className = "mobile-nav-overlay";
+      document.body.appendChild(overlay);
+    }
+
+    const openDrawer = () => {
+      mobileNav.classList.add("open");
+      overlay.classList.add("open");
+      document.body.style.overflow = "hidden";
+    };
+
+    const closeDrawer = () => {
+      mobileNav.classList.remove("open");
+      overlay.classList.remove("open");
+      document.body.style.overflow = "";
+    };
+
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (mobileNav.classList.contains("open")) {
+        closeDrawer();
+      } else {
+        openDrawer();
+      }
+    });
+
+    overlay.addEventListener("click", closeDrawer);
+
     const closeBtn = mobileNav.querySelector(".mobile-nav-close");
-    if (closeBtn) closeBtn.addEventListener("click", () => mobileNav.classList.remove("open"));
+    if (closeBtn) closeBtn.addEventListener("click", closeDrawer);
+
+    mobileNav.addEventListener("click", (e) => {
+      const link = e.target.closest("a");
+      if (link && link.id !== "mobile-signout-btn" && !link.hasAttribute("data-no-close")) {
+        closeDrawer();
+      }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && mobileNav.classList.contains("open")) {
+        closeDrawer();
+      }
+    });
   }
 
   const searchBtn = document.querySelector("[data-search-toggle]");
   const searchBar = document.querySelector(".search-bar");
   if (searchBtn && searchBar) {
-    searchBtn.addEventListener("click", () => {
+    searchBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
       searchBar.classList.toggle("open");
-      if (searchBar.classList.contains("open")) searchBar.querySelector("input").focus();
+      if (searchBar.classList.contains("open")) {
+        const input = searchBar.querySelector("input");
+        if (input) input.focus();
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (searchBar.classList.contains("open") && !searchBar.contains(e.target) && !searchBtn.contains(e.target)) {
+        searchBar.classList.remove("open");
+      }
     });
     const searchInput = searchBar.querySelector("input");
     if (searchInput) {
