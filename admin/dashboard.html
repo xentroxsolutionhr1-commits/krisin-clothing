@@ -59,6 +59,10 @@
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
           </svg>Customers</button>
+        <button data-tab="messages"><svg viewBox="0 0 24 24">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+            <polyline points="22,6 12,13 2,6" />
+          </svg>Messages<span id="nav-unread-badge" style="display:none;margin-left:auto;background:#e11d48;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">0</span></button>
         <button data-tab="reviews"><svg viewBox="0 0 24 24">
             <path d="M12 2l2.9 6.5 7.1.6-5.4 4.7 1.7 6.9-6.3-3.9-6.3 3.9 1.7-6.9-5.4-4.7 7.1-.6L12 2z" />
           </svg>Reviews</button>
@@ -272,6 +276,42 @@
         </div>
       </section>
 
+      <!-- MESSAGES -->
+      <section class="a-tab" id="tab-messages">
+        <div class="a-actions" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <div class="a-searchbar" style="margin-bottom:0">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.3-4.3" />
+              </svg>
+              <input placeholder="Search messages…" id="message-search">
+            </div>
+            <select id="message-filter" style="border:1px solid var(--a-line);border-radius:8px;padding:9px 12px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:var(--a-ink);">
+              <option value="all">All Messages</option>
+              <option value="unread">Unread Only</option>
+              <option value="read">Read Only</option>
+            </select>
+          </div>
+          <button class="a-btn" id="btn-refresh-messages">Refresh</button>
+        </div>
+        <div class="a-panel" style="padding:0">
+          <table class="a-table" style="padding:12px">
+            <thead>
+              <tr>
+                <th style="width:100px">Status</th>
+                <th>Sender</th>
+                <th>Email</th>
+                <th>Subject</th>
+                <th>Received</th>
+                <th style="text-align:right;width:210px">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="messages-body"></tbody>
+          </table>
+        </div>
+      </section>
+
       <!-- REVIEWS -->
       <section class="a-tab" id="tab-reviews">
         <div class="a-panel" style="padding:0">
@@ -452,6 +492,45 @@
     </div>
   </div>
 
+  <!-- ================= MESSAGE DETAILS MODAL ================= -->
+  <div class="a-modal-backdrop" id="message-modal-backdrop">
+    <div class="a-modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+      <div class="a-modal-head">
+        <div>
+          <h3 id="msg-modal-subject" style="font-size:18px;color:var(--a-navy);">Message Details</h3>
+          <div id="msg-modal-meta" style="font-size:12px;color:var(--a-muted);margin-top:2px;"></div>
+        </div>
+        <button class="a-modal-close" id="message-modal-close" aria-label="Close">
+          <svg viewBox="0 0 24 24"><path d="M4 4l16 16M20 4L4 20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" /></svg>
+        </button>
+      </div>
+
+      <div style="padding:18px 20px;">
+        <div style="background:#f8fafc;border:1px solid var(--a-line);border-radius:8px;padding:12px 14px;margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px;">
+            <span style="color:var(--a-muted);">From:</span>
+            <strong id="msg-modal-sender" style="color:var(--a-navy);"></strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;">
+            <span style="color:var(--a-muted);">Email:</span>
+            <span id="msg-modal-email"></span>
+          </div>
+        </div>
+
+        <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--a-muted);margin-bottom:6px;">Message</div>
+        <div id="msg-modal-body" style="font-size:13.5px;line-height:1.6;white-space:pre-wrap;background:#fff;border:1px solid var(--a-line);border-radius:8px;padding:14px;min-height:100px;color:var(--a-ink);"></div>
+      </div>
+
+      <div class="a-modal-foot" style="justify-content:space-between;">
+        <button type="button" class="a-btn danger" id="msg-modal-delete">Delete</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" class="a-btn" id="msg-modal-toggle-status">Mark as Read</button>
+          <button type="button" class="a-btn primary" id="msg-modal-dismiss">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   <div class="a-toast-stack" id="a-toast-stack"></div>
 
@@ -615,7 +694,9 @@
       inventory: ["Inventory", "Track stock across every size and colour."],
       orders: ["Orders", "View and fulfil customer orders."],
       customers: ["Customers", "Everyone who has shopped with Krisin Clothing, and their account access."],
-      reviews: ["Reviews", "Moderate product reviews from customers."]
+      messages: ["Messages", "Contact inquiries and customer feedback."],
+      reviews: ["Reviews", "Moderate product reviews from customers."],
+      users: ["Users", "Manage user logins and customer account access."]
     };
     document.getElementById("a-nav").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-tab]");
@@ -1823,6 +1904,249 @@
     });
 
     /* =========================================================
+       Messages tab — Contact inquiries from customers
+       ========================================================= */
+    let allMessages = [];
+    let activeMessage = null;
+
+    function renderMessages(list) {
+      const tbody = document.getElementById("messages-body");
+      if (!tbody) return;
+
+      if (!list || list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty">No messages found.</div></td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(m => {
+        const isUnread = (m.status || "").toLowerCase() === "unread";
+        const statusClass = isUnread ? "pending" : "ok";
+        const dateStr = fmtDate(m.created_at);
+
+        return `
+          <tr style="${isUnread ? 'background:#fbfdff;font-weight:600;' : ''}">
+            <td><span class="a-status ${statusClass}">${escapeHtml(m.status || 'Unread')}</span></td>
+            <td><strong>${escapeHtml(m.name)}</strong></td>
+            <td><a href="mailto:${escapeHtml(m.email)}" style="color:var(--a-navy);">${escapeHtml(m.email)}</a></td>
+            <td><div style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.subject)}</div></td>
+            <td>${escapeHtml(dateStr)}</td>
+            <td style="text-align:right;">
+              <div style="display:inline-flex;gap:6px;">
+                <button class="a-btn small primary" data-msg-view="${escapeHtml(m.id)}">View</button>
+                <button class="a-btn small" data-msg-toggle="${escapeHtml(m.id)}">${isUnread ? 'Mark Read' : 'Mark Unread'}</button>
+                <button class="a-btn small danger" data-msg-delete="${escapeHtml(m.id)}" data-msg-sender="${escapeHtml(m.name)}">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function updateUnreadBadge() {
+      const badge = document.getElementById("nav-unread-badge");
+      if (!badge) return;
+      const unreadCount = allMessages.filter(m => (m.status || "").toLowerCase() === "unread").length;
+      if (unreadCount > 0) {
+        badge.textContent = unreadCount;
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+    }
+
+    function filterMessages() {
+      const query = (document.getElementById("message-search")?.value || "").toLowerCase().trim();
+      const filter = document.getElementById("message-filter")?.value || "all";
+
+      let filtered = allMessages;
+      if (filter === "unread") {
+        filtered = filtered.filter(m => (m.status || "").toLowerCase() === "unread");
+      } else if (filter === "read") {
+        filtered = filtered.filter(m => (m.status || "").toLowerCase() === "read");
+      }
+
+      if (query) {
+        filtered = filtered.filter(m =>
+          (m.name || "").toLowerCase().includes(query) ||
+          (m.email || "").toLowerCase().includes(query) ||
+          (m.subject || "").toLowerCase().includes(query) ||
+          (m.message || "").toLowerCase().includes(query)
+        );
+      }
+
+      renderMessages(filtered);
+    }
+
+    async function fetchMessages() {
+      const token = getAdminToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/messages`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.status === 401 || res.status === 403) throw new Error("auth");
+        if (!res.ok) throw new Error("fetch_failed");
+
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          allMessages = data;
+          filterMessages();
+          updateUnreadBadge();
+        }
+      } catch (err) {
+        const tbody = document.getElementById("messages-body");
+        if (tbody) {
+          const msg = err.message === "auth"
+            ? 'Session expired. Please <a href="/admin05/login">sign in again</a>.'
+            : 'Failed to load messages from backend.';
+          tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty" style="color:#ef4444">${msg}</div></td></tr>`;
+        }
+      }
+    }
+
+    function openMessageModal(message) {
+      activeMessage = message;
+      const modal = document.getElementById("message-modal-backdrop");
+      if (!modal) return;
+
+      document.getElementById("msg-modal-subject").textContent = message.subject || "Message Details";
+      document.getElementById("msg-modal-meta").textContent = `Received on ${fmtDate(message.created_at)}`;
+      document.getElementById("msg-modal-sender").textContent = message.name || "Unknown";
+      document.getElementById("msg-modal-email").textContent = message.email || "—";
+      document.getElementById("msg-modal-body").textContent = message.message || "";
+
+      const toggleBtn = document.getElementById("msg-modal-toggle-status");
+      const isUnread = (message.status || "").toLowerCase() === "unread";
+      if (toggleBtn) {
+        toggleBtn.textContent = isUnread ? "Mark as Read" : "Mark as Unread";
+      }
+
+      modal.classList.add("open");
+
+      // If opening an unread message, automatically mark as read
+      if (isUnread) {
+        toggleMessageStatus(message.id, "Read", false);
+      }
+    }
+
+    function closeMessageModal() {
+      const modal = document.getElementById("message-modal-backdrop");
+      if (modal) modal.classList.remove("open");
+      activeMessage = null;
+    }
+
+    async function toggleMessageStatus(id, desiredStatus, showToast = true) {
+      const token = getAdminToken();
+      if (!token) return;
+
+      const m = allMessages.find(x => x.id === id);
+      const newStatus = desiredStatus || ((m && (m.status || "").toLowerCase() === "read") ? "Unread" : "Read");
+
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/messages/${id}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (res.ok) {
+          if (m) m.status = newStatus;
+          if (activeMessage && activeMessage.id === id) {
+            activeMessage.status = newStatus;
+            const toggleBtn = document.getElementById("msg-modal-toggle-status");
+            if (toggleBtn) toggleBtn.textContent = newStatus === "Read" ? "Mark as Unread" : "Mark as Read";
+          }
+          filterMessages();
+          updateUnreadBadge();
+          if (showToast) toast(`Message marked as ${newStatus}.`);
+        } else if (showToast) {
+          toast("Failed to update message status.", "error");
+        }
+      } catch (err) {
+        if (showToast) toast("Network error.", "error");
+      }
+    }
+
+    async function deleteMessage(id, senderName) {
+      if (!confirm(`Delete message from "${senderName || 'this sender'}"? This action cannot be undone.`)) return;
+
+      const token = getAdminToken();
+      if (!token) return;
+
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/messages/${id}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          allMessages = allMessages.filter(x => x.id !== id);
+          if (activeMessage && activeMessage.id === id) closeMessageModal();
+          filterMessages();
+          updateUnreadBadge();
+          toast("Message deleted.");
+        } else {
+          toast("Failed to delete message.", "error");
+        }
+      } catch (err) {
+        toast("Network error.", "error");
+      }
+    }
+
+    // Event listeners for message search, filter, and refresh
+    document.getElementById("message-search")?.addEventListener("input", filterMessages);
+    document.getElementById("message-filter")?.addEventListener("change", filterMessages);
+    document.getElementById("btn-refresh-messages")?.addEventListener("click", () => {
+      fetchMessages();
+      toast("Messages refreshed.");
+    });
+
+    // Table action buttons delegation
+    document.getElementById("messages-body")?.addEventListener("click", (e) => {
+      const viewBtn = e.target.closest("[data-msg-view]");
+      if (viewBtn) {
+        const id = viewBtn.dataset.msgView;
+        const m = allMessages.find(x => x.id === id);
+        if (m) openMessageModal(m);
+        return;
+      }
+
+      const toggleBtn = e.target.closest("[data-msg-toggle]");
+      if (toggleBtn) {
+        const id = toggleBtn.dataset.msgToggle;
+        toggleMessageStatus(id, null, true);
+        return;
+      }
+
+      const delBtn = e.target.closest("[data-msg-delete]");
+      if (delBtn) {
+        const id = delBtn.dataset.msgDelete;
+        const sender = delBtn.dataset.msgSender;
+        deleteMessage(id, sender);
+        return;
+      }
+    });
+
+    // Modal action buttons
+    document.getElementById("message-modal-close")?.addEventListener("click", closeMessageModal);
+    document.getElementById("msg-modal-dismiss")?.addEventListener("click", closeMessageModal);
+    document.getElementById("message-modal-backdrop")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("message-modal-backdrop")) closeMessageModal();
+    });
+    document.getElementById("msg-modal-toggle-status")?.addEventListener("click", () => {
+      if (activeMessage) toggleMessageStatus(activeMessage.id, null, true);
+    });
+    document.getElementById("msg-modal-delete")?.addEventListener("click", () => {
+      if (activeMessage) deleteMessage(activeMessage.id, activeMessage.name);
+    });
+
+    // Tab switch listener
+    document.getElementById("a-nav")?.addEventListener("click", (e) => {
+      if (e.target.closest('[data-tab="messages"]')) {
+        fetchMessages();
+      }
+    });
+
+    /* =========================================================
        Initial render & Admin Session Verification
        ========================================================= */
     refreshProductViews();
@@ -1830,6 +2154,7 @@
     renderCustomers();
     fetchBackendData();
     fetchUsers(); // Preload users on dashboard open
+    fetchMessages(); // Preload messages and badge
 
     // Display signed in admin email
     const signedInEmail = localStorage.getItem("krisin_admin_email") || "admin@krisin.clothing";

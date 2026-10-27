@@ -105,18 +105,19 @@
       </div>
 
       <form id="contact-form">
-        <div class="field-block field"><label for="c-name">Name</label><input id="c-name" required></div>
-        <div class="field-block field"><label for="c-email">Email</label><input id="c-email" type="email" required>
+        <div class="field-block field"><label for="c-name">Name</label><input id="c-name" required maxlength="100"></div>
+        <div class="field-block field"><label for="c-email">Email</label><input id="c-email" type="email" required maxlength="255">
         </div>
-        <div class="field-block field"><label for="c-subject">Subject</label><input id="c-subject" required></div>
+        <div class="field-block field"><label for="c-subject">Subject</label><input id="c-subject" required maxlength="200"></div>
         <div class="field-block field">
           <label for="c-message">Message</label>
-          <textarea id="c-message" rows="5" required
+          <textarea id="c-message" rows="5" required maxlength="5000"
             style="width:100%;border:1px solid var(--line);padding:12px 14px;font-family:inherit;font-size:14px;resize:vertical"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Send message</button>
-        <p id="contact-success" class="sub hidden" style="margin-top:16px;color:var(--charcoal)">Thanks, we'll get back
+        <button type="submit" class="btn btn-primary" id="c-submit-btn">Send message</button>
+        <p id="contact-success" class="sub hidden" style="margin-top:16px;color:#16a34a;font-weight:600;">Thanks, we'll get back
           to you within 1 to 2 business days.</p>
+        <p id="contact-error" class="sub hidden" style="margin-top:16px;color:#ef4444;font-weight:500;"></p>
       </form>
     </div>
   </main>
@@ -133,10 +134,88 @@
   <script src="js/auth.js?v=2"></script>
   <script src="js/main.js?v=2"></script>
   <script>
-    document.getElementById("contact-form").addEventListener("submit", function (e) {
+    document.getElementById("contact-form").addEventListener("submit", async function (e) {
       e.preventDefault();
-      document.getElementById("contact-success").classList.remove("hidden");
-      this.reset();
+
+      const nameInput = document.getElementById("c-name");
+      const emailInput = document.getElementById("c-email");
+      const subjectInput = document.getElementById("c-subject");
+      const messageInput = document.getElementById("c-message");
+      const submitBtn = document.getElementById("c-submit-btn") || this.querySelector('button[type="submit"]');
+      const successEl = document.getElementById("contact-success");
+      const errorEl = document.getElementById("contact-error");
+
+      successEl.classList.add("hidden");
+      if (errorEl) {
+        errorEl.classList.add("hidden");
+        errorEl.textContent = "";
+      }
+
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      const subject = subjectInput.value.trim();
+      const message = messageInput.value.trim();
+
+      function showError(msg) {
+        if (errorEl) {
+          errorEl.textContent = msg;
+          errorEl.classList.remove("hidden");
+        } else {
+          alert(msg);
+        }
+      }
+
+      if (!name) {
+        showError("Please enter your name.");
+        nameInput.focus();
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        showError("Please enter a valid email address.");
+        emailInput.focus();
+        return;
+      }
+      if (!subject) {
+        showError("Please enter a subject.");
+        subjectInput.focus();
+        return;
+      }
+      if (!message || message.length < 5) {
+        showError("Please enter a message with at least 5 characters.");
+        messageInput.focus();
+        return;
+      }
+
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Sending…";
+
+      const apiBase = (window.AUTH && typeof window.AUTH.getApiBase === "function")
+        ? window.AUTH.getApiBase()
+        : (window.location.port === "4000" ? "" : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "http://localhost:4000" : "https://krisin-clothing-1.onrender.com"));
+
+      try {
+        const res = await fetch(`${apiBase}/api/contact`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, subject, message })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && (data.success || data.message)) {
+          this.reset();
+          successEl.textContent = data.message || "Thanks, we'll get back to you within 1 to 2 business days.";
+          successEl.classList.remove("hidden");
+        } else {
+          showError(data.error || "Failed to send message. Please try again later.");
+        }
+      } catch (err) {
+        showError("Cannot reach the server. Please check your connection and try again.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
     });
   </script>
   <script src="js/animations.js"></script>

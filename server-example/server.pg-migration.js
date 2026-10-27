@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Krisin Clothing â€” Backend Server
  * 
  * Powered by:
@@ -84,6 +84,20 @@ pool.query("SELECT 1")
   .catch((err) => {
     console.error("Neon PostgreSQL error:", err.message);
   });
+
+pool.query(`
+  CREATE TABLE IF NOT EXISTS contact_messages (
+    id VARCHAR(64) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    status VARCHAR(32) DEFAULT 'Unread',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+  );
+`).catch((err) => {
+  console.error("Neon PostgreSQL contact_messages table error:", err.message);
+});
 
 
 
@@ -1331,6 +1345,136 @@ app.delete("/api/admin/orders/:id", requireAdminAuth, async (req, res) => {
   } catch (err) {
     console.error("Delete order error:", err);
     res.status(500).json({ error: "Failed to delete order." });
+  }
+});
+
+/* =========================================================
+   CONTACT MESSAGES APIS â€” NEON POSTGRESQL
+   ========================================================= */
+
+// In-memory rate limiting for contact messages: max 5 messages per 10 minutes per IP
+const contactRateLimits = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, timestamps] of contactRateLimits.entries()) {
+    const valid = timestamps.filter(t => now - t < 10 * 60 * 1000);
+    if (valid.length === 0) contactRateLimits.delete(ip);
+    else contactRateLimits.set(ip, valid);
+  }
+}, 5 * 60 * 1000);
+
+// 1. Submit contact message (Public)
+app.post("/api/contact", async (req, res) => {
+  try {
+    const ip = req.ip || req.connection?.remoteAddress || "unknown";
+    const now = Date.now();
+    const timestamps = (contactRateLimits.get(ip) || []).filter(t => now - t < 10 * 60 * 1000);
+    if (timestamps.length >= 5) {
+      return res.status(429).json({ error: "Too many messages sent. Please wait a few minutes before trying again." });
+    }
+
+    const { name, email, subject, message } = req.body || {};
+
+    if (!name || typeof name !== "string" || !name.trim()) {
+      return res.status(400).json({ error: "Name is required." });
+    }
+    if (name.trim().length > 100) {
+      return res.status(400).json({ error: "Name must be 100 characters or fewer." });
+    }
+
+    if (!email || typeof email !== "string" || !email.trim()) {
+      return res.status(400).json({ error: "Email is required." });
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim()) || email.trim().length > 255) {
+      return res.status(400).json({ error: "A valid email address is required." });
+    }
+
+    if (!subject || typeof subject !== "string" || !subject.trim()) {
+      return res.status(400).json({ error: "Subject is required." });
+    }
+    if (subject.trim().length > 200) {
+      return res.status(400).json({ error: "Subject must be 200 characters or fewer." });
+    }
+
+    if (!message || typeof message !== "string" || !message.trim()) {
+      return res.status(400).json({ error: "Message is required." });
+    }
+    if (message.trim().length < 5) {
+      return res.status(400).json({ error: "Message must be at least 5 characters long." });
+    }
+    if (message.trim().length > 5000) {
+      return res.status(400).json({ error: "Message must be 5000 characters or fewer." });
+    }
+
+    timestamps.push(now);
+    contactRateLimits.set(ip, timestamps);
+
+    const id = `msg_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+    await pool.query(
+      `INSERT INTO contact_messages (id, name, email, subject, message, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, 'Unread', NOW())`,
+      [id, name.trim(), email.trim(), subject.trim(), message.trim()]
+    );
+
+    res.status(201).json({ success: true, message: "Thank you! Your message has been received." });
+  } catch (err) {
+    console.error("Contact message submission error:", err);
+    res.status(500).json({ error: "Failed to submit message. Please try again later." });
+  }
+});
+
+// 2. Admin: Get all messages
+app.get("/api/admin/messages", requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM contact_messages ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Admin fetch messages error:", err);
+    res.status(500).json({ error: "Failed to fetch messages." });
+  }
+});
+
+// 3. Admin: Update message status (Read / Unread)
+app.post("/api/admin/messages/:id/status", requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body || {};
+    if (!status || !["Read", "Unread", "read", "unread"].includes(status)) {
+      return res.status(400).json({ error: "Status must be 'Read' or 'Unread'." });
+    }
+    const formattedStatus = status.toLowerCase() === "read" ? "Read" : "Unread";
+    const result = await pool.query(
+      "UPDATE contact_messages SET status = $1 WHERE id = $2 RETURNING *",
+      [formattedStatus, id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+    res.json({ success: true, message: `Message marked as ${formattedStatus}.` });
+  } catch (err) {
+    console.error("Admin update message status error:", err);
+    res.status(500).json({ error: "Failed to update message status." });
+  }
+});
+
+// 4. Admin: Delete message
+app.delete("/api/admin/messages/:id", requireAdminAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      "DELETE FROM contact_messages WHERE id = $1 RETURNING id",
+      [id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+    res.json({ success: true, message: "Message deleted successfully." });
+  } catch (err) {
+    console.error("Admin delete message error:", err);
+    res.status(500).json({ error: "Failed to delete message." });
   }
 });
 
