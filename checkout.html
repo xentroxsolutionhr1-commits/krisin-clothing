@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -167,7 +167,7 @@
     <div class="page-hero" style="padding-top:40px;padding-bottom:0;border:none">
       <h1 class="heading">Checkout</h1>
       <div class="steps">
-        <div class="step done"><span class="dot">✓</span>Bag</div>
+        <div class="step done"><span class="dot">âœ“</span>Bag</div>
         <div class="step-line"></div>
         <div class="step active"><span class="dot">2</span>Details &amp; payment</div>
         <div class="step-line"></div>
@@ -206,7 +206,7 @@
             <input type="radio" name="pay" value="cod">
             <div>
               <div class="pm-title">Cash on delivery</div>
-              <div class="pm-sub">Pay in cash when your order arrives. A ₹49 handling fee applies.</div>
+              <div class="pm-sub">Pay in cash when your order arrives. A â‚¹49 handling fee applies.</div>
             </div>
           </label>
           <div class="rz-note">
@@ -242,7 +242,7 @@
   <footer class="site-footer">
     <div class="container">
       <div class="footer-bottom" style="border:none;padding-top:0">
-        <span>© 2026 Krisin Clothing</span>
+        <span>Â© 2026 Krisin Clothing</span>
       </div>
     </div>
   </footer>
@@ -266,7 +266,7 @@
          guide, including why order creation should move to a small
          backend before launch.
          ========================================================= */
-      const RAZORPAY_KEY_ID = "rzp_test_1DP5mmOlF5G5ag";
+      const RAZORPAY_KEY_ID = "rzp_test_TsnnIytpjha6Ha";
 
       const summaryEl = document.getElementById("order-summary");
       const form = document.getElementById("checkout-form");
@@ -296,7 +296,7 @@
       <h3>Order summary</h3>
       ${cart.map(item => {
           const p = getProduct(item.productId);
-          return `<div class="summary-line"><span>${p.name} × ${item.qty}</span><span class="mono-price">${formatPrice(p.price * item.qty)}</span></div>`;
+          return `<div class="summary-line"><span>${p.name} Ã— ${item.qty}</span><span class="mono-price">${formatPrice(p.price * item.qty)}</span></div>`;
         }).join("")}
       <div class="summary-line" style="border-top:1px solid var(--line);margin-top:10px;padding-top:14px"><span>Subtotal</span><span class="mono-price">${formatPrice(subtotal)}</span></div>
       <div class="summary-line"><span>Shipping</span><span class="mono-price">${shipping === 0 ? "Free" : formatPrice(shipping)}</span></div>
@@ -496,70 +496,139 @@
         }
         form.classList.add("hidden");
         document.querySelector(".steps").innerHTML = `
-      <div class="step done"><span class="dot">✓</span>Bag</div>
+      <div class="step done"><span class="dot">âœ“</span>Bag</div>
       <div class="step-line"></div>
-      <div class="step done"><span class="dot">✓</span>Details &amp; payment</div>
+      <div class="step done"><span class="dot">âœ“</span>Details &amp; payment</div>
       <div class="step-line"></div>
-      <div class="step active"><span class="dot">✓</span>Confirmation</div>`;
+      <div class="step active"><span class="dot">âœ“</span>Confirmation</div>`;
         document.getElementById("confirmation").classList.remove("hidden");
         localStorage.removeItem("mc_cart");
         updateHeaderCounts();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
-
       function makeOrderId() {
         return "KC" + Math.floor(100000 + Math.random() * 900000);
       }
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!form.checkValidity()) {
+    form.reportValidity();
+    return;
+  }
+  const method = getSelectedMethod();
+  const { total } = totals();
+  const orderId = makeOrderId();
+  const name = document.getElementById("fname").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const phone = document.getElementById("phone").value.trim();
 
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        if (!form.checkValidity()) { form.reportValidity(); return; }
+  if (method === "cod") {
+    await completeOrder(orderId, null);
+    return;
+  }
 
-        const method = getSelectedMethod();
-        const { total } = totals();
-        const orderId = makeOrderId();
-        const name = document.getElementById("fname").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const phone = document.getElementById("phone").value.trim();
+  payCta.disabled = true;
+  payCta.textContent = "Creating secure payment...";
 
-        if (method === "cod") {
-          completeOrder(orderId, null);
-          return;
-        }
+  const apiBase = (window.AUTH && window.AUTH.getApiBase)
+    ? window.AUTH.getApiBase()
+    : "https://krisin-clothing-1.onrender.com";
 
-        // Online payment via Razorpay Checkout.
+  try {
+    // 1. Create the Razorpay order on the backend.
+    const orderResponse = await fetch(`${apiBase}/create-order`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        amountInRupees: total,
+        receipt: orderId
+      })
+    });
+
+    const razorpayOrder = await orderResponse.json();
+
+    if (!orderResponse.ok || !razorpayOrder.id) {
+      throw new Error(
+        razorpayOrder.error || "Could not create Razorpay order."
+      );
+    }
+
+    payCta.textContent = "Opening secure checkout...";
+
+    // 2. Open Razorpay using the server-created order.
+    const rzp = new Razorpay({
+      key: RAZORPAY_KEY_ID,
+      order_id: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency || "INR",
+      name: "Krisin Clothing",
+      description: `Order ${orderId}`,
+      image: "assets/logo-icon.png",
+      prefill: { name, email, contact: phone },
+      notes: { order_id: orderId },
+      theme: { color: "#14244b" },
+
+      // 3. Verify the signature on the backend before saving as paid.
+      handler: async function (response) {
         payCta.disabled = true;
-        payCta.textContent = "Opening secure checkout…";
+        payCta.textContent = "Verifying payment...";
 
-        const rzp = new Razorpay({
-          key: RAZORPAY_KEY_ID,
-          amount: Math.round(total * 100), // Razorpay expects the amount in paise.
-          currency: "INR",
-          name: "Krisin Clothing",
-          description: `Order ${orderId}, ${cart.reduce((n, i) => n + i.qty, 0)} item(s)`,
-          image: "assets/logo-icon.png",
-          prefill: { name, email, contact: phone },
-          notes: { order_id: orderId },
-          theme: { color: "#14244b" },
-          handler: function (response) {
-            completeOrder(orderId, response.razorpay_payment_id);
-          },
-          modal: {
-            ondismiss: function () {
-              payCta.disabled = false;
-              renderSummary();
-            }
+        try {
+          const verifyResponse = await fetch(`${apiBase}/verify-payment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+          });
+
+          const verification = await verifyResponse.json();
+
+          if (!verifyResponse.ok || verification.verified !== true) {
+            throw new Error(
+              verification.error || "Payment verification failed."
+            );
           }
-        });
 
-        rzp.on("payment.failed", function (response) {
+          // Only save the order as paid after verification succeeds.
+          await completeOrder(orderId, response.razorpay_payment_id);
+        } catch (error) {
+          console.error("Razorpay verification error:", error);
+          alert(
+            "We could not verify or save your payment. " +
+            "Do not pay again. Keep your payment reference and contact the store."
+          );
           payCta.disabled = false;
           renderSummary();
-          showToast("Payment failed. Please try again.");
-        });
+        }
+      },
 
-        rzp.open();
-      });
+      modal: {
+        ondismiss: function () {
+          payCta.disabled = false;
+          renderSummary();
+        }
+      }
+    });
+
+    rzp.on("payment.failed", function (response) {
+      console.error("Razorpay payment failed:", response.error);
+      payCta.disabled = false;
+      renderSummary();
+      showToast("Payment failed. Please try again.");
+    });
+
+    rzp.open();
+  } catch (error) {
+    console.error("Razorpay checkout error:", error);
+    alert(error.message || "Unable to start payment. Please try again.");
+    payCta.disabled = false;
+    renderSummary();
+  }
+});
+
     })();
   </script>
   <script src="js/animations.js"></script>
