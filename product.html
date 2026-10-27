@@ -178,7 +178,6 @@
       document.getElementById("page-title").textContent = product.name + " | Krisin Clothing";
 
       let activeImg = 0;
-      let activeColor = product.colors[0].name;
       let activeSize = product.sizes.find(s => !product.outOfStock.includes(s)) || product.sizes[0];
       let qty = 1;
 
@@ -216,12 +215,6 @@
         <h1>${product.name}</h1>
         <div class="pdp-price mono-price">${product.compareAt ? `<del>${formatPrice(product.compareAt)}</del> <span class="sale-price">${formatPrice(product.price)}</span>` : formatPrice(product.price)}</div>
 
-        <div class="option-row">
-          <div class="label-line"><span>Color: ${activeColor}</span></div>
-          <div class="color-options">
-            ${product.colors.map(c => `<button class="color-swatch ${c.name === activeColor ? "active" : ""}" style="background:${c.hex}" data-color="${c.name}" aria-label="${c.name}"></button>`).join("")}
-          </div>
-        </div>
 
         <div class="option-row">
           <div class="label-line"><span>Size: ${activeSize}</span><a href="#size-guide" class="link-underline" style="border-color:var(--stone)">Size Guide</a></div>
@@ -256,7 +249,6 @@
     </div>`;
 
         root.querySelectorAll(".pdp-thumbs button").forEach(b => b.addEventListener("click", () => { activeImg = +b.dataset.img; render(); }));
-        root.querySelectorAll(".color-swatch").forEach(b => b.addEventListener("click", () => { activeColor = b.dataset.color; render(); }));
         root.querySelectorAll(".size-box:not(.disabled)").forEach(b => b.addEventListener("click", () => { activeSize = b.dataset.size; render(); }));
         root.querySelector('[data-qty="inc"]').addEventListener("click", () => { qty++; render(); });
         root.querySelector('[data-qty="dec"]').addEventListener("click", () => { if (qty > 1) qty--; render(); });
@@ -266,11 +258,11 @@
           render();
         });
         root.querySelector("#add-to-cart").addEventListener("click", () => {
-          STORE.addToCart(product.id, activeColor, activeSize, qty);
+          STORE.addToCart(product.id, "", activeSize, qty);
           showToast("Added to your bag");
         });
         root.querySelector("#buy-now").addEventListener("click", () => {
-          STORE.addToCart(product.id, activeColor, activeSize, qty);
+          STORE.addToCart(product.id, "", activeSize, qty);
           if (typeof AUTH !== "undefined" && !AUTH.isCustomerLoggedIn()) {
             window.location.href = "login.html?redirect=checkout";
           } else {
