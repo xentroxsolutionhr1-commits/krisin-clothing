@@ -59,9 +59,6 @@
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
           </svg>Customers</button>
-        <button data-tab="coupons"><svg viewBox="0 0 24 24">
-            <path d="M4 9a2 2 0 002-2V5h12v2a2 2 0 002 2v6a2 2 0 00-2 2v2H6v-2a2 2 0 00-2-2V9z" />
-          </svg>Coupons</button>
         <button data-tab="reviews"><svg viewBox="0 0 24 24">
             <path d="M12 2l2.9 6.5 7.1.6-5.4 4.7 1.7 6.9-6.3-3.9-6.3 3.9 1.7-6.9-5.4-4.7 7.1-.6L12 2z" />
           </svg>Reviews</button>
@@ -271,25 +268,6 @@
               </tr>
             </thead>
             <tbody id="customers-body"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- COUPONS -->
-      <section class="a-tab" id="tab-coupons">
-        <div class="a-actions"><button class="a-btn primary" id="btn-add-coupon">+ Create coupon</button></div>
-        <div class="a-panel" style="padding:0">
-          <table class="a-table" style="padding:12px">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Discount</th>
-                <th>Uses</th>
-                <th>Expires</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="coupons-body"></tbody>
           </table>
         </div>
       </section>
@@ -637,7 +615,6 @@
       inventory: ["Inventory", "Track stock across every size and colour."],
       orders: ["Orders", "View and fulfil customer orders."],
       customers: ["Customers", "Everyone who has shopped with Krisin Clothing, and their account access."],
-      coupons: ["Coupons", "Manage discount codes and promotions."],
       reviews: ["Reviews", "Moderate product reviews from customers."]
     };
     document.getElementById("a-nav").addEventListener("click", (e) => {
@@ -653,8 +630,8 @@
     });
 
     /* =========================================================
-       Mock orders / customers / coupons / reviews
-       (Orders, coupons and reviews are demo data — wiring these
+       Mock orders / customers / reviews
+       (Orders and reviews are demo data — wiring these
        to real records needs the backend described in the README.)
        ========================================================= */
     const ORDERS = [
@@ -671,11 +648,6 @@
       { name: "Rahul Nair", email: "rahul.nair@example.com", phone: "9876543212", pass: "rahul$2026", orders: 4, ltv: 9640 },
       { name: "Divya Krishnan", email: "divya.k@example.com", phone: "9876543213", pass: "divya@krish", orders: 9, ltv: 27210 },
       { name: "Kiran Das", email: "kiran.das@example.com", phone: "9876543214", pass: "kiran!999", orders: 1, ltv: 899 }
-    ];
-    const COUPONS = [
-      { code: "WELCOME10", discount: "10% off", uses: "482 / ∞", expires: "31 Dec 2026", status: "ok" },
-      { code: "FREESHIP", discount: "Free shipping", uses: "213 / ∞", expires: "31 Oct 2026", status: "ok" },
-      { code: "FEST25", discount: "25% off", uses: "97 / 500", expires: "15 Sep 2026", status: "low" }
     ];
     const REVIEWS = [
       { product: "Minimal Oversized Tee", customer: "Aarav Menon", rating: 5, comment: "Fits exactly as described, fabric feels premium.", status: "ok" },
@@ -1699,15 +1671,6 @@
       }
     });
 
-    /* =========================================================
-       Coupons
-       ========================================================= */
-    document.getElementById("coupons-body").innerHTML = COUPONS.map(c => `
-  <tr><td><strong>${c.code}</strong></td><td>${c.discount}</td><td>${c.uses}</td><td>${c.expires}</td>
-  <td><span class="a-status ${c.status === "ok" ? "paid" : "pending"}">${c.status === "ok" ? "Active" : "Ending soon"}</span></td></tr>`).join("");
-    document.getElementById("btn-add-coupon").addEventListener("click", () => {
-      toast("Coupon creation needs the backend described in the README — this demo view is read-only.", "error");
-    });
 
     /* =========================================================
        Reviews
