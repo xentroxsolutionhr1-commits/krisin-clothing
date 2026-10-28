@@ -245,6 +245,12 @@
         <p class="sub" style="font-size:12.5px;color:var(--stone)" id="size-guide">${product.stock > 10 ? "In stock, ready to ship." : `Only ${product.stock} left, order soon.`}</p>
 
         <div style="margin-top:30px">${accordionHTML()}</div>
+        <section class="section" id="reviews-section" style="margin-top:20px;">
+          <h2 class="heading">Customer Reviews</h2>
+          <div id="reviews-summary"></div>
+          <div id="reviews-list"></div>
+          <button class="btn btn-primary" id="write-review-btn" style="margin-top:15px; display:none;">Write a Review</button>
+        </section>
       </div>
     </div>`;
 
@@ -270,8 +276,124 @@
           }
         });
         root.querySelectorAll(".accordion-head").forEach(h => h.addEventListener("click", () => {
-          h.closest(".accordion-item").classList.toggle("open");
-        }));
+  h.closest(".accordion-item").classList.toggle("open");
+}));
+
+// Load and display product reviews
+function loadReviews() {
+  fetch(`/api/products/${product.id}/reviews`)
+    .then(res => res.json())
+    .then(data => {
+      const summaryEl = document.getElementById('reviews-summary');
+      const listEl = document.getElementById('reviews-list');
+      summaryEl.innerHTML = '';
+      listEl.innerHTML = '';
+      if (data.reviewCount) {
+        summaryEl.innerHTML = `<div class="rating-summary"><span class="average">${data.averageRating} ★</span> (${data.reviewCount} reviews)</div>`;
+      } else {
+        summaryEl.textContent = 'No reviews yet.';
+      }
+      data.reviews.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'review-item';
+        const nameEl = document.createElement('strong');
+        nameEl.textContent = r.customer_name || 'Anonymous';
+        const ratingEl = document.createElement('span');
+        ratingEl.className = 'rating';
+        ratingEl.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+        const commentEl = document.createElement('p');
+        commentEl.textContent = r.comment || '';
+        div.appendChild(nameEl);
+        div.appendChild(document.createTextNode(' '));
+        div.appendChild(ratingEl);
+        div.appendChild(commentEl);
+        listEl.appendChild(div);
+      });
+      updateWriteReviewButton(data.reviews.map(r => r.order_id));
+    })
+    .catch(err => console.error('Failed to load reviews', err));
+}
+
+// Show Write Review button if customer has a delivered order for this product without a review
+function updateWriteReviewButton(existingOrderIds) {
+  const btn = document.getElementById('write-review-btn');
+  btn.style.display = 'none';
+  if (!window.AUTH || !AUTH.isCustomerLoggedIn()) return;
+  const token = AUTH.getCustomerToken();
+  fetch('/api/customer/orders', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+    .then(res => res.json())
+    .then(orders => {
+      const eligible = orders.find(o => {
+        const status = (o.status || '').toLowerCase();
+        const items = o.items_json ? JSON.parse(o.items_json) : [];
+        const hasProduct = items.some(i => i.id === product.id);
+        return status === 'delivered' && hasProduct && !existingOrderIds.includes(o.id);
+      });
+      if (eligible) {
+        btn.style.display = 'inline-block';
+        btn.onclick = () => showReviewForm(eligible.id);
+      }
+    })
+    .catch(err => console.error('Failed to check orders', err));
+}
+
+// Simple modal for submitting a review
+function showReviewForm(orderId) {
+  const overlay = document.createElement('div');
+  overlay.className = 'review-modal-overlay';
+  overlay.innerHTML = `
+    <div class="review-modal">
+      <h3>Write a Review</h3>
+      <label>Rating: <select id="review-rating">
+        <option value="5">5 ★</option>
+        <option value="4">4 ★</option>
+        <option value="3">3 ★</option>
+        <option value="2">2 ★</option>
+        <option value="1">1 ★</option>
+      </select></label>
+      <br/>
+      <label>Comment:<br/><textarea id="review-comment" rows="4" style="width:100%;"></textarea></label>
+      <br/>
+      <button id="submit-review" class="btn btn-primary">Submit</button>
+      <button id="cancel-review" class="btn btn-outline">Cancel</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('cancel-review').onclick = () => overlay.remove();
+  document.getElementById('submit-review').onclick = () => {
+    const rating = document.getElementById('review-rating').value;
+    const comment = document.getElementById('review-comment').value.trim();
+    const token = AUTH.getCustomerToken();
+    fetch('/api/reviews', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        product: product.id,
+        orderId,
+        rating,
+        comment
+      })
+    })
+      .then(res => res.json())
+      .then(resp => {
+        if (resp.error) {
+          alert(resp.error);
+        } else {
+          alert('Review submitted for approval.');
+          overlay.remove();
+          loadReviews();
+        }
+      })
+      .catch(err => console.error('Submit review failed', err));
+  };
+}
+
+// Initial load of reviews
+loadReviews();
       }
 
       render();

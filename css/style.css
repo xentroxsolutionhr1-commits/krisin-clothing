@@ -3007,4 +3007,38 @@ fieldset {
 [data-scroll-reveal].revealed {
   opacity: 1;
   transform: none;
+}/* Review Section Styles */
+.reviews-section {
+  margin-top: 20px;
+}
+.rating-summary {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.review-item {
+  border-bottom: 1px solid var(--stone);
+  padding: 8px 0;
+}
+.review-item .rating {
+  color: var(--gold, #f5a623);
+  margin-left: 8px;
+}
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.review-modal {
+  background: var(--bg);
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+}
+.review-modal h3 {
+  margin-top: 0;
 }

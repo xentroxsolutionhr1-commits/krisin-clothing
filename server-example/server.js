@@ -159,6 +159,18 @@ db.exec(`
     status TEXT DEFAULT 'Unread',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS reviews (
+    id TEXT PRIMARY KEY,
+    product TEXT NOT NULL,
+    customer_id TEXT NOT NULL,
+    order_id TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_reviews_order_product ON reviews (order_id, product);
 `);
 
 try {
@@ -590,6 +602,139 @@ app.delete("/api/admin/products/:id", requireAdminAuth, (req, res) => {
   } catch (err) {
     console.error("Delete product error:", err);
     res.status(500).json({ error: "Failed to delete product." });
+  }
+});
+
+// ----------------------------------------------------------
+// Customer Orders Endpoint (for checking delivered orders)
+app.get("/api/customer/orders", requireCustomerAuth, (req, res) => {
+  try {
+    const orders = db.prepare(`
+      SELECT * FROM orders WHERE customer_id = ? ORDER BY created_at DESC
+    `).all(req.user.id);
+    res.json(orders);
+  } catch (err) {
+    console.error("Fetch customer orders error:", err);
+    res.status(500).json({ error: "Unable to fetch orders." });
+  }
+});
+
+// ----------------------------------------------------------
+// Reviews API
+// 1. Submit Review (Customer)
+app.post("/api/reviews", requireCustomerAuth, (req, res) => {
+  try {
+    const { product, orderId, rating, comment } = req.body;
+    if (!product || !orderId || !rating) {
+      return res.status(400).json({ error: "product, orderId and rating are required." });
+    }
+    const ratingInt = Number(rating);
+    if (!Number.isInteger(ratingInt) || ratingInt < 1 || ratingInt > 5) {
+      return res.status(400).json({ error: "Rating must be an integer between 1 and 5." });
+    }
+    // Verify order belongs to user and is delivered
+    const order = db.prepare(`SELECT * FROM orders WHERE id = ? AND customer_id = ?`).get(orderId, req.user.id);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found for this customer." });
+    }
+    const statusLower = (order.status || "").toLowerCase();
+    if (statusLower !== "delivered") {
+      return res.status(403).json({ error: "Can only review delivered orders." });
+    }
+    // Verify the product belongs to this order
+    const items = order.items_json ? JSON.parse(order.items_json) : [];
+    const productInOrder = items.some(i => i.id === product);
+    if (!productInOrder) {
+      return res.status(400).json({ error: "Product does not belong to the specified order." });
+    }
+    // Prevent duplicate review for same order & product
+    const existing = db.prepare(`SELECT id FROM reviews WHERE order_id = ? AND product = ?`).get(orderId, product);
+    if (existing) {
+      return res.status(409).json({ error: "Review for this order and product already exists." });
+    }
+    const reviewId = "rev_" + crypto.randomUUID().slice(0, 8);
+    try {
+      db.prepare(`
+        INSERT INTO reviews (id, product, customer_id, order_id, rating, comment, status)
+        VALUES (?, ?, ?, ?, ?, ?, 'pending')
+      `).run(reviewId, product, req.user.id, orderId, ratingInt, comment || "");
+    } catch (insertErr) {
+      // Handle unique constraint violation gracefully
+      if (insertErr && insertErr.code && insertErr.code.startsWith('SQLITE_CONSTRAINT')) {
+        return res.status(409).json({ error: "Duplicate review detected." });
+      }
+      console.error("Submit review error:", insertErr);
+      return res.status(500).json({ error: "Unable to submit review." });
+    }
+    res.status(201).json({ message: "Review submitted for approval.", reviewId });
+  } catch (err) {
+    console.error("Submit review error:", err);
+    res.status(500).json({ error: "Unable to submit review." });
+  }
+});
+
+// 2. Get Approved Reviews for a Product (Public)
+app.get("/api/products/:id/reviews", (req, res) => {
+  try {
+    const productId = req.params.id;
+    const rows = db.prepare(`
+      SELECT r.rating, r.comment, r.created_at, r.order_id, u.name AS customer_name
+      FROM reviews r
+      LEFT JOIN users u ON r.customer_id = u.id
+      WHERE r.product = ? AND r.status = 'approved'
+      ORDER BY r.created_at DESC
+    `).all(productId);
+    const total = rows.reduce((sum, r) => sum + r.rating, 0);
+    const avg = rows.length ? (total / rows.length).toFixed(2) : null;
+    res.json({ reviews: rows, averageRating: avg, reviewCount: rows.length });
+  } catch (err) {
+    console.error("Fetch product reviews error:", err);
+    res.status(500).json({ error: "Unable to fetch reviews." });
+  }
+});
+
+// 3. Admin: List All Reviews
+app.get("/api/admin/reviews", requireAdminAuth, (req, res) => {
+  try {
+    const reviews = db.prepare(`
+      SELECT r.*, u.name AS customer_name, p.name AS product_name
+      FROM reviews r
+      LEFT JOIN users u ON r.customer_id = u.id
+      LEFT JOIN custom_products p ON r.product = p.id
+      ORDER BY r.created_at DESC
+    `).all();
+    res.json(reviews);
+  } catch (err) {
+    console.error("Admin fetch reviews error:", err);
+    res.status(500).json({ error: "Unable to fetch reviews." });
+  }
+});
+
+// 4. Admin: Approve / Reject Review
+app.patch("/api/admin/reviews/:id", requireAdminAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // expected 'approved' or 'rejected'
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: "Invalid status value." });
+    }
+    db.prepare(`UPDATE reviews SET status = ? WHERE id = ?`).run(status, id);
+    res.json({ message: `Review ${status}.` });
+  } catch (err) {
+    console.error("Admin update review error:", err);
+    res.status(500).json({ error: "Unable to update review." });
+  }
+});
+
+// 5. Admin: Delete Review
+app.delete("/api/admin/reviews/:id", requireAdminAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    db.prepare(`DELETE FROM reviews WHERE id = ?`).run(id);
+    res.json({ message: "Review deleted successfully." });
+  } catch (err) {
+    console.error("Admin delete review error:", err);
+    res.status(500).json({ error: "Unable to delete review." });
   }
 });
 

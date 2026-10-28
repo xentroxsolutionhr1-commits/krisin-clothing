@@ -1756,10 +1756,72 @@
     /* =========================================================
        Reviews
        ========================================================= */
-    document.getElementById("reviews-body").innerHTML = REVIEWS.map(r => `
-  <tr><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer)}</td><td>${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</td>
-  <td style="max-width:260px">${escapeHtml(r.comment)}</td>
-  <td><span class="a-status ${r.status === "ok" ? "paid" : "pending"}">${r.status === "ok" ? "Published" : "Needs review"}</span></td></tr>`).join("");
+// Admin Reviews: fetch from backend and render with actions
+function fetchAdminReviews() {
+  fetch(`${ADMIN_API}/api/admin/reviews`, { headers: { Authorization: `Bearer ${getAdminToken()}` } })
+    .then(res => res.json())
+    .then(data => {
+      const reviews = Array.isArray(data) ? data : [];
+      const tbody = document.getElementById("reviews-body");
+      if (!reviews.length) {
+        tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty">No reviews found.</div></td></tr>`;
+        return;
+      }
+      tbody.innerHTML = reviews.map(r => `
+        <tr data-id="${r.id}">
+          <td>${escapeHtml(r.product || r.product_name || "")}</td>
+          <td>${escapeHtml(r.customer_name || "")}</td>
+          <td>${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</td>
+          <td style="max-width:260px">${escapeHtml(r.comment || "")}</td>
+          <td><span class="a-status ${r.status === "approved" ? "paid" : r.status === "rejected" ? "danger" : "pending"}">${r.status}</span></td>
+          <td>
+            ${r.status === "pending" ? `
+              <button class="a-btn small" onclick="updateReviewStatus('${r.id}', 'approved')">Approve</button>
+              <button class="a-btn small" onclick="updateReviewStatus('${r.id}', 'rejected')">Reject</button>
+            ` : ""}
+            <button class="a-btn danger small" onclick="deleteReview('${r.id}')">Delete</button>
+          </td>
+        </tr>`).join("");
+    })
+    .catch(() => {
+      const tbody = document.getElementById("reviews-body");
+      tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty">Failed to load reviews.</div></td></tr>`;
+    });
+}
+
+function updateReviewStatus(id, status) {
+  fetch(`${ADMIN_API}/api/admin/reviews/${id}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getAdminToken()}`
+    },
+    body: JSON.stringify({ status })
+  })
+    .then(res => {
+      if (!res.ok) throw new Error();
+      return res.json();
+    })
+    .then(() => fetchAdminReviews())
+    .catch(() => toast("Failed to update review.", "error"));
+}
+
+function deleteReview(id) {
+  if (!confirm("Delete this review permanently?")) return;
+  fetch(`${ADMIN_API}/api/admin/reviews/${id}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${getAdminToken()}` }
+  })
+    .then(res => {
+      if (!res.ok) throw new Error();
+      return res.json();
+    })
+    .then(() => fetchAdminReviews())
+    .catch(() => toast("Failed to delete review.", "error"));
+}
+
+// Initial load
+fetchAdminReviews();
 
     /* =========================================================
        Users tab — live from backend
