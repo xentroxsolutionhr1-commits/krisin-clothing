@@ -39,7 +39,7 @@
             <path d="M21 21l-4.3-4.3" />
           </svg>
         </button>
-        <div class="search-bar"><input type="text" id="na-search" placeholder="Search products…"></div>
+        <div class="search-bar"><input type="search" id="na-search" placeholder="Search products…"></div>
         <a href="login.html" class="icon-btn" aria-label="Account">
           <svg viewBox="0 0 24 24">
             <circle cx="12" cy="8" r="4" />
@@ -107,8 +107,8 @@
   <main>
     <div class="shop-header container">
       <p class="eyebrow">Just In</p>
-      <h1 class="display-2" style="margin-top:10px">New Arrivals</h1>
-      <p class="sub" style="margin-top:14px">Fresh pieces for everyday wear — only the latest additions.</p>
+      <h1 class="display-2" id="na-title" style="margin-top:10px">New Arrivals</h1>
+      <p class="sub" id="na-subtitle" style="margin-top:14px">Fresh pieces for everyday wear — only the latest additions.</p>
     </div>
 
     <div class="container shop-toolbar" style="margin-top:24px">
@@ -185,6 +185,14 @@
       const countEl = document.getElementById("na-result-count");
       const sortSelect = document.getElementById("na-sort-select");
       const chipsEl = document.getElementById("na-category-chips");
+      const searchInput = document.getElementById("na-search");
+      const searchBar = document.querySelector(".search-bar");
+      const titleEl = document.getElementById("na-title");
+      const subEl = document.getElementById("na-subtitle");
+
+      const params = new URLSearchParams(window.location.search);
+      let searchQuery = (params.get("q") || "").trim();
+      let lastQuery = searchQuery;
 
       // Only new arrivals
       let baseList = getAdminProducts().filter(p => p.isNew === true);
@@ -211,19 +219,99 @@
 
       sortSelect.addEventListener("change", render);
 
+      function updateHeading() {
+        if (!titleEl || !subEl) return;
+        if (searchQuery) {
+          titleEl.textContent = `Results for "${searchQuery}"`;
+          subEl.textContent = "";
+        } else {
+          titleEl.textContent = "New Arrivals";
+          subEl.textContent = "Fresh pieces for everyday wear — only the latest additions.";
+        }
+      }
+
+      function syncSearch(query) {
+        searchQuery = (query || "").trim();
+        try {
+          const url = new URL(window.location.href);
+          if (searchQuery) {
+            url.searchParams.set("q", searchQuery);
+          } else {
+            url.searchParams.delete("q");
+          }
+          const searchStr = url.searchParams.toString();
+          const newUrl = url.pathname + (searchStr ? "?" + searchStr : "") + url.hash;
+          window.history.replaceState({}, "", newUrl);
+        } catch (err) {}
+
+        updateHeading();
+        render();
+      }
+
+      function handleSearchChange(val) {
+        const query = (val || "").trim();
+        if (query === lastQuery) return;
+        lastQuery = query;
+        syncSearch(query);
+      }
+
+      if (searchInput) {
+        if (searchQuery) {
+          searchInput.value = searchQuery;
+          if (searchBar) searchBar.classList.add("open");
+        }
+        searchInput.addEventListener("input", e => handleSearchChange(e.target.value));
+        searchInput.addEventListener("search", e => handleSearchChange(e.target.value));
+        searchInput.addEventListener("keyup", e => handleSearchChange(e.target.value));
+        searchInput.addEventListener("change", e => handleSearchChange(e.target.value));
+        searchInput.addEventListener("keydown", e => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearchChange(searchInput.value);
+            searchInput.blur();
+          }
+        });
+      }
+
+      window.addEventListener("popstate", () => {
+        const curParams = new URLSearchParams(window.location.search);
+        const newQ = (curParams.get("q") || "").trim();
+        searchQuery = newQ;
+        lastQuery = newQ;
+        if (searchInput) searchInput.value = newQ;
+        updateHeading();
+        render();
+      });
+
       function render() {
         let list = activeCat === "all"
           ? baseList.slice()
           : baseList.filter(p => p.category === activeCat);
+
+        if (searchQuery) {
+          const q = searchQuery.toLowerCase();
+          list = list.filter(p => {
+            const nameMatch = p.name && p.name.toLowerCase().includes(q);
+            const catMatch = p.category && p.category.toLowerCase().includes(q);
+            const descMatch = p.description && p.description.toLowerCase().includes(q);
+            const colorMatch = Array.isArray(p.colors) && p.colors.some(c => c.name && c.name.toLowerCase().includes(q));
+            return nameMatch || catMatch || descMatch || colorMatch;
+          });
+        }
 
         const sort = sortSelect.value;
         if (sort === "price-asc") list.sort((a, b) => a.price - b.price);
         if (sort === "price-desc") list.sort((a, b) => b.price - a.price);
 
         countEl.textContent = list.length;
-        renderProductGrid(grid, list);
+        if (list.length === 0 && searchQuery) {
+          grid.innerHTML = `<p class="sub">No new arrivals match "${searchQuery}". <a href="shop.html?q=${encodeURIComponent(searchQuery)}" class="link-underline" style="color:var(--accent);text-decoration:underline;margin-left:6px;">Search all products →</a></p>`;
+        } else {
+          renderProductGrid(grid, list);
+        }
       }
 
+      updateHeading();
       render();
     })();
   </script>

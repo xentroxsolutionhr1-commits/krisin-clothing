@@ -207,9 +207,19 @@ function initHeader() {
     });
     const searchInput = searchBar.querySelector("input");
     if (searchInput) {
+      const urlQ = new URLSearchParams(window.location.search).get("q");
+      if (urlQ && !document.getElementById("shop-search") && !document.getElementById("na-search")) {
+        searchInput.value = urlQ;
+      }
+
       searchInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && searchInput.value.trim()) {
-          window.location.href = `shop.html?q=${encodeURIComponent(searchInput.value.trim())}`;
+        if (e.key === "Enter") {
+          const isLivePage = !!document.getElementById("shop-search") || !!document.getElementById("na-search");
+          if (!isLivePage) {
+            e.preventDefault();
+            const val = searchInput.value.trim();
+            window.location.href = val ? `shop.html?q=${encodeURIComponent(val)}` : "shop.html";
+          }
         }
       });
     }

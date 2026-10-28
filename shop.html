@@ -38,7 +38,7 @@
             <path d="M21 21l-4.3-4.3" />
           </svg>
         </button>
-        <div class="search-bar"><input type="text" id="shop-search" placeholder="Search products…"></div>
+        <div class="search-bar"><input type="search" id="shop-search" placeholder="Search products…"></div>
         <a href="login.html" class="icon-btn" aria-label="Account">
           <svg viewBox="0 0 24 24">
             <circle cx="12" cy="8" r="4" />
@@ -204,6 +204,7 @@
       const grid = document.getElementById("shop-grid");
       const sortSelect = document.getElementById("sort-select");
       const searchInput = document.getElementById("shop-search");
+      const searchBar = document.querySelector(".search-bar");
 
       let state = {
         cat: params.get("cat") || "all",
@@ -211,23 +212,87 @@
         colors: new Set(),
         price: "all",
         sort: "featured",
-        q: params.get("q") || "",
-        wishlistOnly: params.get("filter") === "wishlist"
+        q: (params.get("q") || "").trim(),
+        wishlistOnly: params.get("filter") === "wishlist",
+        newOnly: params.get("filter") === "new"
       };
 
-      if (params.get("filter") === "new") {
-        document.getElementById("shop-title").textContent = "New Arrivals";
-        document.getElementById("shop-subtitle").textContent = "Fresh pieces for everyday wear.";
+      let lastQuery = state.q;
+
+      function updateHeading() {
+        const titleEl = document.getElementById("shop-title");
+        const subEl = document.getElementById("shop-subtitle");
+        if (!titleEl || !subEl) return;
+
+        if (state.q) {
+          titleEl.textContent = `Results for "${state.q}"`;
+          subEl.textContent = "";
+        } else if (state.wishlistOnly) {
+          titleEl.textContent = "Your Wishlist";
+          subEl.textContent = "Saved pieces, ready when you are.";
+        } else if (state.newOnly) {
+          titleEl.textContent = "New Arrivals";
+          subEl.textContent = "Fresh pieces for everyday wear.";
+        } else {
+          titleEl.textContent = "Shop All";
+          subEl.textContent = "Every essential, in one place.";
+        }
       }
-      if (state.wishlistOnly) {
-        document.getElementById("shop-title").textContent = "Your Wishlist";
-        document.getElementById("shop-subtitle").textContent = "Saved pieces, ready when you are.";
+
+      function syncSearch(query) {
+        state.q = (query || "").trim();
+
+        try {
+          const url = new URL(window.location.href);
+          if (state.q) {
+            url.searchParams.set("q", state.q);
+          } else {
+            url.searchParams.delete("q");
+          }
+          const searchStr = url.searchParams.toString();
+          const newUrl = url.pathname + (searchStr ? "?" + searchStr : "") + url.hash;
+          window.history.replaceState({}, "", newUrl);
+        } catch (err) {}
+
+        updateHeading();
+        render();
       }
-      if (state.q) {
-        document.getElementById("shop-title").textContent = `Results for "${state.q}"`;
-        document.getElementById("shop-subtitle").textContent = "";
-        if (searchInput) searchInput.value = state.q;
+
+      function handleSearchChange(val) {
+        const query = (val || "").trim();
+        if (query === lastQuery) return;
+        lastQuery = query;
+        syncSearch(query);
       }
+
+      if (searchInput) {
+        if (state.q) {
+          searchInput.value = state.q;
+          if (searchBar) searchBar.classList.add("open");
+        }
+
+        searchInput.addEventListener("input", (e) => handleSearchChange(e.target.value));
+        searchInput.addEventListener("search", (e) => handleSearchChange(e.target.value));
+        searchInput.addEventListener("keyup", (e) => handleSearchChange(e.target.value));
+        searchInput.addEventListener("change", (e) => handleSearchChange(e.target.value));
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearchChange(searchInput.value);
+            searchInput.blur();
+          }
+        });
+      }
+
+      window.addEventListener("popstate", () => {
+        const curParams = new URLSearchParams(window.location.search);
+        const newQ = (curParams.get("q") || "").trim();
+        state.q = newQ;
+        lastQuery = newQ;
+        if (searchInput) searchInput.value = newQ;
+        updateHeading();
+        render();
+      });
 
       (typeof getStoreCategories === "function" ? getStoreCategories() : CATEGORIES).forEach(cat => {
         const b = document.createElement("button");
@@ -236,7 +301,7 @@
         b.textContent = cat;
         chipsEl.appendChild(b);
       });
-      if (state.cat !== "all") chipsEl.querySelector('[data-cat="all"]').classList.remove("active");
+      if (state.cat !== "all") chipsEl.querySelector('[data-cat="all"]')?.classList.remove("active");
 
       chipsEl.addEventListener("click", (e) => {
         const btn = e.target.closest(".filter-chip");
@@ -286,6 +351,9 @@
           const wish = STORE.getWishlist();
           list = list.filter(p => wish.includes(p.id));
         }
+        if (state.newOnly) {
+          list = list.filter(p => p.isNew === true);
+        }
         if (state.cat !== "all") list = list.filter(p => p.category === state.cat);
         if (state.sizes.size) list = list.filter(p => p.sizes.some(s => state.sizes.has(s)));
         if (state.colors.size) list = list.filter(p => p.colors.some(c => state.colors.has(c.name)));
@@ -295,7 +363,13 @@
         }
         if (state.q) {
           const q = state.q.toLowerCase();
-          list = list.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+          list = list.filter(p => {
+            const nameMatch = p.name && p.name.toLowerCase().includes(q);
+            const catMatch = p.category && p.category.toLowerCase().includes(q);
+            const descMatch = p.description && p.description.toLowerCase().includes(q);
+            const colorMatch = Array.isArray(p.colors) && p.colors.some(c => c.name && c.name.toLowerCase().includes(q));
+            return nameMatch || catMatch || descMatch || colorMatch;
+          });
         }
 
         if (state.sort === "price-asc") list.sort((a, b) => a.price - b.price);
@@ -306,6 +380,7 @@
         renderProductGrid(grid, list);
       }
 
+      updateHeading();
       render();
     })();
   </script>
