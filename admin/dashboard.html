@@ -63,9 +63,7 @@
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
             <polyline points="22,6 12,13 2,6" />
           </svg>Messages<span id="nav-unread-badge" style="display:none;margin-left:auto;background:#e11d48;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">0</span></button>
-        <button data-tab="reviews"><svg viewBox="0 0 24 24">
-            <path d="M12 2l2.9 6.5 7.1.6-5.4 4.7 1.7 6.9-6.3-3.9-6.3 3.9 1.7-6.9-5.4-4.7 7.1-.6L12 2z" />
-          </svg>Reviews</button>
+
         <button data-tab="users"><svg viewBox="0 0 24 24">
             <circle cx="9" cy="7" r="4" />
             <path d="M2 21c1-4 4-6 7-6s6 2 7 6" />
@@ -695,7 +693,7 @@
       orders: ["Orders", "View and fulfil customer orders."],
       customers: ["Customers", "Everyone who has shopped with Krisin Clothing, and their account access."],
       messages: ["Messages", "Contact inquiries and customer feedback."],
-      reviews: ["Reviews", "Moderate product reviews from customers."],
+
       users: ["Users", "Manage user logins and customer account access."]
     };
     document.getElementById("a-nav").addEventListener("click", (e) => {
@@ -1753,75 +1751,8 @@
     });
 
 
-    /* =========================================================
-       Reviews
-       ========================================================= */
-// Admin Reviews: fetch from backend and render with actions
-function fetchAdminReviews() {
-  fetch(`${ADMIN_API}/api/admin/reviews`, { headers: { Authorization: `Bearer ${getAdminToken()}` } })
-    .then(res => res.json())
-    .then(data => {
-      const reviews = Array.isArray(data) ? data : [];
-      const tbody = document.getElementById("reviews-body");
-      if (!reviews.length) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty">No reviews found.</div></td></tr>`;
-        return;
-      }
-      tbody.innerHTML = reviews.map(r => `
-        <tr data-id="${r.id}">
-          <td>${escapeHtml(r.product || r.product_name || "")}</td>
-          <td>${escapeHtml(r.customer_name || "")}</td>
-          <td>${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)}</td>
-          <td style="max-width:260px">${escapeHtml(r.comment || "")}</td>
-          <td><span class="a-status ${r.status === "approved" ? "paid" : r.status === "rejected" ? "danger" : "pending"}">${r.status}</span></td>
-          <td>
-            ${r.status === "pending" ? `
-              <button class="a-btn small" onclick="updateReviewStatus('${r.id}', 'approved')">Approve</button>
-              <button class="a-btn small" onclick="updateReviewStatus('${r.id}', 'rejected')">Reject</button>
-            ` : ""}
-            <button class="a-btn danger small" onclick="deleteReview('${r.id}')">Delete</button>
-          </td>
-        </tr>`).join("");
-    })
-    .catch(() => {
-      const tbody = document.getElementById("reviews-body");
-      tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty">Failed to load reviews.</div></td></tr>`;
-    });
-}
 
-function updateReviewStatus(id, status) {
-  fetch(`${ADMIN_API}/api/admin/reviews/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getAdminToken()}`
-    },
-    body: JSON.stringify({ status })
-  })
-    .then(res => {
-      if (!res.ok) throw new Error();
-      return res.json();
-    })
-    .then(() => fetchAdminReviews())
-    .catch(() => toast("Failed to update review.", "error"));
-}
 
-function deleteReview(id) {
-  if (!confirm("Delete this review permanently?")) return;
-  fetch(`${ADMIN_API}/api/admin/reviews/${id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${getAdminToken()}` }
-  })
-    .then(res => {
-      if (!res.ok) throw new Error();
-      return res.json();
-    })
-    .then(() => fetchAdminReviews())
-    .catch(() => toast("Failed to delete review.", "error"));
-}
-
-// Initial load
-fetchAdminReviews();
 
     /* =========================================================
        Users tab — live from backend
