@@ -179,6 +179,35 @@ try {
   // Column already exists
 }
 
+try {
+  const customProductColumns = new Set(
+    db.prepare("PRAGMA table_info(custom_products)").all().map(col => col.name)
+  );
+
+  if (!customProductColumns.has("fit")) {
+    try {
+      db.exec("ALTER TABLE custom_products ADD COLUMN fit TEXT;");
+    } catch (err) {
+      if (!/duplicate column/i.test(err.message)) {
+        throw err;
+      }
+    }
+  }
+
+  if (!customProductColumns.has("material")) {
+    try {
+      db.exec("ALTER TABLE custom_products ADD COLUMN material TEXT;");
+    } catch (err) {
+      if (!/duplicate column/i.test(err.message)) {
+        throw err;
+      }
+    }
+  }
+} catch (err) {
+  console.error("Fatal error migrating custom_products table schema:", err);
+  process.exit(1);
+}
+
 // Seed default customers if empty
 const userCount = db.prepare("SELECT COUNT(*) as count FROM users").get().count;
 if (userCount === 0) {

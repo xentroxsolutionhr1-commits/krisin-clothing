@@ -183,11 +183,17 @@
 
       const root = document.getElementById("pdp-root");
 
+      function formatAccordionText(str, fallback) {
+        if (!str || !String(str).trim()) return `<p>${fallback || "Not specified."}</p>`;
+        const escaped = String(str).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+        return `<p style="white-space: pre-line;">${escaped}</p>`;
+      }
+
       function accordionHTML() {
         const items = [
-          ["Description", `<p>${product.description}</p>`],
-          ["Fit & size", `<p>${product.fit}</p>`],
-          ["Material & care", `<p>${product.material}</p>`],
+          ["Description", formatAccordionText(product.description, "No description available.")],
+          ["Fit & size", formatAccordionText(product.fit, "Standard fit. True to size.")],
+          ["Material & care", formatAccordionText(product.material, "Machine wash cold. Do not bleach. Tumble dry low.")],
           ["Shipping & returns", `<ul><li>Free shipping on orders above ₹1,999</li><li>Delivered in 3 to 6 business days</li><li>Easy 15-day returns &amp; exchanges</li></ul>`]
         ];
         return items.map(([title, body], i) => `

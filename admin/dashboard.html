@@ -412,6 +412,14 @@
             <label for="pf-desc">Description</label>
             <textarea id="pf-desc" placeholder="Short product description shown on the product page."></textarea>
           </div>
+          <div class="a-field full">
+            <label for="pf-fit">Fit &amp; Size</label>
+            <textarea id="pf-fit" placeholder="Fit and size details."></textarea>
+          </div>
+          <div class="a-field full">
+            <label for="pf-material">Material &amp; Care</label>
+            <textarea id="pf-material" placeholder="Material and care instructions."></textarea>
+          </div>
           <div class="a-field">
             <label class="a-check-chip" style="display:inline-flex;align-items:center;"><input type="checkbox"
                 id="pf-new" style="margin-right:6px;">Mark as new</label>
@@ -1152,6 +1160,8 @@
         document.getElementById("pf-stock").value = product.stock;
         document.getElementById("pf-image").value = (product.images && product.images[0]) || "";
         document.getElementById("pf-desc").value = product.description || "";
+        document.getElementById("pf-fit").value = product.fit || "";
+        document.getElementById("pf-material").value = product.material || "";
         document.getElementById("pf-new").checked = !!product.isNew;
         document.getElementById("pf-bestseller").checked = !!product.bestSeller;
         (product.sizes || []).forEach(s => {
@@ -1204,8 +1214,8 @@
         stock: Number(document.getElementById("pf-stock").value),
         images: [imageUrl],
         description: document.getElementById("pf-desc").value.trim(),
-        fit: "",
-        material: "",
+        fit: document.getElementById("pf-fit").value.trim(),
+        material: document.getElementById("pf-material").value.trim(),
         isNew: document.getElementById("pf-new").checked,
         bestSeller: document.getElementById("pf-bestseller").checked
       };
