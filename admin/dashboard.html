@@ -141,6 +141,7 @@
               </thead>
               <tbody id="recent-orders-body"></tbody>
             </table>
+            <div id="recent-orders-pagination" class="a-pagination"></div>
           </div>
           <div class="a-panel">
             <h3>Low Stock</h3>
@@ -154,6 +155,7 @@
               </thead>
               <tbody id="low-stock-body"></tbody>
             </table>
+            <div id="low-stock-pagination" class="a-pagination"></div>
           </div>
         </div>
       </section>
@@ -182,6 +184,7 @@
             </thead>
             <tbody id="products-body"></tbody>
           </table>
+          <div id="products-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -202,6 +205,7 @@
             </thead>
             <tbody id="categories-body"></tbody>
           </table>
+          <div id="categories-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -221,6 +225,7 @@
             </thead>
             <tbody id="inventory-body"></tbody>
           </table>
+          <div id="inventory-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -246,6 +251,7 @@
             </thead>
             <tbody id="orders-body"></tbody>
           </table>
+          <div id="orders-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -271,6 +277,7 @@
             </thead>
             <tbody id="customers-body"></tbody>
           </table>
+          <div id="customers-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -307,6 +314,7 @@
             </thead>
             <tbody id="messages-body"></tbody>
           </table>
+          <div id="messages-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -325,6 +333,7 @@
             </thead>
             <tbody id="reviews-body"></tbody>
           </table>
+          <div id="reviews-pagination" class="a-pagination"></div>
         </div>
       </section>
 
@@ -355,6 +364,7 @@
             </thead>
             <tbody id="users-body"><tr><td colspan="10"><div class="a-empty">Loading users…</div></td></tr></tbody>
           </table>
+          <div id="users-pagination" class="a-pagination"></div>
         </div>
       </section>
     </main>
@@ -746,6 +756,152 @@
     function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
 
     /* =========================================================
+       Reusable Table Paginator (10 records/page, compact Gmail-style)
+       ========================================================= */
+    const DEFAULT_PAGE_SIZE = 10;
+
+    function getPaginationPages(currentPage, totalPages) {
+      if (totalPages <= 7) {
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+        return pages;
+      }
+      if (currentPage <= 4) {
+        return [1, 2, 3, 4, 5, "...", totalPages];
+      }
+      if (currentPage >= totalPages - 3) {
+        return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+      }
+      return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+    }
+
+    class TablePaginator {
+      constructor(options) {
+        this.containerId = options.containerId;
+        this.pageSize = options.pageSize || DEFAULT_PAGE_SIZE;
+        this.currentPage = 1;
+        this.items = [];
+        this.onRenderPage = options.onRenderPage;
+        this.ariaLabel = options.ariaLabel || "Table pagination";
+        this._boundClick = false;
+      }
+
+      get container() {
+        return document.getElementById(this.containerId);
+      }
+
+      setItems(newItems, resetPage = false) {
+        this.items = Array.isArray(newItems) ? newItems : [];
+        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
+        if (resetPage || this.currentPage > totalPages) {
+          this.currentPage = 1;
+        }
+        this.update();
+      }
+
+      goToPage(page) {
+        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
+        const target = Math.max(1, Math.min(page, totalPages));
+        if (target !== this.currentPage) {
+          this.currentPage = target;
+          this.update();
+        }
+      }
+
+      prevPage() {
+        if (this.currentPage > 1) {
+          this.goToPage(this.currentPage - 1);
+        }
+      }
+
+      nextPage() {
+        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
+        if (this.currentPage < totalPages) {
+          this.goToPage(this.currentPage + 1);
+        }
+      }
+
+      getCurrentSlice() {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return this.items.slice(start, start + this.pageSize);
+      }
+
+      getInfo() {
+        const total = this.items.length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        if (total === 0) {
+          return { start: 0, end: 0, total: 0, totalPages: 1, currentPage: 1, pageSize: this.pageSize };
+        }
+        const start = (this.currentPage - 1) * this.pageSize + 1;
+        const end = Math.min(this.currentPage * this.pageSize, total);
+        return { start, end, total, totalPages, currentPage: this.currentPage, pageSize: this.pageSize };
+      }
+
+      update() {
+        const info = this.getInfo();
+        const slice = this.getCurrentSlice();
+        if (typeof this.onRenderPage === "function") {
+          this.onRenderPage(slice, info);
+        }
+        this.renderControls(info);
+      }
+
+      renderControls(info) {
+        const container = this.container;
+        if (!container) return;
+
+        const countText = info.total === 0
+          ? "0 of 0"
+          : `${info.start}\u2013${info.end} of ${info.total}`;
+
+        const pages = getPaginationPages(info.currentPage, info.totalPages);
+
+        const pagesHtml = pages.map(p => {
+          if (p === "...") {
+            return '<span class="a-page-dots" aria-hidden="true">\u2026</span>';
+          }
+          const isActive = p === info.currentPage;
+          return `<button type="button" class="a-page-btn num${isActive ? " active" : ""}" data-page="${p}" ${isActive ? 'aria-current="page"' : ""} aria-label="Page ${p}">${p}</button>`;
+        }).join("");
+
+        const prevDisabled = info.currentPage <= 1 || info.total === 0;
+        const nextDisabled = info.currentPage >= info.totalPages || info.total === 0;
+
+        container.innerHTML = `
+          <div class="a-pagination-info" aria-live="polite">
+            ${countText}
+          </div>
+          <div class="a-pagination-controls" role="navigation" aria-label="${escapeHtml(this.ariaLabel)}">
+            <button type="button" class="a-page-btn prev" data-page-action="prev" title="Previous page" aria-label="Previous page" ${prevDisabled ? "disabled" : ""}>
+              <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            ${pagesHtml}
+            <button type="button" class="a-page-btn next" data-page-action="next" title="Next page" aria-label="Next page" ${nextDisabled ? "disabled" : ""}>
+              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        `;
+
+        if (!this._boundClick) {
+          this._boundClick = true;
+          container.addEventListener("click", (e) => {
+            const pageBtn = e.target.closest(".a-page-btn");
+            if (!pageBtn || pageBtn.disabled) return;
+
+            if (pageBtn.dataset.pageAction === "prev") {
+              this.prevPage();
+            } else if (pageBtn.dataset.pageAction === "next") {
+              this.nextPage();
+            } else if (pageBtn.dataset.page) {
+              this.goToPage(Number(pageBtn.dataset.page));
+            }
+          });
+        }
+      }
+    }
+
+
+    /* =========================================================
        User-side & Backend Orders / Customers Management
        ========================================================= */
     let liveOrders = null;
@@ -917,8 +1073,57 @@
     }
 
     /* =========================================================
-       Dashboard stats
+       Dashboard stats & Paginated Recent Orders / Low Stock
        ========================================================= */
+    const recentOrdersPaginator = new TablePaginator({
+      containerId: "recent-orders-pagination",
+      pageSize: 10,
+      ariaLabel: "Recent orders pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("recent-orders-body");
+        if (!tbody) return;
+        tbody.innerHTML = slice.length ? slice.map(o => {
+          const orderId = o.id || o.orderId || "";
+          const custName = o.customer || o.customerName || o.customer_name || "Customer";
+          const custEmail = o.customerEmail || o.customer_email || "";
+          const itemCount = o.itemsCount || o.items_count || (Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.qty) || 1), 0) : 1);
+          const total = o.total || o.totalAmount || o.total_amount || 0;
+          const currentStatus = o.status || "Order Confirmed";
+          const statusLower = currentStatus.toLowerCase();
+          let statusClass = "pending";
+          if (statusLower === "delivered") statusClass = "ok";
+          else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
+          else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
+          else if (statusLower === "cancelled") statusClass = "disabled";
+
+          return `
+      <tr style="cursor:pointer;" data-order-view="${orderId}">
+        <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
+        <td>
+          <div style="font-weight:600;">${escapeHtml(custName)}</div>
+          ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
+        </td>
+        <td>${itemCount} items</td>
+        <td><strong>${money(total)}</strong></td>
+        <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
+      </tr>`;
+        }).join("") : `<tr><td colspan="5"><div class="a-empty">No recent orders yet.</div></td></tr>`;
+      }
+    });
+
+    const lowStockPaginator = new TablePaginator({
+      containerId: "low-stock-pagination",
+      pageSize: 10,
+      ariaLabel: "Low stock pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("low-stock-body");
+        if (!tbody) return;
+        tbody.innerHTML = slice.length ? slice.map(p => `
+      <tr><td>${escapeHtml(p.name)}</td><td><span class="a-status low">${p.stock} units</span></td></tr>`).join("") :
+          `<tr><td colspan="2"><div class="a-empty" style="padding:16px;">All products are well stocked.</div></td></tr>`;
+      }
+    });
+
     function renderDashboardStats() {
       const products = getAllProducts();
       const allOrders = getAllOrders();
@@ -931,7 +1136,7 @@
 
       const balStat = document.getElementById("stat-balance");
       if (balStat) balStat.textContent = money(totalBalance);
-      
+
       const revStat = document.getElementById("stat-revenue");
       if (revStat) revStat.textContent = money(totalRevenue);
 
@@ -945,90 +1150,94 @@
       const lowStockStat = document.getElementById("stat-lowstock");
       if (lowStockStat) lowStockStat.textContent = lowStockProducts.length;
 
-      // Render Recent Orders (latest 5)
-      document.getElementById("recent-orders-body").innerHTML = allOrders.slice(0, 5).map(o => {
-        const orderId = o.id || o.orderId || "";
-        const custName = o.customer || o.customerName || o.customer_name || "Customer";
-        const custEmail = o.customerEmail || o.customer_email || "";
-        const itemCount = o.itemsCount || o.items_count || (Array.isArray(o.items) ? o.items.reduce((s, i) => s + (Number(i.qty) || 1), 0) : 1);
-        const total = o.total || o.totalAmount || o.total_amount || 0;
-        const currentStatus = o.status || "Order Confirmed";
-        const statusLower = currentStatus.toLowerCase();
-        let statusClass = "pending";
-        if (statusLower === "delivered") statusClass = "ok";
-        else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
-        else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
-        else if (statusLower === "cancelled") statusClass = "disabled";
-
-        return `
-    <tr style="cursor:pointer;" data-order-view="${orderId}">
-      <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
-      <td>
-        <div style="font-weight:600;">${escapeHtml(custName)}</div>
-        ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
-      </td>
-      <td>${itemCount} items</td>
-      <td><strong>${money(total)}</strong></td>
-      <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
-    </tr>`;
-      }).join("") || `<tr><td colspan="5"><div class="a-empty">No recent orders yet.</div></td></tr>`;
-
-      document.getElementById("low-stock-body").innerHTML = lowStockProducts.map(p => `
-    <tr><td>${escapeHtml(p.name)}</td><td><span class="a-status low">${p.stock} units</span></td></tr>`).join("") ||
-        `<tr><td colspan="2">All products are well stocked.</td></tr>`;
+      recentOrdersPaginator.setItems(allOrders);
+      lowStockPaginator.setItems(lowStockProducts);
     }
 
     /* =========================================================
-       Products tab
+       Products tab with pagination
        ========================================================= */
-    function renderProducts(list) {
-      const products = list || getAllProducts();
-      const body = document.getElementById("products-body");
-      if (!products.length) {
-        body.innerHTML = `<tr><td colspan="6"><div class="a-empty">No products match your search.</div></td></tr>`;
-        return;
+    const productsPaginator = new TablePaginator({
+      containerId: "products-pagination",
+      pageSize: 10,
+      ariaLabel: "Products pagination",
+      onRenderPage: (slice) => {
+        const body = document.getElementById("products-body");
+        if (!body) return;
+        if (!slice.length) {
+          body.innerHTML = `<tr><td colspan="6"><div class="a-empty">No products match your search.</div></td></tr>`;
+          return;
+        }
+        body.innerHTML = slice.map(p => `
+      <tr>
+        <td><div class="a-prod-cell"><img src="${(p.images && p.images[0]) || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=200&auto=format&fit=crop'}" alt=""><span>${escapeHtml(p.name)}</span></div></td>
+        <td>${escapeHtml(p.category)}</td>
+        <td>${money(p.price)}${p.compareAt ? ` <del style="color:#9aa1b4;font-size:12px;">${money(p.compareAt)}</del>` : ""}</td>
+        <td>${p.stock}</td>
+        <td><span class="a-status ${p.stock < 20 ? "low" : "ok"}">${p.stock < 20 ? "Low stock" : "In stock"}</span></td>
+        <td>
+          <div class="a-row-actions">
+            <button class="a-icon-btn edit" title="Edit product" data-edit="${p.id}"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+            <button class="a-icon-btn del" title="Remove product" data-del="${p.id}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+          </div>
+        </td>
+      </tr>`).join("");
       }
-      body.innerHTML = products.map(p => `
-    <tr>
-      <td><div class="a-prod-cell"><img src="${p.images[0]}" alt=""><span>${escapeHtml(p.name)}</span></div></td>
-      <td>${escapeHtml(p.category)}</td>
-      <td>${money(p.price)}${p.compareAt ? ` <del style="color:#9aa1b4;font-size:12px;">${money(p.compareAt)}</del>` : ""}</td>
-      <td>${p.stock}</td>
-      <td><span class="a-status ${p.stock < 20 ? "low" : "ok"}">${p.stock < 20 ? "Low stock" : "In stock"}</span></td>
-      <td>
-        <div class="a-row-actions">
-          <button class="a-icon-btn edit" title="Edit product" data-edit="${p.id}"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
-          <button class="a-icon-btn del" title="Remove product" data-del="${p.id}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
-        </div>
-      </td>
-    </tr>`).join("");
+    });
+
+    function getFilteredProducts() {
+      const q = (document.getElementById("product-search")?.value || "").toLowerCase().trim();
+      const all = getAllProducts();
+      return q ? all.filter(p => (p.name || "").toLowerCase().includes(q) || (p.category || "").toLowerCase().includes(q)) : all;
     }
 
-    function renderCategories() {
-      const products = getAllProducts();
-      const customCats = new Set(lsGet(LS_CATEGORIES, []));
+    function renderProducts(list, resetPage = false) {
+      const prods = list !== undefined ? list : getFilteredProducts();
+      productsPaginator.setItems(prods, resetPage);
+    }
+
+    /* =========================================================
+       Categories tab with pagination
+       ========================================================= */
+    const categoriesPaginator = new TablePaginator({
+      containerId: "categories-pagination",
+      pageSize: 10,
+      ariaLabel: "Categories pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("categories-body");
+        if (!tbody) return;
+        const products = getAllProducts();
+        const customCats = new Set(lsGet(LS_CATEGORIES, []));
+
+        if (!slice.length) {
+          tbody.innerHTML = `<tr><td colspan="4"><div class="a-empty">No categories found.</div></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = slice.map(c => {
+          const count = products.filter(p => p.category === c).length;
+          const isCustom = customCats.has(c);
+          return `
+      <tr>
+        <td><strong>${escapeHtml(c)}</strong></td>
+        <td>${count} products</td>
+        <td><span class="a-status ${isCustom ? "active" : "ok"}">${isCustom ? "Custom" : "Default"}</span></td>
+        <td>
+          <div class="a-row-actions">
+            <button class="a-icon-btn del" title="Delete category" data-del-cat="${escapeHtml(c)}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+          </div>
+        </td>
+      </tr>`;
+        }).join("");
+      }
+    });
+
+    function renderCategories(resetPage = false) {
       const cats = getAllCategories();
-      const tbody = document.getElementById("categories-body");
-      if (!tbody) return;
-
-      tbody.innerHTML = cats.map(c => {
-        const count = products.filter(p => p.category === c).length;
-        const isCustom = customCats.has(c);
-        return `
-    <tr>
-      <td><strong>${escapeHtml(c)}</strong></td>
-      <td>${count} products</td>
-      <td><span class="a-status ${isCustom ? "active" : "ok"}">${isCustom ? "Custom" : "Default"}</span></td>
-      <td>
-        <div class="a-row-actions">
-          <button class="a-icon-btn del" title="Delete category" data-del-cat="${escapeHtml(c)}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
-        </div>
-      </td>
-    </tr>`;
-      }).join("");
+      categoriesPaginator.setItems(cats, resetPage);
     }
 
-    /* ---------- Category modal & actions ---------- */
+/* ---------- Category modal & actions ---------- */
     const catModal = document.getElementById("category-modal-backdrop");
     const catForm = document.getElementById("category-form");
     const catInput = document.getElementById("cat-name-input");
@@ -1096,13 +1305,31 @@
       });
     }
 
-    function renderInventory() {
+    /* =========================================================
+       Inventory tab with pagination
+       ========================================================= */
+    const inventoryPaginator = new TablePaginator({
+      containerId: "inventory-pagination",
+      pageSize: 10,
+      ariaLabel: "Inventory pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("inventory-body");
+        if (!tbody) return;
+        if (!slice.length) {
+          tbody.innerHTML = `<tr><td colspan="4"><div class="a-empty">No products in inventory.</div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = slice.map(p => `
+      <tr>
+        <td>${escapeHtml(p.name)}</td><td>${(p.sizes || []).join(", ")}</td><td>${p.stock}</td>
+        <td><span class="a-status ${p.stock < 20 ? "low" : "ok"}">${p.stock < 20 ? "Reorder soon" : "Healthy"}</span></td>
+      </tr>`).join("");
+      }
+    });
+
+    function renderInventory(resetPage = false) {
       const products = getAllProducts();
-      document.getElementById("inventory-body").innerHTML = products.map(p => `
-    <tr>
-      <td>${escapeHtml(p.name)}</td><td>${(p.sizes || []).join(", ")}</td><td>${p.stock}</td>
-      <td><span class="a-status ${p.stock < 20 ? "low" : "ok"}">${p.stock < 20 ? "Reorder soon" : "Healthy"}</span></td>
-    </tr>`).join("");
+      inventoryPaginator.setItems(products, resetPage);
     }
 
     function refreshProductViews() {
@@ -1113,12 +1340,11 @@
       populateCategoryOptions();
     }
 
-    document.getElementById("product-search").addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase();
-      renderProducts(getAllProducts().filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)));
+    document.getElementById("product-search").addEventListener("input", () => {
+      renderProducts(undefined, true);
     });
 
-    /* ---------- Export CSV ---------- */
+/* ---------- Export CSV ---------- */
     document.getElementById("btn-export-csv").addEventListener("click", () => {
       const products = getAllProducts();
       const rows = [["ID", "Name", "Category", "Price", "Compare At", "Stock", "Sizes"]];
@@ -1429,7 +1655,7 @@
             } catch (err) {}
           }
 
-          renderOrders();
+          renderOrders(undefined, false);
           renderDashboardStats();
           toast(`Order #${orderId} updated to "${newStatus}".`);
           closeOrderDetailsModal();
@@ -1449,85 +1675,101 @@
       if (e.target === document.getElementById("order-details-modal-backdrop")) closeOrderDetailsModal();
     });
 
-    function renderOrders(list) {
-      const orders = list || getAllOrders();
-      const body = document.getElementById("orders-body");
-      if (!body) return;
+    /* =========================================================
+       Orders tab with pagination
+       ========================================================= */
+    const ordersPaginator = new TablePaginator({
+      containerId: "orders-pagination",
+      pageSize: 10,
+      ariaLabel: "Orders pagination",
+      onRenderPage: (slice) => {
+        const body = document.getElementById("orders-body");
+        if (!body) return;
 
-      body.innerHTML = orders.length ? orders.map(o => {
-        const orderId = o.id || o.orderId || "";
-        const custName = o.customer || o.customerName || o.customer_name || "Customer";
-        const custEmail = o.customerEmail || o.customer_email || "";
-        const orderDate = o.date || (o.created_at ? o.created_at.split("T")[0] : "Today");
-        const itemsText = Array.isArray(o.items) && o.items.length
-          ? o.items.map(i => `${i.name || 'Item'} × ${i.qty || 1}`).join(", ") 
-          : (o.items_count ? `${o.items_count} items` : (o.items || "1 item"));
-        const total = o.total || o.totalAmount || o.total_amount || 0;
-        const payMethod = o.pay || o.paymentMethod || o.payment_method || "Online";
-        const currentStatus = o.status || "Order Confirmed";
-        const statusLower = currentStatus.toLowerCase();
-        let statusClass = "pending";
-        if (statusLower === "delivered") statusClass = "ok";
-        else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
-        else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
-        else if (statusLower === "cancelled") statusClass = "disabled";
+        body.innerHTML = slice.length ? slice.map(o => {
+          const orderId = o.id || o.orderId || "";
+          const custName = o.customer || o.customerName || o.customer_name || "Customer";
+          const custEmail = o.customerEmail || o.customer_email || "";
+          const orderDate = o.date || (o.created_at ? o.created_at.split("T")[0] : "Today");
+          const itemsText = Array.isArray(o.items) && o.items.length
+            ? o.items.map(i => `${i.name || 'Item'} \u00d7 ${i.qty || 1}`).join(", ")
+            : (o.items_count ? `${o.items_count} items` : (o.items || "1 item"));
+          const total = o.total || o.totalAmount || o.total_amount || 0;
+          const payMethod = o.pay || o.paymentMethod || o.payment_method || "Online";
+          const currentStatus = o.status || "Order Confirmed";
+          const statusLower = currentStatus.toLowerCase();
+          let statusClass = "pending";
+          if (statusLower === "delivered") statusClass = "ok";
+          else if (statusLower === "shipped" || statusLower === "out for delivery") statusClass = "active";
+          else if (statusLower === "order confirmed" || statusLower === "confirmed" || statusLower === "paid") statusClass = "paid";
+          else if (statusLower === "cancelled") statusClass = "disabled";
 
-        const stages = [
-          "Order Placed",
-          "Order Confirmed",
-          "Processing",
-          "Shipped",
-          "Out for Delivery",
-          "Delivered",
-          "Cancelled"
-        ];
+          const stages = [
+            "Order Placed",
+            "Order Confirmed",
+            "Processing",
+            "Shipped",
+            "Out for Delivery",
+            "Delivered",
+            "Cancelled"
+          ];
 
-        const selectOptions = stages.map(s => {
-          const isSel = s.toLowerCase() === statusLower;
-          return `<option value="${s}" ${isSel ? "selected" : ""}>${s}</option>`;
-        }).join("");
+          const selectOptions = stages.map(s => {
+            const isSel = s.toLowerCase() === statusLower;
+            return `<option value="${s}" ${isSel ? "selected" : ""}>${s}</option>`;
+          }).join("");
 
-        return `
-    <tr>
-      <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
-      <td>
-        <div style="font-weight:600;">${escapeHtml(custName)}</div>
-        ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
-      </td>
-      <td>${orderDate}</td>
-      <td>
-        <span style="font-size:12.5px;cursor:pointer;color:var(--a-navy);" data-order-view="${orderId}" title="Click to view all items">${escapeHtml(itemsText)}</span>
-      </td>
-      <td><strong>${money(total)}</strong></td>
-      <td>
-        <div>${escapeHtml(payMethod)}</div>
-        <div style="font-size:11px;color:var(--a-muted);">${escapeHtml(o.paymentStatus || o.payment_status || "Pending")}</div>
-      </td>
-      <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button class="a-btn small" data-order-view="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#f0f3fa;color:var(--a-navy);border:1px solid #d5dded;cursor:pointer;">View</button>
-          <select class="a-btn small" data-order-status-select="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#1b2234;color:#fff;border:1px solid #323b54;border-radius:4px;cursor:pointer;">
-            ${selectOptions}
-          </select>
-          <button class="a-icon-btn del" title="Delete order" data-order-delete="${orderId}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
-        </div>
-      </td>
-    </tr>`;
-      }).join("") : `<tr><td colspan="8"><div class="a-empty">No orders match your search.</div></td></tr>`;
-    }
+          return `
+      <tr>
+        <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;" data-order-view="${orderId}">#${orderId}</a></td>
+        <td>
+          <div style="font-weight:600;">${escapeHtml(custName)}</div>
+          ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ''}
+        </td>
+        <td>${orderDate}</td>
+        <td>
+          <span style="font-size:12.5px;cursor:pointer;color:var(--a-navy);" data-order-view="${orderId}" title="Click to view all items">${escapeHtml(itemsText)}</span>
+        </td>
+        <td><strong>${money(total)}</strong></td>
+        <td>
+          <div>${escapeHtml(payMethod)}</div>
+          <div style="font-size:11px;color:var(--a-muted);">${escapeHtml(o.paymentStatus || o.payment_status || "Pending")}</div>
+        </td>
+        <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button class="a-btn small" data-order-view="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#f0f3fa;color:var(--a-navy);border:1px solid #d5dded;cursor:pointer;">View</button>
+            <select class="a-btn small" data-order-status-select="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#1b2234;color:#fff;border:1px solid #323b54;border-radius:4px;cursor:pointer;">
+              ${selectOptions}
+            </select>
+            <button class="a-icon-btn del" title="Delete order" data-order-delete="${orderId}"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+          </div>
+        </td>
+      </tr>`;
+        }).join("") : `<tr><td colspan="8"><div class="a-empty">No orders match your search.</div></td></tr>`;
+      }
+    });
 
-    document.getElementById("order-search").addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase();
-      const currentList = getAllOrders();
-      renderOrders(currentList.filter(o => {
+    function getFilteredOrders() {
+      const q = (document.getElementById("order-search")?.value || "").toLowerCase().trim();
+      const all = getAllOrders();
+      return q ? all.filter(o => {
         const cName = (o.customer || o.customerName || o.customer_name || "").toLowerCase();
         const oId = String(o.id || o.orderId || "").toLowerCase();
         return cName.includes(q) || oId.includes(q);
-      }));
+      }) : all;
+    }
+
+    function renderOrders(list, resetPage = false) {
+      const orders = list !== undefined ? list : getFilteredOrders();
+      ordersPaginator.setItems(orders, resetPage);
+    }
+
+    document.getElementById("order-search").addEventListener("input", () => {
+      renderOrders(undefined, true);
     });
 
-    // Handle Click on Order Rows to View Details (Recent Orders & Orders table)
+// Handle Click on Order Rows to View Details (Recent Orders & Orders table)
     document.addEventListener("click", (e) => {
       const viewTrigger = e.target.closest("[data-order-view]");
       if (viewTrigger) {
@@ -1560,7 +1802,7 @@
         liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
       }
 
-      renderOrders();
+      renderOrders(undefined, false);
       renderDashboardStats();
 
       if (token) {
@@ -1596,7 +1838,7 @@
           liveOrders = liveOrders.map(o => (o.id === orderId || o.orderId === orderId) ? { ...o, status: newStatus } : o);
         }
 
-        renderOrders();
+        renderOrders(undefined, false);
         renderDashboardStats();
 
         if (token) {
@@ -1627,7 +1869,7 @@
           liveOrders = liveOrders.filter(o => o.id !== orderId && o.orderId !== orderId);
         }
 
-        renderOrders();
+        renderOrders(undefined, false);
         renderDashboardStats();
 
         if (token) {
@@ -1645,40 +1887,60 @@
     /* =========================================================
        Customers tab — access control (enable / disable)
        ========================================================= */
-    function renderCustomers(list) {
-      const customers = list || getAllCustomers();
-      const body = document.getElementById("customers-body");
-      if (!customers.length) {
-        body.innerHTML = `<tr><td colspan="8"><div class="a-empty">No customers match your search.</div></td></tr>`;
-        return;
+    /* =========================================================
+       Customers tab — access control with pagination
+       ========================================================= */
+    const customersPaginator = new TablePaginator({
+      containerId: "customers-pagination",
+      pageSize: 10,
+      ariaLabel: "Customers pagination",
+      onRenderPage: (slice) => {
+        const body = document.getElementById("customers-body");
+        if (!body) return;
+        if (!slice.length) {
+          body.innerHTML = `<tr><td colspan="8"><div class="a-empty">No customers match your search.</div></td></tr>`;
+          return;
+        }
+        body.innerHTML = slice.map(c => {
+          const status = c.status || getUserStatus(c.email);
+          const isActive = status === "active";
+          const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:#888;">\u2014</span>';
+          const rawPwd = c.plain_password || c.password || (c.pass || "");
+          const pwdHtml = rawPwd
+            ? `<span style="font-family:monospace;background:#242424;padding:3px 6px;border-radius:4px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
+            : '<span style="color:#888;font-style:italic;">Encrypted</span>';
+          return `
+      <tr>
+        <td><strong>${escapeHtml(c.name || "Customer")}</strong></td>
+        <td>${escapeHtml(c.email)}</td>
+        <td>${phone}</td>
+        <td>${pwdHtml}</td>
+        <td>${c.orders_count !== undefined ? c.orders_count : (c.orders || 0)}</td>
+        <td>${money(c.total_spent !== undefined ? c.total_spent : (c.ltv || 0))}</td>
+        <td><span class="a-status ${isActive ? "active" : "disabled"}">${isActive ? "Active" : "Disabled"}</span></td>
+        <td>
+          <label class="a-toggle">
+            <input type="checkbox" data-user-toggle="${escapeHtml(c.email)}" ${isActive ? "checked" : ""}>
+            <span class="track"></span>
+            <span class="a-toggle-label">${isActive ? "Allowed" : "Blocked"}</span>
+          </label>
+        </td>
+      </tr>`;
+        }).join("");
       }
-      body.innerHTML = customers.map(c => {
-        const status = c.status || getUserStatus(c.email);
-        const isActive = status === "active";
-        const phone = c.phone ? escapeHtml(c.phone) : '<span style="color:#888;">—</span>';
-        const rawPwd = c.plain_password || c.password || (c.pass || "");
-        const pwdHtml = rawPwd 
-          ? `<span style="font-family:monospace;background:#242424;padding:3px 6px;border-radius:4px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
-          : '<span style="color:#888;font-style:italic;">Encrypted</span>';
-        return `
-    <tr>
-      <td><strong>${escapeHtml(c.name || "Customer")}</strong></td>
-      <td>${escapeHtml(c.email)}</td>
-      <td>${phone}</td>
-      <td>${pwdHtml}</td>
-      <td>${c.orders_count !== undefined ? c.orders_count : (c.orders || 0)}</td>
-      <td>${money(c.total_spent !== undefined ? c.total_spent : (c.ltv || 0))}</td>
-      <td><span class="a-status ${isActive ? "active" : "disabled"}">${isActive ? "Active" : "Disabled"}</span></td>
-      <td>
-        <label class="a-toggle">
-          <input type="checkbox" data-user-toggle="${escapeHtml(c.email)}" ${isActive ? "checked" : ""}>
-          <span class="track"></span>
-          <span class="a-toggle-label">${isActive ? "Allowed" : "Blocked"}</span>
-        </label>
-      </td>
-    </tr>`;
-      }).join("");
+    });
+
+    function getFilteredCustomers() {
+      const q = (document.getElementById("customer-search")?.value || "").toLowerCase().trim();
+      const all = getAllCustomers();
+      return q ? all.filter(c => (c.name || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").toLowerCase().includes(q)) : all;
     }
+
+    function renderCustomers(list, resetPage = false) {
+      const custs = list !== undefined ? list : getFilteredCustomers();
+      customersPaginator.setItems(custs, resetPage);
+    }
+
     document.getElementById("customers-body").addEventListener("change", (e) => {
       const toggle = e.target.closest("[data-user-toggle]");
       if (!toggle) return;
@@ -1689,21 +1951,20 @@
         const c = liveCustomers.find(item => item.email.toLowerCase() === email.toLowerCase());
         if (c) c.status = newStatus;
       }
-      renderCustomers();
+      renderCustomers(undefined, false);
       const customer = getAllCustomers().find(c => c.email.toLowerCase() === email.toLowerCase());
       toast(
         newStatus === "active"
           ? `${customer ? customer.name : "Customer"} can sign in and order again.`
-          : `${customer ? customer.name : "Customer"}'s account is disabled — they can't sign in or check out.`
+          : `${customer ? customer.name : "Customer"}'s account is disabled \u2014 they can't sign in or check out.`
       );
     });
-    document.getElementById("customer-search").addEventListener("input", (e) => {
-      const q = e.target.value.toLowerCase();
-      const currentList = getAllCustomers();
-      renderCustomers(currentList.filter(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q)));
+
+    document.getElementById("customer-search").addEventListener("input", () => {
+      renderCustomers(undefined, true);
     });
 
-    // Fetch real backend customers & orders if admin token is present
+// Fetch real backend customers & orders if admin token is present
     function fetchBackendData() {
       const token = getAdminToken();
       if (!token) return;
@@ -1775,50 +2036,69 @@
       return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
-    function renderUsers(list) {
-      const body = document.getElementById('users-body');
-      const countLabel = document.getElementById('user-count-label');
-      if (countLabel) countLabel.textContent = list.length + ' user' + (list.length !== 1 ? 's' : '');
-      if (!list.length) {
-        body.innerHTML = `<tr><td colspan="10"><div class="a-empty">No users found.</div></td></tr>`;
-        return;
+    const usersPaginator = new TablePaginator({
+      containerId: "users-pagination",
+      pageSize: 10,
+      ariaLabel: "Users pagination",
+      onRenderPage: (slice, info) => {
+        const body = document.getElementById('users-body');
+        if (!body) return;
+        if (!slice.length) {
+          body.innerHTML = '<tr><td colspan="10"><div class="a-empty">No users found.</div></td></tr>';
+          return;
+        }
+        const startIndex = (info.currentPage - 1) * info.pageSize;
+        body.innerHTML = slice.map((u, i) => {
+          const isActive = u.status === 'active';
+          const rawPwd = u.plain_password || u.password || (u.pass || "");
+          const pwdHtml = rawPwd
+            ? `<span style="font-family:monospace;background:#242424;color:#f3f4f6;padding:3px 8px;border-radius:4px;font-size:12px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
+            : '<span style="color:#6b7280;font-size:12px;font-style:italic;">Encrypted</span>';
+          return `
+            <tr>
+              <td style="color:#9ca3af;font-size:12px">${startIndex + i + 1}</td>
+              <td><strong>${escapeHtml(u.name)}</strong></td>
+              <td style="font-size:13px">${escapeHtml(u.email)}</td>
+              <td style="font-size:13px">${escapeHtml(u.phone || '\u2014')}</td>
+              <td>${pwdHtml}</td>
+              <td style="font-size:12px;color:#6b7280">${fmtDate(u.created_at)}</td>
+              <td style="text-align:center">${u.orders_count || 0}</td>
+              <td>${money(u.total_spent || 0)}</td>
+              <td><span class="a-status ${isActive ? 'active' : 'disabled'}">${isActive ? 'Active' : 'Disabled'}</span></td>
+              <td>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <label class="a-toggle" title="${isActive ? 'Disable account' : 'Enable account'}">
+                    <input type="checkbox" data-user-status-toggle="${escapeHtml(u.id)}" ${isActive ? 'checked' : ''}>
+                    <span class="track"></span>
+                  </label>
+                  <button class="a-btn" style="padding:4px 10px;font-size:11px;height:auto;border-color:#ef4444;color:#ef4444"
+                    data-user-delete="${escapeHtml(u.id)}" data-user-name="${escapeHtml(u.name)}">Delete</button>
+                </div>
+              </td>
+            </tr>`;
+        }).join('');
       }
-      body.innerHTML = list.map((u, i) => {
-        const isActive = u.status === 'active';
-        const rawPwd = u.plain_password || u.password || (u.pass || "");
-        const pwdHtml = rawPwd
-          ? `<span style="font-family:monospace;background:#242424;color:#f3f4f6;padding:3px 8px;border-radius:4px;font-size:12px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
-          : '<span style="color:#6b7280;font-size:12px;font-style:italic;">Encrypted</span>';
-        return `
-          <tr>
-            <td style="color:#9ca3af;font-size:12px">${i + 1}</td>
-            <td><strong>${escapeHtml(u.name)}</strong></td>
-            <td style="font-size:13px">${escapeHtml(u.email)}</td>
-            <td style="font-size:13px">${escapeHtml(u.phone || '—')}</td>
-            <td>${pwdHtml}</td>
-            <td style="font-size:12px;color:#6b7280">${fmtDate(u.created_at)}</td>
-            <td style="text-align:center">${u.orders_count || 0}</td>
-            <td>${money(u.total_spent || 0)}</td>
-            <td><span class="a-status ${isActive ? 'active' : 'disabled'}">${isActive ? 'Active' : 'Disabled'}</span></td>
-            <td>
-              <div style="display:flex;gap:8px;align-items:center">
-                <label class="a-toggle" title="${isActive ? 'Disable account' : 'Enable account'}">
-                  <input type="checkbox" data-user-status-toggle="${escapeHtml(u.id)}" ${isActive ? 'checked' : ''}>
-                  <span class="track"></span>
-                </label>
-                <button class="a-btn" style="padding:4px 10px;font-size:11px;height:auto;border-color:#ef4444;color:#ef4444"
-                  data-user-delete="${escapeHtml(u.id)}" data-user-name="${escapeHtml(u.name)}">Delete</button>
-              </div>
-            </td>
-          </tr>`;
-      }).join('');
+    });
+
+    function getFilteredUsers() {
+      const q = (document.getElementById('user-search')?.value || "").toLowerCase().trim();
+      return q ? allUsers.filter(u =>
+        (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q) || (u.phone || "").toLowerCase().includes(q)
+      ) : allUsers;
+    }
+
+    function renderUsers(list, resetPage = false) {
+      const users = list !== undefined ? list : getFilteredUsers();
+      const countLabel = document.getElementById('user-count-label');
+      if (countLabel) countLabel.textContent = users.length + ' user' + (users.length !== 1 ? 's' : '');
+      usersPaginator.setItems(users, resetPage);
     }
 
     function fetchUsers() {
       const token = getAdminToken();
       if (!token) {
         document.getElementById('users-body').innerHTML =
-          `<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">No admin session. Please <a href="/admin05/login">sign in again</a>.</div></td></tr>`;
+          '<tr><td colspan="9"><div class="a-empty" style="color:#ef4444">No admin session. Please <a href="/admin05/login">sign in again</a>.</div></td></tr>';
         return;
       }
       fetch(`${ADMIN_API}/api/admin/users`, {
@@ -1846,14 +2126,11 @@
     }
 
     // Search
-    document.getElementById('user-search').addEventListener('input', e => {
-      const q = e.target.value.toLowerCase();
-      renderUsers(q ? allUsers.filter(u =>
-        u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-      ) : allUsers);
+    document.getElementById('user-search').addEventListener('input', () => {
+      renderUsers(undefined, true);
     });
 
-    // Toggle status & Delete via event delegation
+// Toggle status & Delete via event delegation
     document.getElementById('users-body').addEventListener('change', async e => {
       const toggle = e.target.closest('[data-user-status-toggle]');
       if (!toggle) return;
@@ -1869,7 +2146,7 @@
         if (res.ok) {
           const u = allUsers.find(x => x.id === id);
           if (u) u.status = newStatus;
-          renderUsers(allUsers);
+          renderUsers(undefined, false);
           toast(`Account ${newStatus === 'active' ? 'enabled' : 'disabled'}.`);
         } else {
           toast('Could not update status.', 'error');
@@ -1891,7 +2168,7 @@
         });
         if (res.ok) {
           allUsers = allUsers.filter(u => u.id !== id);
-          renderUsers(allUsers);
+          renderUsers(undefined, false);
           toast(`"${name}" deleted.`);
         } else {
           toast('Could not delete user.', 'error');
@@ -1912,38 +2189,43 @@
     let allMessages = [];
     let activeMessage = null;
 
-    function renderMessages(list) {
-      const tbody = document.getElementById("messages-body");
-      if (!tbody) return;
+    const messagesPaginator = new TablePaginator({
+      containerId: "messages-pagination",
+      pageSize: 10,
+      ariaLabel: "Messages pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("messages-body");
+        if (!tbody) return;
 
-      if (!list || list.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6"><div class="a-empty">No messages found.</div></td></tr>`;
-        return;
+        if (!slice || slice.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6"><div class="a-empty">No messages found.</div></td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = slice.map(m => {
+          const isUnread = (m.status || "").toLowerCase() === "unread";
+          const statusClass = isUnread ? "pending" : "ok";
+          const dateStr = fmtDate(m.created_at);
+
+          return `
+            <tr style="${isUnread ? 'background:#fbfdff;font-weight:600;' : ''}">
+              <td><span class="a-status ${statusClass}">${escapeHtml(m.status || 'Unread')}</span></td>
+              <td><strong>${escapeHtml(m.name)}</strong></td>
+              <td><a href="mailto:${escapeHtml(m.email)}" style="color:var(--a-navy);">${escapeHtml(m.email)}</a></td>
+              <td><div style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.subject)}</div></td>
+              <td>${escapeHtml(dateStr)}</td>
+              <td style="text-align:right;">
+                <div style="display:inline-flex;gap:6px;">
+                  <button class="a-btn small primary" data-msg-view="${escapeHtml(m.id)}">View</button>
+                  <button class="a-btn small" data-msg-toggle="${escapeHtml(m.id)}">${isUnread ? 'Mark Read' : 'Mark Unread'}</button>
+                  <button class="a-btn small danger" data-msg-delete="${escapeHtml(m.id)}" data-msg-sender="${escapeHtml(m.name)}">Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("");
       }
-
-      tbody.innerHTML = list.map(m => {
-        const isUnread = (m.status || "").toLowerCase() === "unread";
-        const statusClass = isUnread ? "pending" : "ok";
-        const dateStr = fmtDate(m.created_at);
-
-        return `
-          <tr style="${isUnread ? 'background:#fbfdff;font-weight:600;' : ''}">
-            <td><span class="a-status ${statusClass}">${escapeHtml(m.status || 'Unread')}</span></td>
-            <td><strong>${escapeHtml(m.name)}</strong></td>
-            <td><a href="mailto:${escapeHtml(m.email)}" style="color:var(--a-navy);">${escapeHtml(m.email)}</a></td>
-            <td><div style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(m.subject)}</div></td>
-            <td>${escapeHtml(dateStr)}</td>
-            <td style="text-align:right;">
-              <div style="display:inline-flex;gap:6px;">
-                <button class="a-btn small primary" data-msg-view="${escapeHtml(m.id)}">View</button>
-                <button class="a-btn small" data-msg-toggle="${escapeHtml(m.id)}">${isUnread ? 'Mark Read' : 'Mark Unread'}</button>
-                <button class="a-btn small danger" data-msg-delete="${escapeHtml(m.id)}" data-msg-sender="${escapeHtml(m.name)}">Delete</button>
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join("");
-    }
+    });
 
     function updateUnreadBadge() {
       const badge = document.getElementById("nav-unread-badge");
@@ -1957,7 +2239,7 @@
       }
     }
 
-    function filterMessages() {
+    function filterMessages(resetPage = false) {
       const query = (document.getElementById("message-search")?.value || "").toLowerCase().trim();
       const filter = document.getElementById("message-filter")?.value || "all";
 
@@ -1977,10 +2259,41 @@
         );
       }
 
-      renderMessages(filtered);
+      messagesPaginator.setItems(filtered, resetPage);
     }
 
-    async function fetchMessages() {
+    /* =========================================================
+       Reviews tab with pagination
+       ========================================================= */
+    const reviewsPaginator = new TablePaginator({
+      containerId: "reviews-pagination",
+      pageSize: 10,
+      ariaLabel: "Reviews pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("reviews-body");
+        if (!tbody) return;
+        if (!slice.length) {
+          tbody.innerHTML = '<tr><td colspan="5"><div class="a-empty">No reviews found.</div></td></tr>';
+          return;
+        }
+        tbody.innerHTML = slice.map(r => `
+          <tr>
+            <td><strong>${escapeHtml(r.product || r.product_name)}</strong></td>
+            <td>${escapeHtml(r.customer || r.customer_name)}</td>
+            <td>${"\u2605".repeat(Number(r.rating) || 5)}</td>
+            <td>${escapeHtml(r.comment || "")}</td>
+            <td><span class="a-status ${r.status === 'ok' || r.status === 'approved' ? 'ok' : 'pending'}">${escapeHtml(r.status || 'pending')}</span></td>
+          </tr>
+        `).join("");
+      }
+    });
+
+    function renderReviews(list) {
+      const reviews = list || REVIEWS;
+      reviewsPaginator.setItems(reviews);
+    }
+
+async function fetchMessages() {
       const token = getAdminToken();
       if (!token) return;
 
@@ -1994,7 +2307,7 @@
         const data = await res.json();
         if (Array.isArray(data)) {
           allMessages = data;
-          filterMessages();
+          filterMessages(false);
           updateUnreadBadge();
         }
       } catch (err) {
@@ -2059,7 +2372,7 @@
             const toggleBtn = document.getElementById("msg-modal-toggle-status");
             if (toggleBtn) toggleBtn.textContent = newStatus === "Read" ? "Mark as Unread" : "Mark as Read";
           }
-          filterMessages();
+          filterMessages(false);
           updateUnreadBadge();
           if (showToast) toast(`Message marked as ${newStatus}.`);
         } else if (showToast) {
@@ -2084,7 +2397,7 @@
         if (res.ok) {
           allMessages = allMessages.filter(x => x.id !== id);
           if (activeMessage && activeMessage.id === id) closeMessageModal();
-          filterMessages();
+          filterMessages(false);
           updateUnreadBadge();
           toast("Message deleted.");
         } else {
@@ -2096,8 +2409,8 @@
     }
 
     // Event listeners for message search, filter, and refresh
-    document.getElementById("message-search")?.addEventListener("input", filterMessages);
-    document.getElementById("message-filter")?.addEventListener("change", filterMessages);
+    document.getElementById("message-search")?.addEventListener("input", () => filterMessages(true));
+    document.getElementById("message-filter")?.addEventListener("change", () => filterMessages(true));
     document.getElementById("btn-refresh-messages")?.addEventListener("click", () => {
       fetchMessages();
       toast("Messages refreshed.");
@@ -2155,6 +2468,7 @@
     refreshProductViews();
     renderOrders();
     renderCustomers();
+    renderReviews();
     fetchBackendData();
     fetchUsers(); // Preload users on dashboard open
     fetchMessages(); // Preload messages and badge

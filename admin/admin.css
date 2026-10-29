@@ -196,3 +196,116 @@ button{font-family:inherit;font-size:inherit;cursor:pointer;}
 .a-login-error.show{display:block;}
 .a-login-hint{margin-top:20px;padding-top:16px;border-top:1px solid var(--a-line);font-size:12px;color:var(--a-muted);line-height:1.6;}
 .a-login-hint strong{color:var(--a-ink);}
+
+/* ---------- Pagination Controls ---------- */
+.a-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--a-line);
+  background: #ffffff;
+  border-radius: 0 0 12px 12px;
+  flex-wrap: wrap;
+  gap: 12px;
+  user-select: none;
+}
+.a-panel:not([style*="padding:0"]):not([style*="padding: 0"]) > .a-pagination {
+  background: transparent;
+  padding: 14px 0 0;
+  margin-top: 14px;
+  border-radius: 0;
+}
+.a-pagination-info {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--a-muted);
+  letter-spacing: .01em;
+}
+.a-pagination-info strong {
+  color: var(--a-ink);
+  font-weight: 600;
+}
+.a-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.a-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--a-line);
+  background: #ffffff;
+  color: var(--a-ink);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s ease;
+  line-height: 1;
+  font-family: inherit;
+}
+.a-page-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.a-page-btn:hover:not(:disabled):not(.active) {
+  background: #f4f5f7;
+  border-color: #c7cde0;
+  color: var(--a-navy);
+}
+.a-page-btn.active {
+  background: var(--a-navy);
+  border-color: var(--a-navy);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: default;
+}
+.a-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: var(--a-line);
+  color: var(--a-muted);
+}
+.a-page-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 32px;
+  font-size: 13px;
+  color: var(--a-muted);
+  user-select: none;
+}
+@media (max-width: 640px) {
+  .a-pagination {
+    padding: 10px 14px;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .a-pagination-info {
+    font-size: 12px;
+    text-align: center;
+  }
+  .a-pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+  }
+  .a-page-btn {
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
+    padding: 0 4px;
+  }
+}
