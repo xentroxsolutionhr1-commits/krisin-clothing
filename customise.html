@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customise Your Shirt | Krisin Clothing</title>
+  <meta name="description" content="Design your own custom printed shirt or T-shirt at Krisin Clothing. Upload your artwork, choose your base product, pick your size and colour, then order directly.">
+  <link rel="icon" href="assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .cust-hero{background:linear-gradient(135deg,#0f1622 0%,#1b2640 60%,#14244b 100%);color:#fff;padding:56px 0 48px;text-align:center}
+    .cust-hero h1{font-family:var(--font-display);font-size:clamp(28px,5vw,48px);font-weight:800;letter-spacing:-.02em;margin:0 0 10px}
+    .cust-hero p{font-size:15px;opacity:.75;max-width:540px;margin:0 auto;line-height:1.6}
+    .hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:100px;padding:5px 14px;font-size:12.5px;font-weight:600;margin-bottom:18px}
+    .cust-steps{display:flex;align-items:center;justify-content:center;margin:32px 0 36px;padding:0 16px}
+    .cust-step{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;flex:1;max-width:180px}
+    .cust-step:not(:last-child)::after{content:'';position:absolute;top:15px;left:calc(50% + 15px);width:calc(100% - 30px);height:2px;background:var(--line);transition:background .3s}
+    .cust-step.done:not(:last-child)::after,.cust-step.active:not(:last-child)::after{background:var(--black)}
+    .cust-step-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--stone);background:#fff;transition:all .25s;z-index:1}
+    .cust-step.done .cust-step-dot{background:var(--black);border-color:var(--black);color:#fff}
+    .cust-step.active .cust-step-dot{background:#fff;border-color:var(--black);color:var(--black);font-weight:800;box-shadow:0 0 0 4px rgba(20,36,75,.12)}
+    .cust-step-label{font-size:11px;font-weight:600;color:var(--stone);text-align:center;white-space:nowrap}
+    .cust-step.active .cust-step-label,.cust-step.done .cust-step-label{color:var(--black)}
+    .cust-layout{display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start;padding-bottom:60px}
+    @media(max-width:900px){.cust-layout{grid-template-columns:1fr}}
+    .cust-panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px 28px;margin-bottom:16px}
+    .cust-panel-title{font-family:var(--font-display);font-size:17px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:20px}
+    .cust-panel-num{width:26px;height:26px;border-radius:50%;background:var(--black);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+    .cust-product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+    .cust-product-card{border:2px solid var(--line);border-radius:10px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;overflow:hidden;position:relative}
+    .cust-product-card:hover{border-color:#9ca3af;transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    .cust-product-card.selected{border-color:var(--black);box-shadow:0 0 0 1px var(--black)}
+    .cust-product-card.selected::after{content:'✓';position:absolute;top:8px;right:8px;width:22px;height:22px;background:var(--black);color:#fff;border-radius:50%;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:22px;text-align:center}
+    .cust-product-img{width:100%;aspect-ratio:3/4;object-fit:cover}
+    .cust-product-info{padding:8px 10px 10px}
+    .cust-product-name{font-weight:700;font-size:12px;line-height:1.3;margin-bottom:3px}
+    .cust-product-price{font-size:12px;color:var(--stone)}
+    .cust-size-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .cust-size-chip{border:1.5px solid var(--line);border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;transition:all .18s;user-select:none}
+    .cust-size-chip:hover{border-color:#9ca3af;background:#f9fafb}
+    .cust-size-chip.selected{background:var(--black);border-color:var(--black);color:#fff}
+    .cust-upload-zone{border:2px dashed var(--line);border-radius:12px;padding:40px 24px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+    .cust-upload-zone:hover,.cust-upload-zone.drag-over{border-color:var(--black);background:#f8faff}
+    .cust-upload-icon{width:52px;height:52px;margin:0 auto 14px;background:#f3f4f8;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .cust-upload-icon svg{width:26px;height:26px;stroke:var(--stone);fill:none;stroke-width:1.8;stroke-linecap:round}
+    .cust-upload-text{font-weight:600;font-size:14px;margin-bottom:5px}
+    .cust-upload-hint{font-size:12.5px;color:var(--stone)}
+    .cust-upload-hidden{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+    .cust-preview-wrap{display:none;position:relative;text-align:center}
+    .cust-preview-wrap.visible{display:block}
+    .cust-preview-img{max-width:100%;max-height:260px;border-radius:10px;border:1px solid var(--line);object-fit:contain}
+    .cust-preview-remove{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:14px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .cust-url-row{display:flex;align-items:center;gap:10px;margin-top:14px}
+    .cust-url-row input{flex:1;border:1.5px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;transition:border-color .18s}
+    .cust-url-row input:focus{border-color:var(--black)}
+    .cust-field{margin-top:14px}
+    .cust-field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--black)}
+    .cust-field textarea,.cust-field input{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;outline:none;transition:border-color .18s;resize:vertical;box-sizing:border-box}
+    .cust-field textarea:focus,.cust-field input:focus{border-color:var(--black)}
+    .cust-summary{background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px;position:sticky;top:88px}
+    .cust-summary-title{font-family:var(--font-display);font-size:17px;font-weight:700;margin-bottom:18px}
+    .cust-summary-row{display:flex;justify-content:space-between;align-items:flex-start;font-size:13.5px;padding:7px 0;border-bottom:1px solid #f0f1f4;gap:10px}
+    .cust-summary-row .label{color:var(--stone);flex-shrink:0}
+    .cust-summary-row .val{font-weight:600;text-align:right;word-break:break-word}
+    .cust-summary-total{display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:700;padding-top:14px;margin-top:8px;border-top:2px solid var(--black)}
+    .cust-preview-thumb{width:60px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:none;margin-bottom:12px}
+    .cust-preview-thumb.visible{display:block}
+    .cust-notice{background:#f0f4ff;border:1px solid #c7d4f5;border-radius:10px;padding:14px 16px;font-size:13px;color:#1e3a8a;margin-top:16px;line-height:1.5}
+    .cust-cta-btn{width:100%;margin-top:18px;padding:14px;font-size:15px;font-weight:700;letter-spacing:.02em}
+    .cust-auth-notice{background:#fff7ed;border:1px solid #fcd34d;border-radius:10px;padding:14px 16px;font-size:13px;color:#92400e;margin-bottom:16px;display:none}
+    .cust-auth-notice.visible{display:block}
+    .cust-skeleton{height:160px;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:10px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    .cust-empty{text-align:center;padding:32px;color:var(--stone);font-size:14px}
+    .cust-color-grid{display:flex;flex-wrap:wrap;gap:8px}
+    .cust-color-btn{width:30px;height:30px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .15s;outline:none}
+    .cust-color-btn:hover{transform:scale(1.15)}
+    .cust-color-btn.selected{border-color:var(--black);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--black)}
+    .cust-print-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .cust-print-chip{border:1.5px solid var(--line);border-radius:100px;padding:5px 14px;font-size:12.5px;font-weight:600;cursor:pointer;background:#fff;transition:all .18s}
+    .cust-print-chip.selected{background:var(--black);border-color:var(--black);color:#fff}
+    .cust-success{display:none;text-align:center;padding:56px 24px}
+    .cust-success.visible{display:block}
+    .cust-success-icon{width:72px;height:72px;border-radius:50%;background:#ecfdf5;border:3px solid #a7f3d0;display:flex;align-items:center;justify-content:center;margin:0 auto 20px}
+    .cust-success-icon svg{width:34px;height:34px;stroke:#059669;fill:none;stroke-width:2.5}
+    @media(max-width:600px){.cust-step-label{font-size:9.5px}.cust-panel{padding:18px 16px}}
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <button class="menu-toggle icon-btn" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+      <nav class="main-nav">
+        <a href="index.html">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="new-arrivals.html">New Arrivals</a>
+        <a href="collections.html">Collections</a>
+        <a href="about.html">About Us</a>
+        <a href="customise.html" class="active" style="color:var(--black);font-weight:700;">Customise</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" data-search-toggle aria-label="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+        <div class="search-bar"><input type="search" placeholder="Search products&hellip;"></div>
+        <a href="login.html" class="icon-btn" aria-label="Account" id="hdr-account-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6"/></svg></a>
+        <a href="shop.html?filter=wishlist" class="icon-btn" aria-label="Wishlist"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z"/></svg><span class="count-badge hidden" data-wish-count>0</span></a>
+        <button class="icon-btn" data-cart-open aria-label="Cart"><svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 016 0v2"/></svg><span class="count-badge hidden" data-cart-count>0</span></button>
+      </div>
+    </div>
+  </header>
+  <div class="mobile-nav">
+    <div class="mobile-nav-top">
+      <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+      <button class="icon-btn mobile-nav-close" aria-label="Close menu"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <nav class="mobile-nav-links">
+      <a href="index.html">Home</a><a href="shop.html">Shop</a><a href="new-arrivals.html">New Arrivals</a>
+      <a href="collections.html">Collections</a><a href="about.html">About Us</a><a href="contact.html">Contact</a>
+      <a href="customise.html" style="font-weight:700;color:var(--black);">&#10024; Customise</a>
+    </nav>
+    <div class="mobile-nav-foot"><a href="cart.html">Cart</a><a href="shop.html?filter=wishlist">Wishlist</a></div>
+  </div>
+  <div class="drawer-overlay" data-cart-close></div>
+  <aside class="cart-drawer">
+    <div class="drawer-head"><span class="heading" style="font-size:18px">Your Bag</span><button class="icon-btn" data-cart-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="drawer-body"></div>
+    <div class="drawer-foot"><div class="summary-line total"><span>Subtotal</span><span data-drawer-total>&#8377;0</span></div><a href="cart.html" class="btn btn-outline btn-block" style="margin-top:12px">View Bag</a><a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px">Checkout</a></div>
+  </aside>
+
+  <section class="cust-hero">
+    <div class="container">
+      <div class="hero-badge">&#10024; Custom Printing Service</div>
+      <h1>Design Your Own Shirt</h1>
+      <p>Upload your artwork, pick a base product, choose your size &mdash; we'll print and deliver it straight to your door.</p>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="cust-steps" id="cust-steps" aria-label="Order progress">
+      <div class="cust-step active" data-step="1"><div class="cust-step-dot">1</div><div class="cust-step-label">Choose Product</div></div>
+      <div class="cust-step" data-step="2"><div class="cust-step-dot">2</div><div class="cust-step-label">Upload Design</div></div>
+      <div class="cust-step" data-step="3"><div class="cust-step-dot">3</div><div class="cust-step-label">Your Details</div></div>
+      <div class="cust-step" data-step="4"><div class="cust-step-dot">4</div><div class="cust-step-label">Confirm</div></div>
+    </div>
+  </div>
+
+  <main class="container" style="padding-bottom:60px;">
+    <div id="cust-success-view" class="cust-success">
+      <div class="cust-success-icon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <h2 style="font-family:var(--font-display);font-size:26px;font-weight:800;margin:0 0 10px;">Order Placed! &#127881;</h2>
+      <div id="cust-success-oid-badge" style="display:inline-block;margin-bottom:12px;padding:6px 16px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:20px;font-size:13px;font-weight:700;color:#7c3aed;"></div>
+      <p style="color:var(--stone);font-size:15px;max-width:480px;margin:0 auto 24px;line-height:1.6;">Your custom order has been received. Our team will review your design and get in touch if we need anything. Track progress in <a href="orders.html" style="font-weight:700;color:var(--black);">My Orders</a>.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="orders.html" class="btn btn-primary">Track My Order</a>
+        <a href="customise.html" class="btn btn-outline" onclick="location.reload();return false;">Order Another</a>
+        <a href="shop.html" class="btn btn-outline">Continue Shopping</a>
+      </div>
+    </div>
+    <div id="cust-form-area">
+      <div class="cust-auth-notice" id="cust-auth-notice"><strong>You're ordering as a guest.</strong> <a href="login.html?redirect=customise.html" style="color:#92400e;font-weight:700;">Sign in</a> to track your order in My Orders, or fill in your contact details below.</div>
+      <div class="cust-layout">
+        <div>
+          <div class="cust-panel">
+            <div class="cust-panel-title"><span class="cust-panel-num">1</span> Choose a Base Product</div>
+            <div id="cust-product-loading" class="cust-skeleton"></div>
+            <div id="cust-product-grid" class="cust-product-grid" style="display:none"></div>
+            <div id="cust-product-empty" class="cust-empty" style="display:none">No customisable products found. Please check back soon.</div>
+            <div id="size-section" style="display:none;margin-top:20px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Select Size</div>
+              <div class="cust-size-grid" id="cust-size-grid"></div>
+            </div>
+            <div id="color-section" style="display:none;margin-top:16px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Select Colour</div>
+              <div class="cust-color-grid" id="cust-color-grid"></div>
+            </div>
+          </div>
+          <div class="cust-panel">
+            <div class="cust-panel-title"><span class="cust-panel-num">2</span> Upload Your Design</div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Print Position</div>
+            <div class="cust-print-chips" id="print-position-chips">
+              <div class="cust-print-chip selected" data-pos="Front Centre">Front Centre</div>
+              <div class="cust-print-chip" data-pos="Back Centre">Back Centre</div>
+              <div class="cust-print-chip" data-pos="Left Chest">Left Chest</div>
+              <div class="cust-print-chip" data-pos="Right Chest">Right Chest</div>
+              <div class="cust-print-chip" data-pos="Full Front">Full Front</div>
+            </div>
+            <div style="margin-top:18px;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Design File</div>
+              <div id="cust-upload-zone" class="cust-upload-zone">
+                <div class="cust-upload-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+                <div class="cust-upload-text">Click to upload or drag &amp; drop</div>
+                <div class="cust-upload-hint">PNG, JPG, SVG &mdash; max 10 MB</div>
+                <input type="file" id="cust-file-input" class="cust-upload-hidden" accept="image/*" aria-label="Upload design file">
+              </div>
+              <div id="cust-preview-wrap" class="cust-preview-wrap" style="margin-top:14px;">
+                <img id="cust-preview-img" class="cust-preview-img" src="" alt="Your design preview">
+                <button id="cust-preview-remove" class="cust-preview-remove" aria-label="Remove design">&#x2715;</button>
+              </div>
+              <div id="cust-upload-status" style="margin-top:8px;font-size:12.5px;display:none;"></div>
+              <div style="margin-top:16px;font-size:13px;color:var(--stone);text-align:center;">or paste a direct image URL</div>
+              <div class="cust-url-row" style="margin-top:8px;">
+                <input type="url" id="cust-url-input" placeholder="https://example.com/my-design.png" aria-label="Design image URL">
+                <button class="btn btn-outline" id="cust-url-use" style="padding:9px 16px;font-size:13px;white-space:nowrap;">Use URL</button>
+              </div>
+              <div id="cust-url-error" style="color:#e11d48;font-size:12px;margin-top:6px;display:none;"></div>
+            </div>
+            <div class="cust-field" style="margin-top:20px;">
+              <label for="cust-message">Special Instructions <span style="font-weight:400;color:var(--stone)">(optional)</span></label>
+              <textarea id="cust-message" rows="3" placeholder="e.g. Please keep the design centred, use white ink on dark fabric, etc." maxlength="1000"></textarea>
+            </div>
+          </div>
+          <div class="cust-panel">
+            <div class="cust-panel-title"><span class="cust-panel-num">3</span> Your Details &amp; Shipping</div>
+            <div id="cust-logged-in-info" style="display:none;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:13.5px;"><strong id="cust-li-name"></strong><br><span style="color:var(--stone)" id="cust-li-email"></span></div>
+            <div id="cust-guest-fields">
+              <div class="cust-field"><label for="cust-guest-name">Full Name *</label><input type="text" id="cust-guest-name" placeholder="Your full name" autocomplete="name"></div>
+              <div class="cust-field"><label for="cust-guest-email">Email Address *</label><input type="email" id="cust-guest-email" placeholder="you@example.com" autocomplete="email"></div>
+              <div class="cust-field"><label for="cust-guest-phone">Phone Number *</label><input type="tel" id="cust-guest-phone" placeholder="10-digit mobile number" autocomplete="tel"></div>
+            </div>
+            <div class="cust-field" style="margin-top:16px;"><label for="cust-address">Shipping Address *</label><textarea id="cust-address" rows="3" placeholder="House / flat, street, city, state, PIN code" autocomplete="street-address"></textarea></div>
+          </div>
+        </div>
+        <div>
+          <div class="cust-summary">
+            <div class="cust-summary-title">Order Summary</div>
+            <img id="sum-design-thumb" class="cust-preview-thumb" src="" alt="Design preview">
+            <div class="cust-summary-row"><span class="label">Base Product</span><span class="val" id="sum-product">&mdash;</span></div>
+            <div class="cust-summary-row"><span class="label">Size</span><span class="val" id="sum-size">&mdash;</span></div>
+            <div class="cust-summary-row"><span class="label">Colour</span><span class="val" id="sum-color">&mdash;</span></div>
+            <div class="cust-summary-row"><span class="label">Print Position</span><span class="val" id="sum-position">Front Centre</span></div>
+            <div class="cust-summary-row"><span class="label">Design</span><span class="val" id="sum-design">&mdash;</span></div>
+            <div style="height:10px;"></div>
+            <div class="cust-summary-row"><span class="label">Product Price</span><span class="val" id="sum-base-price">&#8377;0</span></div>
+            <div class="cust-summary-row"><span class="label">Custom Printing Fee</span><span class="val" id="sum-printing-fee">&#8377;200</span></div>
+            <div class="cust-summary-row"><span class="label">Shipping</span><span class="val">&#8377;99 <span style="font-size:11px;color:var(--stone)">(Free over &#8377;1,999)</span></span></div>
+            <div class="cust-summary-total"><span>Total</span><span id="sum-grand-total">&#8377;0</span></div>
+            <div class="cust-notice">&#128424;&#65039; Our team will review your design and confirm production within 1&#8211;2 business days.</div>
+            <div id="cust-place-error" style="color:#e11d48;font-size:12.5px;margin-top:12px;display:none;"></div>
+            <button class="btn btn-primary cust-cta-btn" id="cust-place-btn">Place Custom Order &rarr;</button>
+            <div style="margin-top:12px;text-align:center;font-size:12px;color:var(--stone);">Secured by Razorpay &nbsp;|&nbsp; 100% safe checkout</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container"><div class="footer-bottom" style="border:none;padding-top:0"><span>&copy; 2026 Krisin Clothing</span></div></div>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+  (function(){
+    var API_BASE=AUTH.getApiBase();
+    function money(n){return'\u20b9'+Number(n).toLocaleString('en-IN');}
+    function esc(s){return String(s||'').replace(/[&<>"']/g,function(m){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]);});}
+    var isLoggedIn=AUTH.isCustomerLoggedIn();
+    var customer=isLoggedIn?AUTH.getCustomer():null;
+    if(isLoggedIn){var al=document.getElementById('hdr-account-link');if(al)al.href='profile.html';}
+    if(!isLoggedIn){
+      document.getElementById('cust-auth-notice').classList.add('visible');
+      document.getElementById('cust-guest-fields').style.display='block';
+      document.getElementById('cust-logged-in-info').style.display='none';
+    }else{
+      document.getElementById('cust-auth-notice').classList.remove('visible');
+      document.getElementById('cust-guest-fields').style.display='none';
+      document.getElementById('cust-logged-in-info').style.display='block';
+      document.getElementById('cust-li-name').textContent=customer.name||'';
+      document.getElementById('cust-li-email').textContent=customer.email||'';
+    }
+    var selProd=null,selSize=null,selColor=null,selPos='Front Centre',designUrl='',printFee=200;
+    fetch(API_BASE+'/api/config/printing-fee').then(function(r){return r.json();}).then(function(d){
+      printFee=Number(d.printing_fee)||200;
+      document.getElementById('sum-printing-fee').textContent=money(printFee);
+      updateTotal();
+    }).catch(function(){});
+    function renderProductsGrid(list) {
+      document.getElementById('cust-product-loading').style.display='none';
+      if(!list || !list.length){
+        document.getElementById('cust-product-empty').style.display='block';
+        return;
+      }
+      var grid=document.getElementById('cust-product-grid');
+      grid.style.display='grid';
+      grid.innerHTML=list.map(function(p){
+        var img=(p.images&&p.images[0])||'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=400&auto=format&fit=crop';
+        return'<div class="cust-product-card" data-pid="'+esc(p.id)+'" tabindex="0" role="radio" aria-checked="false"><img class="cust-product-img" src="'+esc(img)+'" alt="'+esc(p.name)+'" loading="lazy"><div class="cust-product-info"><div class="cust-product-name">'+esc(p.name)+'</div><div class="cust-product-price">'+money(p.price)+'</div></div></div>';
+      }).join('');
+      window._custProds=list;
+      grid.addEventListener('click',function(e){var c=e.target.closest('.cust-product-card');if(c)selProduct(c.dataset.pid);});
+      grid.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var c=e.target.closest('.cust-product-card');if(c)selProduct(c.dataset.pid);}});
+      if(list.length > 0) selProduct(list[0].id);
+    }
+
+    fetch(API_BASE+'/api/products').then(function(r){return r.json();}).then(function(prods){
+      var list=(Array.isArray(prods)?prods:[]).filter(function(p){
+        var c=(p.category||'').toLowerCase(),n=(p.name||'').toLowerCase();
+        return c.includes('shirt')||c.includes('tee')||c.includes('t-shirt')||n.includes('shirt')||n.includes('tee');
+      });
+      if(!list.length && typeof PRODUCTS !== 'undefined') {
+        list = PRODUCTS.filter(function(p){
+          var c=(p.category||'').toLowerCase(),n=(p.name||'').toLowerCase();
+          return c.includes('shirt')||c.includes('tee')||c.includes('t-shirt')||n.includes('shirt')||n.includes('tee');
+        });
+      }
+      renderProductsGrid(list);
+    }).catch(function(){
+      var list = [];
+      if(typeof PRODUCTS !== 'undefined') {
+        list = PRODUCTS.filter(function(p){
+          var c=(p.category||'').toLowerCase(),n=(p.name||'').toLowerCase();
+          return c.includes('shirt')||c.includes('tee')||c.includes('t-shirt')||n.includes('shirt')||n.includes('tee');
+        });
+      }
+      if(list.length) {
+        renderProductsGrid(list);
+      } else {
+        document.getElementById('cust-product-loading').style.display='none';
+        document.getElementById('cust-product-empty').textContent='Failed to load products. Please refresh.';
+        document.getElementById('cust-product-empty').style.display='block';
+      }
+    });
+    function selProduct(pid){
+      var list=window._custProds||[];
+      var p=list.find(function(x){return x.id===pid;});if(!p)return;
+      selProd=p;selSize=null;selColor=null;
+      document.querySelectorAll('.cust-product-card').forEach(function(c){var s=c.dataset.pid===pid;c.classList.toggle('selected',s);c.setAttribute('aria-checked',s?'true':'false');});
+      var sizes=(p.sizes&&p.sizes.length)?p.sizes:['S','M','L','XL'];
+      var sg=document.getElementById('cust-size-grid');
+      sg.innerHTML=sizes.map(function(s){return'<div class="cust-size-chip" data-size="'+esc(s)+'">'+esc(s)+'</div>';}).join('');
+      document.getElementById('size-section').style.display='block';
+      sg.querySelectorAll('.cust-size-chip').forEach(function(chip){chip.addEventListener('click',function(){sg.querySelectorAll('.cust-size-chip').forEach(function(c){c.classList.remove('selected');});chip.classList.add('selected');selSize=chip.dataset.size;updSummary();});});
+      var colors=(p.colors&&p.colors.length)?p.colors:[{name:'White',hex:'#ffffff'},{name:'Black',hex:'#1a1a1a'},{name:'Navy',hex:'#14244b'}];
+      var cg=document.getElementById('cust-color-grid');
+      cg.innerHTML=colors.map(function(c){var b=(c.hex==='#ffffff'||c.hex==='#fff')?'#d1d5db':'transparent';return'<button class="cust-color-btn" data-color="'+esc(c.name)+'" style="background:'+esc(c.hex)+';border-color:'+b+';" title="'+esc(c.name)+'" aria-label="Colour: '+esc(c.name)+'"></button>';}).join('');
+      document.getElementById('color-section').style.display='flex';
+      cg.querySelectorAll('.cust-color-btn').forEach(function(btn){btn.addEventListener('click',function(){cg.querySelectorAll('.cust-color-btn').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');selColor=btn.dataset.color;updSummary();});});
+      var fc=cg.querySelector('.cust-color-btn');if(fc)fc.click();
+      updSummary();updSteps(1);
+    }
+    document.querySelectorAll('.cust-print-chip').forEach(function(chip){chip.addEventListener('click',function(){document.querySelectorAll('.cust-print-chip').forEach(function(c){c.classList.remove('selected');});chip.classList.add('selected');selPos=chip.dataset.pos;document.getElementById('sum-position').textContent=selPos;});});
+    var fi=document.getElementById('cust-file-input'),uz=document.getElementById('cust-upload-zone');
+    var isUploading=false;
+    var statusEl=document.getElementById('cust-upload-status');
+
+    function setUploadStatus(html, color) {
+      if (!statusEl) statusEl = document.getElementById('cust-upload-status');
+      if (!statusEl) return;
+      statusEl.style.display = html ? 'block' : 'none';
+      statusEl.style.color = color || 'inherit';
+      statusEl.innerHTML = html;
+    }
+
+    uz.addEventListener('dragover',function(e){e.preventDefault();uz.classList.add('drag-over');});
+    uz.addEventListener('dragleave',function(){uz.classList.remove('drag-over');});
+    uz.addEventListener('drop',function(e){e.preventDefault();uz.classList.remove('drag-over');var f=e.dataTransfer.files[0];if(f)doUpload(f);});
+    fi.addEventListener('change',function(){var f=fi.files[0];if(f)doUpload(f);});
+
+    async function doUpload(file){
+      var validMime = file.type.match(/^image\/(png|jpe?g|webp|svg\+xml)$/i) || file.name.match(/\.(png|jpe?g|webp|svg)$/i);
+      if(!validMime){
+        alert('Please upload a valid image file (PNG, JPG, WebP, SVG).');
+        return;
+      }
+      if(file.size > 5*1024*1024){
+        alert('File is too large. Maximum size is 5 MB.');
+        return;
+      }
+
+      // Show instant local preview while uploading
+      var localPreview = URL.createObjectURL(file);
+      showPreview(localPreview);
+      setUploadStatus('<span style="color:#6366f1;">&#x23F3; Uploading artwork to secure server&hellip;</span>');
+
+      isUploading = true;
+      var placeBtn = document.getElementById('cust-place-btn');
+      if (placeBtn) {
+        placeBtn.disabled = true;
+        placeBtn.textContent = 'Uploading artwork\u2026';
+      }
+
+      var fd = new FormData();
+      fd.append('artwork', file, file.name);
+
+      try {
+        var res = await fetch(API_BASE + '/api/upload-artwork', {
+          method: 'POST',
+          body: fd
+        });
+        var data = await res.json();
+        if (res.ok && data.url) {
+          designUrl = data.url;
+          setUploadStatus('<span style="color:#10b981;font-weight:600;">&#x2713; Artwork uploaded securely</span>');
+          document.getElementById('sum-design').textContent = 'Uploaded \u2713';
+          updSteps(2);
+        } else {
+          throw new Error(data.error || 'Server rejected artwork upload.');
+        }
+      } catch (err) {
+        designUrl = '';
+        setUploadStatus('<span style="color:#e11d48;">Upload failed: ' + esc(err.message) + '. You can paste an image URL below instead.</span>');
+        document.getElementById('sum-design').textContent = 'Upload failed';
+      } finally {
+        isUploading = false;
+        if (placeBtn) {
+          placeBtn.disabled = false;
+          placeBtn.textContent = 'Place Custom Order \u2192';
+        }
+        updSummary();
+      }
+    }
+
+    function showPreview(src){
+      document.getElementById('cust-preview-img').src=src;
+      document.getElementById('cust-preview-wrap').classList.add('visible');uz.style.display='none';
+      document.getElementById('sum-design-thumb').src=src;document.getElementById('sum-design-thumb').classList.add('visible');
+      document.getElementById('sum-design').textContent='Artwork attached';updSteps(2);
+    }
+
+    document.getElementById('cust-preview-remove').addEventListener('click',function(){
+      designUrl='';fi.value='';
+      document.getElementById('cust-preview-wrap').classList.remove('visible');document.getElementById('cust-preview-img').src='';
+      document.getElementById('sum-design-thumb').src='';document.getElementById('sum-design-thumb').classList.remove('visible');
+      document.getElementById('sum-design').textContent='\u2014';uz.style.display='';
+      document.getElementById('cust-url-input').value='';document.getElementById('cust-url-error').style.display='none';
+      setUploadStatus('');
+      updSummary();
+    });
+
+    document.getElementById('cust-url-use').addEventListener('click',function(){
+      var url=document.getElementById('cust-url-input').value.trim(),err=document.getElementById('cust-url-error');
+      err.style.display='none';
+      if(!url){err.textContent='Please enter a URL.';err.style.display='block';return;}
+      if(!/^https?:\/\/.+/i.test(url)){err.textContent='Enter a valid http:// or https:// URL.';err.style.display='block';return;}
+      designUrl=url;
+      showPreview(url);
+      setUploadStatus('<span style="color:#10b981;font-weight:600;">&#x2713; Direct artwork URL applied</span>');
+      document.getElementById('cust-preview-img').onerror=function(){
+        err.textContent='Could not load image from that URL. Please verify the link.';
+        err.style.display='block';
+        designUrl='';
+        setUploadStatus('');
+      };
+      updSummary();
+    });
+    function updSummary(){
+      document.getElementById('sum-product').textContent=selProd?selProd.name:'\u2014';
+      document.getElementById('sum-size').textContent=selSize||'\u2014';
+      document.getElementById('sum-color').textContent=selColor||'\u2014';
+      document.getElementById('sum-position').textContent=selPos;
+      updateTotal();
+    }
+    function updateTotal(){
+      var base=selProd?Number(selProd.price):0,ship=base+printFee>=1999?0:99,tot=base+printFee+ship;
+      document.getElementById('sum-base-price').textContent=money(base);
+      document.getElementById('sum-grand-total').textContent=money(tot);
+    }
+    function updSteps(done){
+      document.querySelectorAll('.cust-step').forEach(function(el){
+        var s=Number(el.dataset.step);el.classList.remove('active','done');
+        if(s<done+1)el.classList.add('done');else if(s===done+1)el.classList.add('active');
+      });
+    }
+    document.getElementById('cust-place-btn').addEventListener('click',async function(){
+      var err=document.getElementById('cust-place-error');err.style.display='none';
+      var errs=[];
+      if(isUploading)errs.push('Please wait for your artwork to finish uploading.');
+      if(!selProd)errs.push('Please choose a base product.');
+      if(!selSize)errs.push('Please select a size.');
+      if(!designUrl)errs.push('Please upload your artwork or provide a valid image URL.');
+      if(designUrl && !/^https?:\/\/.+/i.test(designUrl))errs.push('Please wait for artwork upload to complete or enter a valid HTTP/HTTPS image URL.');
+      var cName,cEmail,cPhone,addr=document.getElementById('cust-address').value.trim();
+      if(isLoggedIn){cName=customer.name||'';cEmail=customer.email||'';cPhone=customer.phone||'';}
+      else{
+        cName=document.getElementById('cust-guest-name').value.trim();
+        cEmail=document.getElementById('cust-guest-email').value.trim();
+        cPhone=document.getElementById('cust-guest-phone').value.trim();
+        if(!cName)errs.push('Please enter your full name.');
+        if(!cEmail||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cEmail))errs.push('Please enter a valid email address.');
+        if(!cPhone||cPhone.replace(/\D/g,'').length<10)errs.push('Please enter a valid 10-digit phone number.');
+      }
+      if(!addr)errs.push('Please enter your shipping address.');
+      if(errs.length){err.innerHTML=errs.map(function(e){return'\u2022 '+e;}).join('<br>');err.style.display='block';err.scrollIntoView({behavior:'smooth',block:'center'});return;}
+      var btn=document.getElementById('cust-place-btn');btn.disabled=true;btn.textContent='Placing order\u2026';
+      var base=Number(selProd.price),ship=base+printFee>=1999?0:99,total=base+printFee+ship;
+      var msg=document.getElementById('cust-message').value.trim();
+      var oid='CUST-'+Date.now()+'-'+Math.random().toString(36).substr(2,5).toUpperCase();
+      var imgUrl=designUrl;
+      var sa={address:addr};
+      var payload={orderId:oid,items:[{id:selProd.id,productId:selProd.id,name:selProd.name,price:base,qty:1,size:selSize,color:selColor||'',image:(selProd.images&&selProd.images[0])||'',is_customized:true,custom_image_url:imgUrl,customer_message:msg}],total:total,total_amount:total,subtotal:base,shippingFee:ship,shippingAddress:sa,shipping_address:sa,paymentMethod:'COD',payment_method:'COD',status:'Pending',is_customized:true,custom_image_url:imgUrl,printing_fee:printFee,customer_message:msg,customer_name:cName,customer_email:cEmail,customer_phone:cPhone,custom_details:{source:'customise_page',product_name:selProd.name,size:selSize,color:selColor||'',print_position:selPos,image_url:imgUrl||'[uploaded-file]'}};
+      var localRecord = Object.assign({}, payload, {
+        id: oid,
+        orderId: oid,
+        created_at: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        custom_image_url: designUrl || imgUrl
+      });
+      if(localRecord.items && localRecord.items[0]) {
+        localRecord.items[0].custom_image_url = designUrl || imgUrl;
+      }
+      try{
+        var st1=JSON.parse(localStorage.getItem('krisin_orders_v1')||'[]');
+        st1.unshift(localRecord);
+        localStorage.setItem('krisin_orders_v1',JSON.stringify(st1));
+        var st2=JSON.parse(localStorage.getItem('kc_orders')||'[]');
+        st2.unshift(localRecord);
+        localStorage.setItem('kc_orders',JSON.stringify(st2));
+      }catch(e){}
+      try{
+        var hdrs={'Content-Type':'application/json'};
+        var tok=(localStorage.getItem('krisin_customer_token')||sessionStorage.getItem('krisin_customer_token')||'');
+        if(tok)hdrs['Authorization']='Bearer '+tok;
+        await fetch(API_BASE+'/api/orders',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
+      }catch(e){}
+      var badge = document.getElementById('cust-success-oid-badge');
+      if(badge) badge.textContent = 'Order #' + oid;
+      document.getElementById('cust-form-area').style.display='none';
+      document.getElementById('cust-success-view').classList.add('visible');
+      updSteps(4);window.scrollTo({top:0,behavior:'smooth'});
+    });
+  })();
+  </script>
+  <script src="js/animations.js"></script>
+</body>
+</html>

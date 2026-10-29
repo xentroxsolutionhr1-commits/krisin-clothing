@@ -3,3 +3,12 @@ node_modules/
 *.db
 .DS_Store
 Thumbs.db
+
+*.bak
+*.tmp*
+*.diff
+*-diff.txt
+changed-files.txt
+uploads/*
+!uploads/artworks/
+!uploads/artworks/.gitkeep

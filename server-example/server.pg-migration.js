@@ -13,6 +13,8 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
+const fs = require("fs");
+const multer = require("multer");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -23,7 +25,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV !== "production" ? "krisin_jwt_development_secret_key_2026" : null);
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET environment variable is required");
@@ -70,6 +72,12 @@ app.use((req, res, next) => {
 });
 // Serve static frontend files from parent directory
 app.use(express.static(staticRoot));
+const artworkDir = path.join(staticRoot, "uploads", "artworks");
+if (!fs.existsSync(artworkDir)) {
+  fs.mkdirSync(artworkDir, { recursive: true });
+}
+app.use("/uploads", express.static(path.join(staticRoot, "uploads"), { dotfiles: "ignore", maxAge: "7d" }));
+
 
 // Initialize Neon PostgreSQL connection
 pool.query("SELECT 1")
@@ -235,8 +243,8 @@ async function requireCustomerAuth(req, res, next) {
    ADMIN AUTHENTICATION MIDDLEWARE
    ========================================================= */
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-const ADMIN_PASS = process.env.ADMIN_PASS;
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || (process.env.NODE_ENV !== "production" ? "admin@krisinclothing.com" : "")).trim().toLowerCase();
+const ADMIN_PASS = process.env.ADMIN_PASS || (process.env.NODE_ENV !== "production" ? "AdminPass2026!" : "");
 
 if (!ADMIN_EMAIL || !ADMIN_PASS) {
   throw new Error("ADMIN_EMAIL and ADMIN_PASS environment variables are required");
@@ -959,8 +967,228 @@ app.post("/verify-payment", (req, res) => {
 });
 
 
+
+// Artwork Buffer Validation (Magic Bytes & MIME Security)
+function validateImageBuffer(buffer, mimeType) {
+  if (!buffer || buffer.length < 12) return { valid: false, reason: "File is empty or corrupted." };
+
+  const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
+  const isJpg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
+  const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
+                 buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
+
+  let isSvg = false;
+  if (mimeType === "image/svg+xml" || buffer.slice(0, 100).toString("utf-8").toLowerCase().includes("<svg")) {
+    const text = buffer.toString("utf-8", 0, Math.min(buffer.length, 10000)).toLowerCase();
+    if (text.includes("<svg") && !text.includes("<script") && !text.includes("javascript:") && !text.includes("onload=") && !text.includes("onerror=")) {
+      isSvg = true;
+    } else {
+      return { valid: false, reason: "SVG file contains prohibited scripts or tags." };
+    }
+  }
+
+  if (isPng) return { valid: true, ext: "png", mime: "image/png" };
+  if (isJpg) return { valid: true, ext: "jpg", mime: "image/jpeg" };
+  if (isWebp) return { valid: true, ext: "webp", mime: "image/webp" };
+  if (isSvg) return { valid: true, ext: "svg", mime: "image/svg+xml" };
+
+  return { valid: false, reason: "Unsupported image format. Please upload PNG, JPG, WebP, or SVG." };
+}
+
+// Multer in-memory upload (max 5MB)
+const artworkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }
+});
+
+// POST /api/upload-artwork
+app.post("/api/upload-artwork", (req, res) => {
+  artworkUpload.single("artwork")(req, res, async (err) => {
+    if (err) {
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({ error: "Artwork file exceeds 5MB size limit." });
+      }
+      return res.status(400).json({ error: err.message || "Failed to parse upload." });
+    }
+
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ error: "No artwork file was provided." });
+    }
+
+    const validation = validateImageBuffer(req.file.buffer, req.file.mimetype);
+    if (!validation.valid) {
+      return res.status(400).json({ error: validation.reason });
+    }
+
+    // Cloudinary Support if credentials exist
+    const cName = process.env.CLOUDINARY_CLOUD_NAME;
+    const cKey = process.env.CLOUDINARY_API_KEY;
+    const cSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (cName && cKey && cSecret) {
+      try {
+        const timestamp = Math.floor(Date.now() / 1000);
+        const folder = "krisin_custom_artworks";
+        const strToSign = `folder=${folder}&timestamp=${timestamp}${cSecret}`;
+        const signature = crypto.createHash("sha1").update(strToSign).digest("hex");
+
+        const form = new FormData();
+        form.append("file", new Blob([req.file.buffer], { type: validation.mime }), req.file.originalname);
+        form.append("api_key", cKey);
+        form.append("timestamp", String(timestamp));
+        form.append("signature", signature);
+        form.append("folder", folder);
+
+        const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cName}/image/upload`, {
+          method: "POST",
+          body: form
+        });
+
+        if (cloudRes.ok) {
+          const cData = await cloudRes.json();
+          return res.json({ url: cData.secure_url, storage: "cloudinary" });
+        }
+      } catch (cErr) {
+        console.error("Cloudinary upload failed, falling back to local storage:", cErr);
+      }
+    }
+
+    // Local Disk Storage Fallback
+    try {
+      const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${validation.ext}`;
+      const destPath = path.join(artworkDir, filename);
+      fs.writeFileSync(destPath, req.file.buffer);
+
+      const forwardedProto = req.headers["x-forwarded-proto"];
+      const proto = (forwardedProto ? forwardedProto.split(",")[0].trim() : req.protocol) || "https";
+      const host = req.headers["x-forwarded-host"] || req.get("host");
+      const fileUrl = `${proto}://${host}/uploads/artworks/${filename}`;
+
+      return res.json({ url: fileUrl, storage: "local" });
+    } catch (fsErr) {
+      console.error("Failed to save artwork:", fsErr);
+      return res.status(500).json({ error: "Failed to save artwork image on server." });
+    }
+  });
+});
+
+// SSRF and Image URL Validation
+function isSafeImageUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string") return false;
+  const trimmed = rawUrl.trim();
+  if (trimmed.length > 2048) return false;
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch (e) {
+    return false;
+  }
+
+  // Only allow http: and https:
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return false;
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  // Always block cloud metadata endpoints and internal domains regardless of environment
+  if (
+    hostname === "169.254.169.254" ||
+    hostname === "metadata.google.internal" ||
+    hostname.endsWith(".internal")
+  ) {
+    return false;
+  }
+
+  // In production, block localhost, private networks, and internal hostnames
+  const isDev = process.env.NODE_ENV !== "production";
+  if (!isDev) {
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "::1" ||
+      hostname.endsWith(".localhost") ||
+      hostname.endsWith(".local")
+    ) {
+      return false;
+    }
+
+    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+    const match = hostname.match(ipv4Regex);
+    if (match) {
+      const p1 = parseInt(match[1], 10);
+      const p2 = parseInt(match[2], 10);
+      if (p1 === 10) return false;
+      if (p1 === 127) return false;
+      if (p1 === 169 && p2 === 254) return false;
+      if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
+      if (p1 === 192 && p2 === 168) return false;
+      if (p1 === 0) return false;
+    }
+  }
+
+  return true;
+}
+
+// Category Validator for Customisation (Shirts & T-Shirts only)
+function isCustomisableCategory(category, productName = "") {
+  const cat = String(category || "").toLowerCase().trim();
+  const name = String(productName || "").toLowerCase().trim();
+  if (cat.includes("shirt") || cat.includes("tee") || cat.includes("t-shirt")) return true;
+  if (name.includes("shirt") || name.includes("tee") || name.includes("t-shirt")) return true;
+  return false;
+}
+
 /* =========================================================
-   SAVE PLACED ORDER â€” NEON POSTGRESQL
+   STORE SETTINGS & CONFIG APIS (PRINTING CHARGE)
+   ========================================================= */
+
+// Public endpoint for frontend customisation page
+app.get("/api/config/printing-fee", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT value FROM store_settings WHERE key = 'printing_fee'");
+    const fee = result.rows.length ? Number(result.rows[0].value) : 200;
+    res.json({ printing_fee: Number.isFinite(fee) ? fee : 200 });
+  } catch (err) {
+    res.json({ printing_fee: 200 });
+  }
+});
+
+// Admin get printing fee
+app.get("/api/admin/settings/printing-fee", requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query("SELECT value FROM store_settings WHERE key = 'printing_fee'");
+    const fee = result.rows.length ? Number(result.rows[0].value) : 200;
+    res.json({ printing_fee: Number.isFinite(fee) ? fee : 200 });
+  } catch (err) {
+    res.status(500).json({ error: "Could not fetch printing fee." });
+  }
+});
+
+// Admin update printing fee
+app.post("/api/admin/settings/printing-fee", requireAdminAuth, async (req, res) => {
+  try {
+    const fee = Number(req.body.fee ?? req.body.printing_fee);
+    if (!Number.isFinite(fee) || fee < 0) {
+      return res.status(400).json({ error: "Invalid printing fee. Must be a non-negative number." });
+    }
+    await pool.query(`
+      INSERT INTO store_settings (key, value, updated_at)
+      VALUES ('printing_fee', $1, NOW())
+      ON CONFLICT (key) DO UPDATE
+      SET value = $1, updated_at = NOW()
+    `, [String(fee)]);
+    res.json({ message: "Printing fee updated successfully.", printing_fee: fee });
+  } catch (err) {
+    console.error("Update printing fee error:", err);
+    res.status(500).json({ error: "Could not update printing fee." });
+  }
+});
+
+/* =========================================================
+   SAVE PLACED ORDER — NEON POSTGRESQL
    ========================================================= */
 
 app.post("/api/orders", async (req, res) => {
@@ -974,8 +1202,7 @@ app.post("/api/orders", async (req, res) => {
       body.total !== undefined ? body.total : body.total_amount;
     const finalTotal = Number(rawTotal);
 
-    if (!finalOrderId || rawTotal === undefined ||
-        !Number.isFinite(finalTotal) || finalTotal < 0) {
+    if (!finalOrderId || (rawTotal !== undefined && (!Number.isFinite(finalTotal) || finalTotal < 0))) {
       return res.status(400).json({
         error: "Missing or invalid order details."
       });
@@ -1060,19 +1287,144 @@ app.post("/api/orders", async (req, res) => {
           ? "pending"
           : "pending";
 
-    const subtotal = Number(body.subtotal ?? finalTotal);
-    const shippingFee = Number(body.shipping_fee ?? body.shippingFee ?? 0);
-    const codFee = Number(body.cod_fee ?? body.codFee ?? 0);
-    const discount = Number(body.discount ?? 0);
+    // Recalculate trusted Subtotal and check customisation
+    const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url || i.custom_details));
+    const isCustomized = Boolean(body.is_customized || hasCustomItems || String(finalOrderId).startsWith("CUST-"));
 
-    if (
-      ![subtotal, shippingFee, codFee, discount].every(Number.isFinite) ||
-      shippingFee < 0 || codFee < 0 || discount < 0
-    ) {
-      return res.status(400).json({
-        error: "Invalid order amount details."
+    let customImageUrl = null;
+    let printingFee = 0;
+    let customerMessage = null;
+    let customDetails = null;
+
+    if (isCustomized) {
+      const customItem = Array.isArray(finalItems) ? (finalItems.find(i => i && (i.is_customized || i.custom_image_url || i.custom_details)) || finalItems[0] || {}) : {};
+      const rawUrl = body.custom_image_url || customItem.custom_image_url || (customItem.custom_details && customItem.custom_details.image_url) || "";
+
+      if (!rawUrl || !isSafeImageUrl(rawUrl)) {
+        return res.status(400).json({
+          error: "Invalid or unsafe custom image URL. Must be a valid, publicly accessible HTTP or HTTPS link."
+        });
+      }
+      customImageUrl = String(rawUrl).trim();
+
+      // Check product eligibility (only Shirts & T-Shirts)
+      const productId = customItem.productId || customItem.id;
+      if (!productId) {
+        return res.status(400).json({
+          error: "A valid product ID is required for customised apparel orders."
+        });
+      }
+
+      const prodResult = await pool.query("SELECT id, name, category, price FROM products WHERE id = $1", [productId]);
+      if (!prodResult.rows.length) {
+        return res.status(400).json({
+          error: `Selected product "${productId}" does not exist in the catalogue.`
+        });
+      }
+
+      const dbProduct = prodResult.rows[0];
+      if (!isCustomisableCategory(dbProduct.category, dbProduct.name)) {
+        return res.status(400).json({
+          error: `Product "${dbProduct.name}" (${dbProduct.category}) is not eligible for customisation. Only shirts and T-shirts can be customised.`
+        });
+      }
+
+      // Fetch live printing fee from store_settings
+      try {
+        const feeRes = await pool.query("SELECT value FROM store_settings WHERE key = 'printing_fee'");
+        if (feeRes.rows.length) {
+          const val = Number(feeRes.rows[0].value);
+          printingFee = (Number.isFinite(val) && val >= 0) ? val : 200;
+        } else {
+          printingFee = 200;
+        }
+      } catch (e) {
+        printingFee = 200;
+      }
+
+      const rawMsg = body.customer_message || customItem.customer_message || "";
+      if (rawMsg) {
+        customerMessage = String(rawMsg).trim().slice(0, 1000);
+      }
+
+      const printPos = body.print_position || (customItem.custom_details && customItem.custom_details.print_position) || customItem.print_position || "Front Centre";
+      const size = customItem.size || body.size || "M";
+      const color = customItem.color || body.color || "Default";
+
+      customDetails = {
+        source: "customise_page",
+        product_name: dbProduct.name,
+        product_id: dbProduct.id,
+        size: size,
+        color: color,
+        print_position: printPos,
+        print_fee: printingFee,
+        image_url: customImageUrl,
+        customer_message: customerMessage
+      };
+
+      if (body.custom_details && typeof body.custom_details === "object") {
+        customDetails = { ...body.custom_details, ...customDetails };
+      }
+    }
+
+    // Recalculate trusted Subtotal using trusted Database prices
+    let calculatedSubtotal = 0;
+    const verifiedItems = [];
+
+    for (const item of finalItems) {
+      if (!item) continue;
+      const pId = item.productId || item.id;
+      const qty = Math.max(1, parseInt(item.qty, 10) || 1);
+      let unitPrice = 0;
+      let itemName = item.name || "Apparel Item";
+
+      if (pId) {
+        const pRes = await pool.query("SELECT id, name, category, price FROM products WHERE id = $1", [pId]);
+        if (pRes.rows.length) {
+          unitPrice = Number(pRes.rows[0].price);
+          itemName = pRes.rows[0].name;
+        } else if (isCustomized) {
+          return res.status(400).json({ error: `Product "${pId}" not found in catalogue.` });
+        } else if (Number.isFinite(Number(item.price)) && Number(item.price) >= 0) {
+          unitPrice = Number(item.price);
+        }
+      } else if (!isCustomized && Number.isFinite(Number(item.price)) && Number(item.price) >= 0) {
+        unitPrice = Number(item.price);
+      }
+
+      calculatedSubtotal += unitPrice * qty;
+
+      verifiedItems.push({
+        ...item,
+        id: pId || item.id,
+        productId: pId || item.productId,
+        name: itemName,
+        price: unitPrice,
+        qty: qty
       });
     }
+
+    if (verifiedItems.length === 0) {
+      return res.status(400).json({ error: "Order must contain at least one valid item." });
+    }
+
+    // Trusted Shipping: Free if subtotal (plus printing fee for custom orders) >= 1999, else 99
+    const eligibleAmount = calculatedSubtotal + (isCustomized ? printingFee : 0);
+    const calculatedShippingFee = eligibleAmount >= 1999 ? 0 : 99;
+
+    // Trusted COD handling fee: 49 for COD, 0 otherwise
+    const calculatedCodFee = normalizedMethod === "COD" ? 49 : 0;
+
+    // Trusted Discount
+    let calculatedDiscount = 0;
+    const submittedDiscount = Number(body.discount || 0);
+    if (Number.isFinite(submittedDiscount) && submittedDiscount > 0) {
+      calculatedDiscount = Math.min(submittedDiscount, calculatedSubtotal);
+    }
+
+    // Grand total: Subtotal + (Custom Printing Fee included exactly once) + Shipping + COD - Discount
+    const calculatedTotal = calculatedSubtotal + (isCustomized ? printingFee : 0) + calculatedShippingFee + calculatedCodFee - calculatedDiscount;
 
     const result = await pool.query(`
       INSERT INTO orders (
@@ -1093,12 +1445,17 @@ app.post("/api/orders", async (req, res) => {
         razorpay_payment_id,
         razorpay_signature,
         status,
+        is_customized,
+        custom_image_url,
+        printing_fee,
+        customer_message,
+        custom_details,
         created_at
       )
       VALUES (
         $1, $2, $3, $4, $5::jsonb, $6::jsonb,
         $7, $8, $9, $10, $11, $12, $13,
-        $14, $15, $16, $17, NOW()
+        $14, $15, $16, $17, $18, $19, $20, $21, $22::jsonb, NOW()
       )
       RETURNING id
     `, [
@@ -1107,23 +1464,30 @@ app.post("/api/orders", async (req, res) => {
       customerEmail,
       customerPhone,
       JSON.stringify(shippingAddress),
-      JSON.stringify(finalItems),
-      subtotal,
-      shippingFee,
-      codFee,
-      discount,
-      finalTotal,
-      paymentMethod,
+      JSON.stringify(verifiedItems),
+      calculatedSubtotal,
+      calculatedShippingFee,
+      calculatedCodFee,
+      calculatedDiscount,
+      calculatedTotal,
+      normalizedMethod,
       paymentStatus,
       razorpayOrderId,
       paymentId,
       razorpaySignature,
-      requestedStatus || "pending"
+      requestedStatus || "pending",
+      isCustomized,
+      customImageUrl,
+      isCustomized ? printingFee : 0,
+      customerMessage,
+      customDetails ? JSON.stringify(customDetails) : null
     ]);
 
     res.status(201).json({
       message: "Order placed successfully.",
-      orderId: result.rows[0].id
+      orderId: result.rows[0].id,
+      is_customized: isCustomized,
+      total: calculatedTotal
     });
   } catch (err) {
     if (err.code === "23505") {
@@ -1160,6 +1524,11 @@ function formatCustomerOrder(row) {
     subtotal: Number(row.subtotal),
     shippingFee: Number(row.shipping_fee),
     codFee: Number(row.cod_fee),
+    is_customized: Boolean(row.is_customized),
+    custom_image_url: row.custom_image_url || null,
+    printing_fee: Number(row.printing_fee || 0),
+    customer_message: row.customer_message || null,
+    custom_details: row.custom_details || null,
     estimatedDelivery: null,
     cancelledAt: null,
     cancellationReason: null,
@@ -1295,6 +1664,19 @@ app.get("/api/admin/orders", requireAdminAuth, async (req, res) => {
   } catch (err) {
     console.error("Fetch admin orders error:", err);
     res.status(500).json({ error: "Failed to fetch orders." });
+  }
+});
+
+// List all customised orders
+app.get("/api/admin/customised-orders", requireAdminAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT * FROM orders WHERE is_customized = TRUE OR custom_image_url IS NOT NULL ORDER BY created_at DESC"
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Fetch customised orders error:", err);
+    res.status(500).json({ error: "Failed to fetch customised orders." });
   }
 });
 

@@ -16,7 +16,7 @@
 <body>
 
   <script>
-    // Auth guard — runs before the page paints.
+    // Auth guard â€” runs before the page paints.
     const hasAdminSession = sessionStorage.getItem("krisin_admin_session") === "1" || localStorage.getItem("krisin_admin_session") === "1";
     const hasAdminToken = sessionStorage.getItem("krisin_admin_token") || localStorage.getItem("krisin_admin_token");
     if (!hasAdminSession || !hasAdminToken) {
@@ -64,6 +64,13 @@
             <polyline points="22,6 12,13 2,6" />
           </svg>Messages<span id="nav-unread-badge" style="display:none;margin-left:auto;background:#e11d48;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">0</span></button>
 
+        <button data-tab="reviews"><svg viewBox="0 0 24 24">
+            <path d="M12 2l2.9 6.5 7.1.6-5.4 4.7 1.7 6.9-6.3-3.9-6.3 3.9 1.7-6.9-5.4-4.7 7.1-.6L12 2z" />
+          </svg>Reviews</button>
+        <button data-tab="custom-orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+            <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
+          </svg>Customised Orders<span id="nav-custom-badge" style="display:none;margin-left:auto;background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">0</span></button>
+          
         <button data-tab="users"><svg viewBox="0 0 24 24">
             <circle cx="9" cy="7" r="4" />
             <path d="M2 21c1-4 4-6 7-6s6 2 7 6" />
@@ -73,7 +80,7 @@
       </nav>
       <div class="a-sidebar-foot">
         Signed in as<br><strong style="color:#fff" id="a-signed-in-email">Admin</strong><br>
-        <a href="/">← Back to store</a><br>
+        <a href="/">â† Back to store</a><br>
         <button class="a-logout" id="a-logout-btn">Sign out</button>
       </div>
     </aside>
@@ -100,23 +107,23 @@
         <div class="a-stats">
           <div class="a-card">
             <div class="lbl">Total Balance</div>
-            <div class="val" id="stat-balance">₹0</div>
+            <div class="val" id="stat-balance">â‚¹0</div>
             <div class="delta up">Available Payout</div>
           </div>
           <div class="a-card">
             <div class="lbl">Revenue (30d)</div>
-            <div class="val" id="stat-revenue">₹0</div>
-            <div class="delta up">↑ 12.4% vs last month</div>
+            <div class="val" id="stat-revenue">â‚¹0</div>
+            <div class="delta up">â†‘ 12.4% vs last month</div>
           </div>
           <div class="a-card">
             <div class="lbl">Orders (30d)</div>
             <div class="val" id="stat-orders">0</div>
-            <div class="delta up">↑ 8.1% vs last month</div>
+            <div class="delta up">â†‘ 8.1% vs last month</div>
           </div>
           <div class="a-card">
             <div class="lbl">Customers</div>
             <div class="val" id="stat-customers">0</div>
-            <div class="delta up">↑ 5 new this week</div>
+            <div class="delta up">â†‘ 5 new this week</div>
           </div>
           <div class="a-card">
             <div class="lbl">Low Stock Items</div>
@@ -169,7 +176,7 @@
         <div class="a-searchbar"><svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" />
-          </svg><input placeholder="Search products…" id="product-search"></div>
+          </svg><input placeholder="Search productsâ€¦" id="product-search"></div>
         <div class="a-panel" style="padding:0">
           <table class="a-table" style="padding:12px">
             <thead>
@@ -234,7 +241,7 @@
         <div class="a-searchbar"><svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" />
-          </svg><input placeholder="Search orders…" id="order-search"></div>
+          </svg><input placeholder="Search ordersâ€¦" id="order-search"></div>
         <div class="a-panel" style="padding:0">
           <table class="a-table" style="padding:12px">
             <thead>
@@ -260,7 +267,7 @@
         <div class="a-searchbar"><svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" />
-          </svg><input placeholder="Search customers…" id="customer-search"></div>
+          </svg><input placeholder="Search customersâ€¦" id="customer-search"></div>
         <div class="a-panel" style="padding:0">
           <table class="a-table" style="padding:12px">
             <thead>
@@ -290,7 +297,7 @@
                 <circle cx="11" cy="11" r="7" />
                 <path d="M21 21l-4.3-4.3" />
               </svg>
-              <input placeholder="Search messages…" id="message-search">
+              <input placeholder="Search messagesâ€¦" id="message-search">
             </div>
             <select id="message-filter" style="border:1px solid var(--a-line);border-radius:8px;padding:9px 12px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:var(--a-ink);">
               <option value="all">All Messages</option>
@@ -342,9 +349,9 @@
         <div class="a-actions" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
           <div class="a-searchbar" style="flex:1;min-width:200px">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-            <input placeholder="Search users by name or email…" id="user-search">
+            <input placeholder="Search users by name or emailâ€¦" id="user-search">
           </div>
-          <span id="user-count-label" style="font-size:13px;color:#6b7280;white-space:nowrap">Loading…</span>
+          <span id="user-count-label" style="font-size:13px;color:#6b7280;white-space:nowrap">Loadingâ€¦</span>
         </div>
         <div class="a-panel" style="padding:0;margin-top:16px">
           <table class="a-table" style="padding:12px">
@@ -362,12 +369,68 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="users-body"><tr><td colspan="10"><div class="a-empty">Loading users…</div></td></tr></tbody>
+            <tbody id="users-body"><tr><td colspan="10"><div class="a-empty">Loading usersâ€¦</div></td></tr></tbody>
           </table>
           <div id="users-pagination" class="a-pagination"></div>
         </div>
       </section>
-    </main>
+
+<!-- CUSTOMISED ORDERS -->
+      <section class="a-tab" id="tab-custom-orders">
+        <div class="a-actions" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px;">
+          <div class="a-searchbar" style="flex:1;min-width:200px">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
+            <input placeholder="Search by order ID or customer nameâ€¦" id="custom-order-search">
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="custom-order-status-filter" style="padding:8px 12px;font-size:13px;border:1px solid var(--a-line);border-radius:6px;background:#fff;">
+              <option value="">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Design Approved">Design Approved</option>
+              <option value="Printing">Printing</option>
+              <option value="Shipped">Shipped</option>
+              <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+            <button class="a-btn" id="btn-refresh-custom-orders" style="padding:7px 14px;font-size:13px;">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 11-2.6-7.4L23 10"/></svg>Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Printing Fee Setting -->
+        <div class="a-panel" style="padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;">
+          <div style="flex:1;min-width:220px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#7c3aed;letter-spacing:.05em;margin-bottom:4px;">Custom Printing Fee</div>
+            <div style="font-size:13px;color:#6b7280;">This fee is added on top of the base product price for all custom orders.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:16px;font-weight:700;color:#4c1d95;">&#8377;</span>
+            <input type="number" id="printing-fee-input" min="0" step="1" value="200" style="width:90px;padding:8px 10px;font-size:16px;font-weight:700;border:2px solid #c4b5fd;border-radius:8px;outline:none;text-align:center;">
+            <button class="a-btn primary" id="btn-save-printing-fee" style="background:#7c3aed;border-color:#7c3aed;">Save Fee</button>
+          </div>
+        </div>
+
+        <div class="a-panel" style="padding:0;">
+          <table class="a-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Product &amp; Details</th>
+                <th>Design</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="custom-orders-body"><tr><td colspan="8"><div class="a-empty">Loading customised orders&hellip;</div></td></tr></tbody>
+          </table>
+          <div id="custom-orders-pagination" class="a-pagination"></div>
+        </div>
+      </section>
+</main>
   </div>
 
   <!-- ================= PRODUCT MODAL ================= -->
@@ -391,12 +454,12 @@
             <select id="pf-category" required></select>
           </div>
           <div class="a-field">
-            <label for="pf-price">Price (₹)</label>
+            <label for="pf-price">Price (â‚¹)</label>
             <input type="number" id="pf-price" min="0" step="1" required placeholder="899">
           </div>
           <div class="a-field">
-            <label for="pf-compare">Compare-at price (₹)</label>
-            <input type="number" id="pf-compare" min="0" step="1" placeholder="Optional — shown struck through">
+            <label for="pf-compare">Compare-at price (â‚¹)</label>
+            <input type="number" id="pf-compare" min="0" step="1" placeholder="Optional â€” shown struck through">
           </div>
           <div class="a-field">
             <label for="pf-stock">Stock (units)</label>
@@ -404,7 +467,7 @@
           </div>
           <div class="a-field full">
             <label for="pf-image">Image URL</label>
-            <input type="url" id="pf-image" placeholder="https://…">
+            <input type="url" id="pf-image" placeholder="https://â€¦">
             <span class="a-field-hint">Leave blank to use a placeholder image.</span>
           </div>
           <div class="a-field full">
@@ -560,7 +623,7 @@
     }
 
     /* =========================================================
-       Storage layer — overlays admin edits on top of the static
+       Storage layer â€” overlays admin edits on top of the static
        catalogue in js/data.js using localStorage. In production
        this whole layer would be replaced by real API calls to a
        backend + database (see README).
@@ -711,7 +774,8 @@
       orders: ["Orders", "View and fulfil customer orders."],
       customers: ["Customers", "Everyone who has shopped with Krisin Clothing, and their account access."],
       messages: ["Messages", "Contact inquiries and customer feedback."],
-
+      reviews: ["Reviews", "Moderate product reviews from customers."],
+      "custom-orders": ["Customised Orders", "Review, update, and fulfil custom printed shirt orders."],
       users: ["Users", "Manage user logins and customer account access."]
     };
     document.getElementById("a-nav").addEventListener("click", (e) => {
@@ -728,9 +792,379 @@
 
     /* =========================================================
        Mock orders / customers / reviews
-       (Orders and reviews are demo data — wiring these
+       (Orders and reviews are demo data â€” wiring these
        to real records needs the backend described in the README.)
        ========================================================= */
+    const DEFAULT_PAGE_SIZE = 10;
+
+    function getPaginationPages(currentPage, totalPages) {
+      if (totalPages <= 7) {
+        const pages = [];
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+        return pages;
+      }
+      if (currentPage <= 4) {
+        return [1, 2, 3, 4, 5, "...", totalPages];
+      }
+      if (currentPage >= totalPages - 3) {
+        return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+      }
+      return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
+    }
+
+    class TablePaginator {
+      constructor(options) {
+        this.containerId = options.containerId;
+        this.pageSize = options.pageSize || DEFAULT_PAGE_SIZE;
+        this.currentPage = 1;
+        this.items = [];
+        this.onRenderPage = options.onRenderPage;
+        this.ariaLabel = options.ariaLabel || "Table pagination";
+        this._boundClick = false;
+      }
+
+      get container() {
+        return document.getElementById(this.containerId);
+      }
+
+      setItems(newItems, resetPage = false) {
+        this.items = Array.isArray(newItems) ? newItems : [];
+        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
+        if (resetPage || this.currentPage > totalPages) {
+          this.currentPage = 1;
+        }
+        this.update();
+      }
+
+      goToPage(page) {
+        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
+        const target = Math.max(1, Math.min(page, totalPages));
+        if (target !== this.currentPage) {
+          this.currentPage = target;
+          this.update();
+        }
+      }
+
+      prevPage() {
+        if (this.currentPage > 1) {
+          this.goToPage(this.currentPage - 1);
+        }
+      }
+
+      nextPage() {
+        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
+        if (this.currentPage < totalPages) {
+          this.goToPage(this.currentPage + 1);
+        }
+      }
+
+      getCurrentSlice() {
+        const start = (this.currentPage - 1) * this.pageSize;
+        return this.items.slice(start, start + this.pageSize);
+      }
+
+      getInfo() {
+        const total = this.items.length;
+        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
+        if (total === 0) {
+          return { start: 0, end: 0, total: 0, totalPages: 1, currentPage: 1, pageSize: this.pageSize };
+        }
+        const start = (this.currentPage - 1) * this.pageSize + 1;
+        const end = Math.min(this.currentPage * this.pageSize, total);
+        return { start, end, total, totalPages, currentPage: this.currentPage, pageSize: this.pageSize };
+      }
+
+      update() {
+        const info = this.getInfo();
+        const slice = this.getCurrentSlice();
+        if (typeof this.onRenderPage === "function") {
+          this.onRenderPage(slice, info);
+        }
+        this.renderControls(info);
+      }
+
+      renderControls(info) {
+        const container = this.container;
+        if (!container) return;
+
+        const countText = info.total === 0
+          ? "0 of 0"
+          : `${info.start}\u2013${info.end} of ${info.total}`;
+
+        const pages = getPaginationPages(info.currentPage, info.totalPages);
+
+        const pagesHtml = pages.map(p => {
+          if (p === "...") {
+            return '<span class="a-page-dots" aria-hidden="true">\u2026</span>';
+          }
+          const isActive = p === info.currentPage;
+          return `<button type="button" class="a-page-btn num${isActive ? " active" : ""}" data-page="${p}" ${isActive ? 'aria-current="page"' : ""} aria-label="Page ${p}">${p}</button>`;
+        }).join("");
+
+        const prevDisabled = info.currentPage <= 1 || info.total === 0;
+        const nextDisabled = info.currentPage >= info.totalPages || info.total === 0;
+
+        container.innerHTML = `
+          <div class="a-pagination-info" aria-live="polite">
+            ${countText}
+          </div>
+          <div class="a-pagination-controls" role="navigation" aria-label="${escapeHtml(this.ariaLabel)}">
+            <button type="button" class="a-page-btn prev" data-page-action="prev" title="Previous page" aria-label="Previous page" ${prevDisabled ? "disabled" : ""}>
+              <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            ${pagesHtml}
+            <button type="button" class="a-page-btn next" data-page-action="next" title="Next page" aria-label="Next page" ${nextDisabled ? "disabled" : ""}>
+              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        `;
+
+        if (!this._boundClick) {
+          this._boundClick = true;
+          container.addEventListener("click", (e) => {
+            const pageBtn = e.target.closest(".a-page-btn");
+            if (!pageBtn || pageBtn.disabled) return;
+
+            if (pageBtn.dataset.pageAction === "prev") {
+              this.prevPage();
+            } else if (pageBtn.dataset.pageAction === "next") {
+              this.nextPage();
+            } else if (pageBtn.dataset.page) {
+              this.goToPage(Number(pageBtn.dataset.page));
+            }
+          });
+        }
+      }
+    }
+
+
+
+
+    /* =========================================================
+       Customised Orders tab â€” fetch, render, status update
+       ========================================================= */
+    let liveCustomOrders = [];
+
+    const customOrdersPaginator = new TablePaginator({
+      containerId: "custom-orders-pagination",
+      pageSize: 10,
+      ariaLabel: "Customised orders pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("custom-orders-body");
+        if (!tbody) return;
+        if (!slice.length) {
+          tbody.innerHTML = `<tr><td colspan="8"><div class="a-empty">No customised orders found.</div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = slice.map(o => {
+          const orderId = o.id || o.orderId || o.order_id || "";
+          const custName = o.customer_name || o.customerName || o.customer || "Customer";
+          const custEmail = o.customer_email || o.customerEmail || "";
+          const custPhone = o.customer_phone || o.customerPhone || "";
+          const total = Number(o.total_amount || o.total || 0);
+          const printFee = Number(o.printing_fee || 0);
+          const payMethod = o.payment_method || o.paymentMethod || "COD";
+          const payStatus = o.payment_status || o.paymentStatus || "Pending";
+          const currentStatus = o.status || "Pending";
+          const createdAt = o.created_at || o.createdAt || "";
+          const orderDate = createdAt ? new Date(createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "â€”";
+
+          // Items / product details
+          let items = o.items || [];
+          if (typeof items === "string") { try { items = JSON.parse(items); } catch(e) { items = []; } }
+          const firstItem = Array.isArray(items) && items[0] ? items[0] : {};
+          const prodName = firstItem.name || o.custom_details?.product_name || "â€”";
+          const size = firstItem.size || o.custom_details?.size || "â€”";
+          const color = firstItem.color || o.custom_details?.color || "â€”";
+          const printPos = o.custom_details?.print_position || "â€”";
+          const custMsg = firstItem.customer_message || o.customer_message || "";
+
+          // Design image
+          const designUrl = firstItem.custom_image_url || o.custom_image_url || o.custom_details?.image_url || "";
+          const isImgValid = designUrl && designUrl !== "[uploaded-file]" && (designUrl.startsWith("http") || designUrl.startsWith("data:image/"));
+          const designHtml = isImgValid
+            ? `<a href="${escapeHtml(designUrl)}" target="_blank" rel="noopener" style="display:inline-block;"><img src="${escapeHtml(designUrl)}" style="width:52px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.parentElement.innerHTML='<span style=\'color:#9ca3af;font-size:12px;\'>No preview</span>';"></a>`
+            : `<span style="font-size:12px;color:#9ca3af;">${designUrl === "[uploaded-file]" ? "Uploaded file" : "No image"}</span>`;
+
+          const statusStages = ["Pending","Design Approved","Printing","Shipped","Delivered","Cancelled"];
+          const stageOpts = statusStages.map(s => `<option value="${s}" ${s === currentStatus ? "selected" : ""}>${s}</option>`).join("");
+
+          const statusLower = currentStatus.toLowerCase();
+          let statusClass = "pending";
+          if (statusLower === "delivered") statusClass = "ok";
+          else if (statusLower === "shipped") statusClass = "active";
+          else if (statusLower === "design approved" || statusLower === "printing") statusClass = "paid";
+          else if (statusLower === "cancelled") statusClass = "disabled";
+
+          return `
+          <tr>
+            <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;font-size:12.5px;" data-custom-order-view="${orderId}">#${orderId}</a><div style="font-size:11px;color:var(--a-muted);margin-top:2px;">${orderDate}</div></td>
+            <td>
+              <div style="font-weight:600;">${escapeHtml(custName)}</div>
+              ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ""}
+              ${custPhone ? `<div style="font-size:11.5px;color:var(--a-muted);">&#128222; ${escapeHtml(custPhone)}</div>` : ""}
+            </td>
+            <td>
+              <div style="font-weight:600;font-size:13px;">${escapeHtml(prodName)}</div>
+              <div style="font-size:12px;color:var(--a-muted);margin-top:2px;">Size: ${escapeHtml(size)} &bull; ${escapeHtml(color)}</div>
+              <div style="font-size:12px;color:var(--a-muted);">Position: ${escapeHtml(printPos)}</div>
+              ${custMsg ? `<div style="font-size:11.5px;color:#6b7280;margin-top:3px;font-style:italic;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(custMsg)}">&#128172; ${escapeHtml(custMsg)}</div>` : ""}
+            </td>
+            <td>${designHtml}</td>
+            <td>
+              <strong>${money(total)}</strong>
+              ${printFee ? `<div style="font-size:11.5px;color:var(--a-muted);">+${money(printFee)} print fee</div>` : ""}
+            </td>
+            <td>
+              <div>${escapeHtml(payMethod)}</div>
+              <div style="font-size:11px;color:var(--a-muted);">${escapeHtml(payStatus)}</div>
+            </td>
+            <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
+            <td>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <select class="a-btn small" data-custom-status-select="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#1b2234;color:#fff;border:1px solid #323b54;border-radius:4px;cursor:pointer;">${stageOpts}</select>
+                <button class="a-btn small" data-custom-order-view="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#f0f3fa;color:var(--a-navy);border:1px solid #d5dded;">View Details</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join("");
+      }
+    });
+
+    function getFilteredCustomOrders() {
+      const q = (document.getElementById("custom-order-search")?.value || "").toLowerCase().trim();
+      const sf = (document.getElementById("custom-order-status-filter")?.value || "").toLowerCase();
+      let list = liveCustomOrders;
+
+      // Also pull from localStorage
+      const localRaw = JSON.parse(localStorage.getItem("krisin_orders_v1") || "[]").concat(JSON.parse(localStorage.getItem("kc_orders") || "[]"));
+      const localCustom = localRaw.filter(o => o.is_customized || (o.orderId && String(o.orderId).startsWith("CUST-")));
+      const liveIds = new Set(liveCustomOrders.map(o => String(o.id || o.orderId || "")));
+      const extraLocal = localCustom.filter(o => !liveIds.has(String(o.id || o.orderId || "")));
+      list = [...liveCustomOrders, ...extraLocal];
+
+      if (q) list = list.filter(o => {
+        const id = String(o.id || o.orderId || "").toLowerCase();
+        const name = (o.customer_name || o.customerName || o.customer || "").toLowerCase();
+        return id.includes(q) || name.includes(q);
+      });
+      if (sf) list = list.filter(o => (o.status || "").toLowerCase() === sf);
+      return list;
+    }
+
+    function renderCustomOrders(resetPage = false) {
+      const list = getFilteredCustomOrders();
+      // Update badge
+      const pendingCount = list.filter(o => (o.status || "Pending") === "Pending").length;
+      const badge = document.getElementById("nav-custom-badge");
+      if (badge) {
+        badge.textContent = pendingCount;
+        badge.style.display = pendingCount > 0 ? "inline" : "none";
+      }
+      customOrdersPaginator.setItems(list, resetPage);
+    }
+
+    function fetchCustomOrders() {
+      const token = getAdminToken();
+      if (!token) { renderCustomOrders(true); return; }
+      fetch(`${ADMIN_API}/api/admin/customised-orders`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            liveCustomOrders = data;
+            renderCustomOrders(true);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load customised orders:", err);
+          renderCustomOrders(true);
+        });
+    }
+
+    // Custom order status update via dropdown
+    document.getElementById("custom-orders-body").addEventListener("change", async (e) => {
+      const sel = e.target.closest("[data-custom-status-select]");
+      if (!sel) return;
+      const orderId = sel.dataset.customStatusSelect;
+      const newStatus = sel.value;
+      const token = getAdminToken();
+
+      liveCustomOrders = liveCustomOrders.map(o =>
+        (String(o.id || o.orderId || "") === orderId) ? { ...o, status: newStatus } : o
+      );
+      ["krisin_orders_v1","kc_orders"].forEach(key => {
+        const list = lsGet(key, []);
+        lsSet(key, list.map(o => (String(o.id || o.orderId || "") === orderId) ? { ...o, status: newStatus } : o));
+      });
+      renderCustomOrders(false);
+
+      if (token) {
+        try {
+          await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (err) {}
+      }
+      toast(`Custom order #${orderId} updated to "${newStatus}".`);
+    });
+
+    // View details click
+    document.getElementById("custom-orders-body").addEventListener("click", (e) => {
+      const viewBtn = e.target.closest("[data-custom-order-view]");
+      if (!viewBtn) return;
+      e.preventDefault();
+      const orderId = viewBtn.dataset.customOrderView;
+      const all = getFilteredCustomOrders();
+      const found = all.find(o => String(o.id || o.orderId || "") === orderId);
+      if (found) openOrderDetailsModal(found);
+    });
+
+    // Search & filter handlers
+    const coSearch = document.getElementById("custom-order-search");
+    if (coSearch) coSearch.addEventListener("input", () => renderCustomOrders(true));
+    const coFilter = document.getElementById("custom-order-status-filter");
+    if (coFilter) coFilter.addEventListener("change", () => renderCustomOrders(true));
+
+    // Refresh button
+    const refreshBtn = document.getElementById("btn-refresh-custom-orders");
+    if (refreshBtn) refreshBtn.addEventListener("click", () => { fetchCustomOrders(); toast("Refreshing customised ordersâ€¦"); });
+
+    // Printing fee save
+    const saveFeeBtn = document.getElementById("btn-save-printing-fee");
+    if (saveFeeBtn) saveFeeBtn.addEventListener("click", async () => {
+      const fee = Number(document.getElementById("printing-fee-input").value);
+      if (isNaN(fee) || fee < 0) { toast("Enter a valid printing fee.", "error"); return; }
+      const token = getAdminToken();
+      if (!token) { toast("Not authenticated.", "error"); return; }
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/settings/printing-fee`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ printing_fee: fee })
+        });
+        if (res.ok) { toast(`Printing fee saved: â‚¹${fee}.`); }
+        else { toast("Failed to save printing fee.", "error"); }
+      } catch (err) { toast("Server error saving fee.", "error"); }
+    });
+
+    // Load current printing fee from backend
+    fetch(`${ADMIN_API}/api/config/printing-fee`)
+      .then(r => r.json())
+      .then(d => {
+        const inp = document.getElementById("printing-fee-input");
+        if (inp && d.printing_fee !== undefined) inp.value = d.printing_fee;
+      })
+      .catch(() => {});
+
+
+    renderCustomOrders();
+    fetchCustomOrders();
+
+
     const ORDERS = [
       { id: "MC10482", customer: "Aarav Menon", date: "28 Aug 2026", items: 3, total: 4497, pay: "UPI", status: "paid" },
       { id: "MC10481", customer: "Sneha Pillai", date: "28 Aug 2026", items: 1, total: 1999, pay: "COD", status: "pending" },
@@ -752,7 +1186,7 @@
       { product: "Relaxed Fit Pants", customer: "Rahul Nair", rating: 5, comment: "My new everyday pants. Perfect fit.", status: "pending" }
     ];
 
-    function money(n) { return "₹" + Number(n).toLocaleString("en-IN"); }
+    function money(n) { return "â‚¹" + Number(n).toLocaleString("en-IN"); }
     function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
 
     /* =========================================================
@@ -1359,7 +1793,7 @@
     });
 
     /* =========================================================
-       Product modal — add / edit
+       Product modal â€” add / edit
        ========================================================= */
     const productModal = document.getElementById("product-modal-backdrop");
     const productForm = document.getElementById("product-form");
@@ -1485,8 +1919,8 @@
 
       const orderId = order.id || order.orderId || "";
       const custName = order.customerName || order.customer_name || order.customer || "Customer";
-      const custEmail = order.customerEmail || order.customer_email || "—";
-      const custPhone = order.customerPhone || order.customer_phone || "—";
+      const custEmail = order.customerEmail || order.customer_email || "â€”";
+      const custPhone = order.customerPhone || order.customer_phone || "â€”";
       const addr = order.shippingAddress || order.shipping_address || {};
       const addrLine = [addr.address, addr.city, addr.state, addr.pincode].filter(Boolean).join(", ") || "No address provided";
       const payMethod = order.paymentMethod || order.payment_method || order.pay || "Online";
@@ -1506,7 +1940,7 @@
         const unitPrice = Number(item.price) || 0;
         const qty = Number(item.qty) || 1;
         const lineTotal = unitPrice * qty;
-        const variantText = [item.size ? `Size: ${item.size}` : null, item.color ? `Color: ${item.color}` : null].filter(Boolean).join(" • ");
+        const variantText = [item.size ? `Size: ${item.size}` : null, item.color ? `Color: ${item.color}` : null].filter(Boolean).join(" â€¢ ");
 
         return `
           <tr style="border-bottom:1px solid #edf0f5;">
@@ -1525,9 +1959,15 @@
       }).join("") || `<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--a-muted);">No items found</td></tr>`;
 
       const subtotal = order.subtotal !== undefined ? Number(order.subtotal) : items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
+      const isCustom = Boolean(order.is_customized || order.custom_image_url || order.custom_details || String(order.id || order.orderId || '').startsWith('CUST-') || (items && items.some(i => i.custom_details || i.is_customized)));
+      const customDetails = order.custom_details || (items[0] && items[0].custom_details) || {};
+      const customImg = order.custom_image_url || customDetails.image_url || customDetails.custom_image_url || (items[0] && items[0].custom_image_url) || "";
+      const printPos = order.print_position || customDetails.print_position || (items[0] && items[0].print_position) || "Front Centre";
+      const customNote = order.customer_message || customDetails.customer_message || (items[0] && items[0].customer_message) || order.notes || "";
+      const printFee = Number(order.printing_fee !== undefined ? order.printing_fee : (customDetails.print_fee || customDetails.printing_fee || (items[0] && items[0].printing_fee) || 0));
       const shippingFee = order.shippingFee !== undefined ? Number(order.shippingFee) : (subtotal >= 1999 ? 0 : 99);
       const codFee = order.codFee !== undefined ? Number(order.codFee) : ((payMethod.toUpperCase() === "COD") ? 49 : 0);
-      const grandTotal = order.totalAmount !== undefined ? Number(order.totalAmount) : (order.total || (subtotal + shippingFee + codFee));
+      const grandTotal = order.totalAmount !== undefined ? Number(order.totalAmount) : (order.total || (subtotal + shippingFee + codFee + (isCustom ? printFee : 0)));
 
       const stages = [
         "Order Placed",
@@ -1551,7 +1991,7 @@
             <div style="font-weight:700;color:var(--a-ink);font-size:14px;">${escapeHtml(custName)}</div>
             <div style="font-size:12.5px;color:var(--a-ink);margin-top:2px;">${escapeHtml(addrLine)}</div>
             <div style="font-size:12px;color:var(--a-muted);margin-top:4px;">
-              ✉️ ${escapeHtml(custEmail)} &nbsp;•&nbsp; 📞 ${escapeHtml(custPhone)}
+              âœ‰ï¸ ${escapeHtml(custEmail)} &nbsp;â€¢&nbsp; ðŸ“ž ${escapeHtml(custPhone)}
             </div>
           </div>
           <div>
@@ -1568,6 +2008,33 @@
             </div>
           </div>
         </div>
+
+        ${isCustom ? `
+        <div style="background:linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);border:1px solid #c4b5fd;border-radius:10px;padding:14px 16px;margin-bottom:18px;display:flex;gap:16px;align-items:flex-start;">
+          <div style="width:38px;height:38px;border-radius:8px;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+            &#10024;
+          </div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;color:#6d28d9;letter-spacing:.05em;">Customised Apparel Order</span>
+              <span style="background:#7c3aed;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;">PRINT SPEC</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:8px;margin-top:6px;font-size:12.5px;">
+              <div><span style="color:#6b7280;">Print Placement:</span> <strong style="color:#1f2937;">${escapeHtml(printPos)}</strong></div>
+              <div><span style="color:#6b7280;">Printing Fee:</span> <strong style="color:#7c3aed;">${money(printFee)}</strong></div>
+              ${customNote ? `<div style="grid-column:1/-1;"><span style="color:#6b7280;">Client Instructions:</span> <span style="color:#1f2937;font-style:italic;">"${escapeHtml(customNote)}"</span></div>` : ''}
+            </div>
+          </div>
+          ${(customImg && customImg !== "[uploaded-file]") ? `
+            <div style="text-align:center;flex-shrink:0;">
+              <a href="${escapeHtml(customImg)}" target="_blank" rel="noopener noreferrer" title="Click to view full design" style="display:block;position:relative;border-radius:6px;overflow:hidden;border:2px solid #7c3aed;box-shadow:0 2px 8px rgba(124,58,237,0.2);">
+                <img src="${escapeHtml(customImg)}" alt="Design Artwork" style="width:64px;height:64px;object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<span style=\'font-size:11px;color:#7c3aed;\'>View Artwork</span>';">
+                <span style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;font-size:9px;padding:2px 0;">ARTWORK</span>
+              </a>
+            </div>
+          ` : ''}
+        </div>
+        ` : ''}
 
         <div style="margin-bottom:18px;">
           <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:var(--a-muted);letter-spacing:.05em;margin-bottom:8px;">Ordered Items (${items.length})</div>
@@ -1603,6 +2070,12 @@
                 <span style="font-weight:600;color:var(--a-ink);">${money(codFee)}</span>
               </div>
             ` : ''}
+            ${printFee > 0 ? `
+              <div style="display:flex;justify-content:space-between;padding:3px 0;color:var(--a-muted);">
+                <span>Printing Fee:</span>
+                <span style="font-weight:600;color:#7c3aed;">${money(printFee)}</span>
+              </div>
+            ` : ''}
             <div style="display:flex;justify-content:space-between;padding:6px 0 0;margin-top:6px;border-top:1px solid #e5e7eb;font-size:15px;font-weight:700;color:var(--a-navy);">
               <span>Grand Total:</span>
               <span>${money(grandTotal)}</span>
@@ -1631,7 +2104,7 @@
           const newStatus = document.getElementById("modal-status-select").value;
           const note = document.getElementById("modal-status-note").value.trim();
           updateBtn.disabled = true;
-          updateBtn.textContent = "Updating…";
+          updateBtn.textContent = "Updatingâ€¦";
 
           const token = getAdminToken();
 
@@ -1885,7 +2358,7 @@
     });
 
     /* =========================================================
-       Customers tab — access control (enable / disable)
+       Customers tab â€” access control (enable / disable)
        ========================================================= */
     /* =========================================================
        Customers tab — access control with pagination
@@ -1957,6 +2430,80 @@
         newStatus === "active"
           ? `${customer ? customer.name : "Customer"} can sign in and order again.`
           : `${customer ? customer.name : "Customer"}'s account is disabled \u2014 they can't sign in or check out.`
+    });
+
+    function getFilteredCustomers() {
+      const q = (document.getElementById("customer-search")?.value || "").toLowerCase().trim();
+      const all = getAllCustomers();
+      return q ? all.filter(c => (c.name || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").toLowerCase().includes(q)) : all;
+    }
+
+    function renderCustomers(list, resetPage = false) {
+      const custs = list !== undefined ? list : getFilteredCustomers();
+      customersPaginator.setItems(custs, resetPage);
+    }
+
+    document.getElementById("customers-body").addEventListener("change", (e) => {
+      const toggle = e.target.closest("[data-user-toggle]");
+      if (!toggle) return;
+      const email = toggle.dataset.userToggle;
+      const newStatus = toggle.checked ? "active" : "disabled";
+      setUserStatus(email, newStatus);
+      if (liveCustomers) {
+        const c = liveCustomers.find(item => item.email.toLowerCase() === email.toLowerCase());
+        if (c) c.status = newStatus;
+      }
+      renderCustomers(undefined, false);
+      const customer = getAllCustomers().find(c => c.email.toLowerCase() === email.toLowerCase());
+      toast(
+        newStatus === "active"
+          ? `${customer ? customer.name : "Customer"} can sign in and order again.`
+          : `${customer ? customer.name : "Customer"}'s account is disabled \u2014 they can't sign in or check out.`
+
+        const pwdHtml = rawPwd 
+          ? `<span style="font-family:monospace;background:#242424;padding:3px 6px;border-radius:4px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
+          : '<span style="color:#888;font-style:italic;">Encrypted</span>';
+        return `
+    <tr>
+      <td><strong>${escapeHtml(c.name || "Customer")}</strong></td>
+      <td>${escapeHtml(c.email)}</td>
+      <td>${phone}</td>
+      <td>${pwdHtml}</td>
+      <td>${c.orders_count !== undefined ? c.orders_count : (c.orders || 0)}</td>
+      <td>${money(c.total_spent !== undefined ? c.total_spent : (c.ltv || 0))}</td>
+      <td><span class="a-status ${isActive ? "active" : "disabled"}">${isActive ? "Active" : "Disabled"}</span></td>
+      <td>
+        <label class="a-toggle">
+          <input type="checkbox" data-user-toggle="${escapeHtml(c.email)}" ${isActive ? "checked" : ""}>
+          <span class="track"></span>
+          <span class="a-toggle-label">${isActive ? "Allowed" : "Blocked"}</span>
+        </label>
+      </td>
+    </tr>`;
+      }).join("");
+    }
+
+    function renderCustomers(list, resetPage = false) {
+      const custs = list !== undefined ? list : getFilteredCustomers();
+      customersPaginator.setItems(custs, resetPage);
+    }
+
+    document.getElementById("customers-body").addEventListener("change", (e) => {
+      const toggle = e.target.closest("[data-user-toggle]");
+      if (!toggle) return;
+      const email = toggle.dataset.userToggle;
+      const newStatus = toggle.checked ? "active" : "disabled";
+      setUserStatus(email, newStatus);
+      if (liveCustomers) {
+        const c = liveCustomers.find(item => item.email.toLowerCase() === email.toLowerCase());
+        if (c) c.status = newStatus;
+      }
+      renderCustomers(undefined, false);
+      const customer = getAllCustomers().find(c => c.email.toLowerCase() === email.toLowerCase());
+      toast(
+        newStatus === "active"
+          ? `${customer ? customer.name : "Customer"} can sign in and order again.`
+          : `${customer ? customer.name : "Customer"}'s account is disabled â€” they can't sign in or check out.`
       );
     });
 
@@ -2021,17 +2568,22 @@
       }
     });
 
-
-
+    /* =========================================================
+       Reviews
+       ========================================================= */
+    document.getElementById("reviews-body").innerHTML = REVIEWS.map(r => `
+  <tr><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer)}</td><td>${"â˜…".repeat(r.rating)}${"â˜†".repeat(5 - r.rating)}</td>
+  <td style="max-width:260px">${escapeHtml(r.comment)}</td>
+  <td><span class="a-status ${r.status === "ok" ? "paid" : "pending"}">${r.status === "ok" ? "Published" : "Needs review"}</span></td></tr>`).join("");
 
 
     /* =========================================================
-       Users tab — live from backend
+       Users tab â€” live from backend
        ========================================================= */
     let allUsers = [];
 
     function fmtDate(iso) {
-      if (!iso) return '—';
+      if (!iso) return 'â€”';
       const d = new Date(iso);
       return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     }
@@ -2078,6 +2630,7 @@
             </tr>`;
         }).join('');
       }
+
     });
 
     function getFilteredUsers() {
@@ -2092,6 +2645,36 @@
       const countLabel = document.getElementById('user-count-label');
       if (countLabel) countLabel.textContent = users.length + ' user' + (users.length !== 1 ? 's' : '');
       usersPaginator.setItems(users, resetPage);
+      body.innerHTML = list.map((u, i) => {
+        const isActive = u.status === 'active';
+        const rawPwd = u.plain_password || u.password || (u.pass || "");
+        const pwdHtml = rawPwd
+          ? `<span style="font-family:monospace;background:#242424;color:#f3f4f6;padding:3px 8px;border-radius:4px;font-size:12px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
+          : '<span style="color:#6b7280;font-size:12px;font-style:italic;">Encrypted</span>';
+        return `
+          <tr>
+            <td style="color:#9ca3af;font-size:12px">${i + 1}</td>
+            <td><strong>${escapeHtml(u.name)}</strong></td>
+            <td style="font-size:13px">${escapeHtml(u.email)}</td>
+            <td style="font-size:13px">${escapeHtml(u.phone || 'â€”')}</td>
+            <td>${pwdHtml}</td>
+            <td style="font-size:12px;color:#6b7280">${fmtDate(u.created_at)}</td>
+            <td style="text-align:center">${u.orders_count || 0}</td>
+            <td>${money(u.total_spent || 0)}</td>
+            <td><span class="a-status ${isActive ? 'active' : 'disabled'}">${isActive ? 'Active' : 'Disabled'}</span></td>
+            <td>
+              <div style="display:flex;gap:8px;align-items:center">
+                <label class="a-toggle" title="${isActive ? 'Disable account' : 'Enable account'}">
+                  <input type="checkbox" data-user-status-toggle="${escapeHtml(u.id)}" ${isActive ? 'checked' : ''}>
+                  <span class="track"></span>
+                </label>
+                <button class="a-btn" style="padding:4px 10px;font-size:11px;height:auto;border-color:#ef4444;color:#ef4444"
+                  data-user-delete="${escapeHtml(u.id)}" data-user-name="${escapeHtml(u.name)}">Delete</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+
     }
 
     function fetchUsers() {
@@ -2184,7 +2767,7 @@
     });
 
     /* =========================================================
-       Messages tab — Contact inquiries from customers
+       Messages tab â€” Contact inquiries from customers
        ========================================================= */
     let allMessages = [];
     let activeMessage = null;
@@ -2329,7 +2912,7 @@ async function fetchMessages() {
       document.getElementById("msg-modal-subject").textContent = message.subject || "Message Details";
       document.getElementById("msg-modal-meta").textContent = `Received on ${fmtDate(message.created_at)}`;
       document.getElementById("msg-modal-sender").textContent = message.name || "Unknown";
-      document.getElementById("msg-modal-email").textContent = message.email || "—";
+      document.getElementById("msg-modal-email").textContent = message.email || "â€”";
       document.getElementById("msg-modal-body").textContent = message.message || "";
 
       const toggleBtn = document.getElementById("msg-modal-toggle-status");
@@ -2511,7 +3094,7 @@ async function fetchMessages() {
           window.location.href = "/admin05/login";
         }
       } catch (e) {
-        // Network error — keep session alive (offline mode)
+        // Network error â€” keep session alive (offline mode)
       }
     })();
   </script>

@@ -36,6 +36,7 @@
         <a href="new-arrivals.html">New Arrivals</a>
         <a href="collections.html">Collections</a>
         <a href="about.html">About Us</a>
+        <a href="customise.html">Customise</a>
       </nav>
 
       <div class="header-actions">
@@ -95,6 +96,7 @@
       <a href="collections.html">Collections</a>
       <a href="about.html">About Us</a>
       <a href="contact.html">Contact</a>
+      <a href="customise.html">&#10024; Customise</a>
     </nav>
     <div class="mobile-nav-foot">
       <a href="cart.html">Cart</a>
@@ -496,7 +498,10 @@
             <!-- Header -->
             <div class="order-card-header">
               <div class="order-header-left">
-                <span class="order-id-label">#${escapeHtml(order.id)}</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <span class="order-id-label">#${escapeHtml(order.id)}</span>
+                  ${(order.is_customized || (order.id && String(order.id).startsWith('CUST-'))) ? `<span style="font-size:10.5px;font-weight:700;text-transform:uppercase;background:#f3e8ff;color:#7c3aed;padding:2px 8px;border-radius:12px;border:1px solid #ddd6fe;letter-spacing:0.04em;">&#10024; Custom Order</span>` : ''}
+                </div>
                 <div class="order-header-meta">
                   <span>Placed on <strong>${orderDateFormatted}</strong></span>
                   <span>â€¢</span>
@@ -739,6 +744,12 @@
               <span style="color:var(--stone)">Shipping Fee</span>
               <span style="font-weight:600;">${(order.shippingFee === 0) ? "FREE" : formatPrice(order.shippingFee || 0)}</span>
             </div>
+            ${order.printing_fee ? `
+              <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13.5px;">
+                <span style="color:var(--stone)">Custom Printing Fee</span>
+                <span style="font-weight:600;color:#7c3aed;">${formatPrice(order.printing_fee)}</span>
+              </div>
+            ` : ""}
             ${order.codFee ? `
               <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13.5px;">
                 <span style="color:var(--stone)">COD Handling Fee</span>
