@@ -126,18 +126,43 @@
     </div>
 
     <div class="container shop-layout">
-      <aside class="shop-sidebar">
-        <h5>Size</h5>
-        <div id="size-filters"></div>
-        <h5>Color</h5>
-        <div id="color-filters"></div>
-        <h5>Price</h5>
-        <label class="check-row"><input type="radio" name="price" value="all" checked> All Prices</label>
-        <label class="check-row"><input type="radio" name="price" value="0-1000"> Under ₹1,000</label>
-        <label class="check-row"><input type="radio" name="price" value="1000-1500"> ₹1,000 – ₹1,500</label>
-        <label class="check-row"><input type="radio" name="price" value="1500-9999"> ₹1,500 &amp; above</label>
+      <aside class="shop-sidebar" aria-label="Product filters">
+        <div class="filter-header">
+          <h2 class="filter-heading">Filters</h2>
+          <button type="button" class="filter-mobile-toggle" id="filter-mobile-toggle" aria-expanded="true" aria-label="Toggle filters">
+            <span class="toggle-text">Hide</span>
+            <svg class="toggle-icon" viewBox="0 0 24 24">
+              <path d="M18 15l-6-6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="filter-divider"></div>
+
+        <div class="filter-groups" id="filter-groups-wrapper">
+          <div class="filter-group">
+            <h5 class="filter-group-title">Size</h5>
+            <div id="size-filters" class="filter-options"></div>
+          </div>
+          <div class="filter-divider"></div>
+
+          <div class="filter-group">
+            <h5 class="filter-group-title">Color</h5>
+            <div id="color-filters" class="filter-options"></div>
+          </div>
+          <div class="filter-divider"></div>
+
+          <div class="filter-group">
+            <h5 class="filter-group-title">Price</h5>
+            <div id="price-filters" class="filter-options">
+              <label class="check-row"><input type="radio" name="price" value="all" checked> All Prices</label>
+              <label class="check-row"><input type="radio" name="price" value="0-1000"> Under ₹1,000</label>
+              <label class="check-row"><input type="radio" name="price" value="1000-1500"> ₹1,000 – ₹1,500</label>
+              <label class="check-row"><input type="radio" name="price" value="1500-9999"> ₹1,500 &amp; above</label>
+            </div>
+          </div>
+        </div>
       </aside>
-      <div>
+      <div class="shop-content">
         <div class="product-grid" id="shop-grid"></div>
       </div>
     </div>
@@ -378,6 +403,19 @@
 
         document.getElementById("result-count").textContent = list.length;
         renderProductGrid(grid, list);
+      }
+
+      const mobileToggle = document.getElementById("filter-mobile-toggle");
+      const filterGroups = document.getElementById("filter-groups-wrapper");
+      if (mobileToggle && filterGroups) {
+        mobileToggle.addEventListener("click", () => {
+          const isExpanded = mobileToggle.getAttribute("aria-expanded") === "true";
+          const nextState = !isExpanded;
+          mobileToggle.setAttribute("aria-expanded", String(nextState));
+          filterGroups.classList.toggle("collapsed", !nextState);
+          const txt = mobileToggle.querySelector(".toggle-text");
+          if (txt) txt.textContent = nextState ? "Hide" : "Show";
+        });
       }
 
       updateHeading();
