@@ -274,11 +274,6 @@
         return { success: false, error: data.error || "Invalid admin credentials." };
       } catch (err) {
         console.error("adminLogin error:", err);
-        // Fallback check if server offline but demo credentials matched
-        if (email === "admin@krisin.clothing" && password === "krisin@admin1") {
-          this.setAdminSession("demo_admin_token", email);
-          return { success: true };
-        }
         return { success: false, error: "Unable to connect to admin server." };
       }
     },

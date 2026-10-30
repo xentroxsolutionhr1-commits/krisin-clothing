@@ -16,7 +16,7 @@
 <body>
 
   <script>
-    // Auth guard â€” runs before the page paints.
+    // Auth guard Ã¢â‚¬â€ runs before the page paints.
     const hasAdminSession = sessionStorage.getItem("krisin_admin_session") === "1" || localStorage.getItem("krisin_admin_session") === "1";
     const hasAdminToken = sessionStorage.getItem("krisin_admin_token") || localStorage.getItem("krisin_admin_token");
     if (!hasAdminSession || !hasAdminToken) {
@@ -83,7 +83,7 @@
       </nav>
       <div class="a-sidebar-foot">
         Signed in as<br><strong style="color:#fff" id="a-signed-in-email">Admin</strong><br>
-        <a href="/">â† Back to store</a><br>
+        <a href="/">Ã¢â€ Â Back to store</a><br>
         <button class="a-logout" id="a-logout-btn">Sign out</button>
       </div>
     </aside>
@@ -110,23 +110,23 @@
         <div class="a-stats">
           <div class="a-card">
             <div class="lbl">Total Balance</div>
-            <div class="val" id="stat-balance">â‚¹0</div>
+            <div class="val" id="stat-balance">Ã¢â€šÂ¹0</div>
             <div class="delta up">Available Payout</div>
           </div>
           <div class="a-card">
             <div class="lbl">Revenue (30d)</div>
-            <div class="val" id="stat-revenue">â‚¹0</div>
-            <div class="delta up">â†‘ 12.4% vs last month</div>
+            <div class="val" id="stat-revenue">Ã¢â€šÂ¹0</div>
+            <div class="delta up">Ã¢â€ â€˜ 12.4% vs last month</div>
           </div>
           <div class="a-card">
             <div class="lbl">Orders (30d)</div>
             <div class="val" id="stat-orders">0</div>
-            <div class="delta up">â†‘ 8.1% vs last month</div>
+            <div class="delta up">Ã¢â€ â€˜ 8.1% vs last month</div>
           </div>
           <div class="a-card">
             <div class="lbl">Customers</div>
             <div class="val" id="stat-customers">0</div>
-            <div class="delta up">â†‘ 5 new this week</div>
+            <div class="delta up">Ã¢â€ â€˜ 5 new this week</div>
           </div>
           <div class="a-card">
             <div class="lbl">Low Stock Items</div>
@@ -179,7 +179,7 @@
         <div class="a-searchbar"><svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" />
-          </svg><input placeholder="Search productsâ€¦" id="product-search"></div>
+          </svg><input placeholder="Search productsÃ¢â‚¬Â¦" id="product-search"></div>
         <div class="a-panel" style="padding:0">
           <table class="a-table" style="padding:12px">
             <thead>
@@ -244,7 +244,7 @@
         <div class="a-searchbar"><svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" />
-          </svg><input placeholder="Search ordersâ€¦" id="order-search"></div>
+          </svg><input placeholder="Search ordersÃ¢â‚¬Â¦" id="order-search"></div>
         <div class="a-panel" style="padding:0">
           <table class="a-table" style="padding:12px">
             <thead>
@@ -270,7 +270,7 @@
         <div class="a-searchbar"><svg viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7" />
             <path d="M21 21l-4.3-4.3" />
-          </svg><input placeholder="Search customersâ€¦" id="customer-search"></div>
+          </svg><input placeholder="Search customersÃ¢â‚¬Â¦" id="customer-search"></div>
         <div class="a-panel" style="padding:0">
           <table class="a-table" style="padding:12px">
             <thead>
@@ -300,7 +300,7 @@
                 <circle cx="11" cy="11" r="7" />
                 <path d="M21 21l-4.3-4.3" />
               </svg>
-              <input placeholder="Search messagesâ€¦" id="message-search">
+              <input placeholder="Search messagesÃ¢â‚¬Â¦" id="message-search">
             </div>
             <select id="message-filter" style="border:1px solid var(--a-line);border-radius:8px;padding:9px 12px;font-size:13px;background:#fff;outline:none;font-family:inherit;color:var(--a-ink);">
               <option value="all">All Messages</option>
@@ -352,9 +352,9 @@
         <div class="a-actions" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap">
           <div class="a-searchbar" style="flex:1;min-width:200px">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-            <input placeholder="Search users by name or emailâ€¦" id="user-search">
+            <input placeholder="Search users by name or emailÃ¢â‚¬Â¦" id="user-search">
           </div>
-          <span id="user-count-label" style="font-size:13px;color:#6b7280;white-space:nowrap">Loadingâ€¦</span>
+          <span id="user-count-label" style="font-size:13px;color:#6b7280;white-space:nowrap">LoadingÃ¢â‚¬Â¦</span>
         </div>
         <div class="a-panel" style="padding:0;margin-top:16px">
           <table class="a-table" style="padding:12px">
@@ -372,7 +372,7 @@
                 <th>Actions</th>
               </tr>
             </thead>
-            <tbody id="users-body"><tr><td colspan="10"><div class="a-empty">Loading usersâ€¦</div></td></tr></tbody>
+            <tbody id="users-body"><tr><td colspan="10"><div class="a-empty">Loading usersÃ¢â‚¬Â¦</div></td></tr></tbody>
           </table>
           <div id="users-pagination" class="a-pagination"></div>
         </div>
@@ -458,12 +458,12 @@
             <select id="pf-category" required></select>
           </div>
           <div class="a-field">
-            <label for="pf-price">Price (â‚¹)</label>
+            <label for="pf-price">Price (Ã¢â€šÂ¹)</label>
             <input type="number" id="pf-price" min="0" step="1" required placeholder="899">
           </div>
           <div class="a-field">
-            <label for="pf-compare">Compare-at price (â‚¹)</label>
-            <input type="number" id="pf-compare" min="0" step="1" placeholder="Optional â€” shown struck through">
+            <label for="pf-compare">Compare-at price (Ã¢â€šÂ¹)</label>
+            <input type="number" id="pf-compare" min="0" step="1" placeholder="Optional Ã¢â‚¬â€ shown struck through">
           </div>
           <div class="a-field">
             <label for="pf-stock">Stock (units)</label>
@@ -471,7 +471,7 @@
           </div>
           <div class="a-field full">
             <label for="pf-image">Image URL</label>
-            <input type="url" id="pf-image" placeholder="https://â€¦">
+            <input type="url" id="pf-image" placeholder="https://Ã¢â‚¬Â¦">
             <span class="a-field-hint">Leave blank to use a placeholder image.</span>
           </div>
           <div class="a-field full">
@@ -627,7 +627,7 @@
     }
 
     /* =========================================================
-       Storage layer â€” overlays admin edits on top of the static
+       Storage layer Ã¢â‚¬â€ overlays admin edits on top of the static
        catalogue in js/data.js using localStorage. In production
        this whole layer would be replaced by real API calls to a
        backend + database (see README).
@@ -796,7 +796,7 @@
 
     /* =========================================================
        Mock orders / customers / reviews
-       (Orders and reviews are demo data â€” wiring these
+       (Orders and reviews are demo data Ã¢â‚¬â€ wiring these
        to real records needs the backend described in the README.)
        ========================================================= */
     const DEFAULT_PAGE_SIZE = 10;
@@ -945,7 +945,7 @@
 
 
     /* =========================================================
-       Customised Orders tab â€” fetch, render, status update
+       Customised Orders tab Ã¢â‚¬â€ fetch, render, status update
        ========================================================= */
     let liveCustomOrders = [];
 
@@ -971,16 +971,16 @@
           const payStatus = o.payment_status || o.paymentStatus || "Pending";
           const currentStatus = o.status || "Pending";
           const createdAt = o.created_at || o.createdAt || "";
-          const orderDate = createdAt ? new Date(createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "â€”";
+          const orderDate = createdAt ? new Date(createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "Ã¢â‚¬â€";
 
           // Items / product details
           let items = o.items || [];
           if (typeof items === "string") { try { items = JSON.parse(items); } catch(e) { items = []; } }
           const firstItem = Array.isArray(items) && items[0] ? items[0] : {};
-          const prodName = firstItem.name || o.custom_details?.product_name || "â€”";
-          const size = firstItem.size || o.custom_details?.size || "â€”";
-          const color = firstItem.color || o.custom_details?.color || "â€”";
-          const printPos = o.custom_details?.print_position || "â€”";
+          const prodName = firstItem.name || o.custom_details?.product_name || "Ã¢â‚¬â€";
+          const size = firstItem.size || o.custom_details?.size || "Ã¢â‚¬â€";
+          const color = firstItem.color || o.custom_details?.color || "Ã¢â‚¬â€";
+          const printPos = o.custom_details?.print_position || "Ã¢â‚¬â€";
           const custMsg = firstItem.customer_message || o.customer_message || "";
 
           // Design image
@@ -1135,7 +1135,7 @@
 
     // Refresh button
     const refreshBtn = document.getElementById("btn-refresh-custom-orders");
-    if (refreshBtn) refreshBtn.addEventListener("click", () => { fetchCustomOrders(); toast("Refreshing customised ordersâ€¦"); });
+    if (refreshBtn) refreshBtn.addEventListener("click", () => { fetchCustomOrders(); toast("Refreshing customised ordersÃ¢â‚¬Â¦"); });
 
     // Printing fee save
     const saveFeeBtn = document.getElementById("btn-save-printing-fee");
@@ -1150,7 +1150,7 @@
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
           body: JSON.stringify({ printing_fee: fee })
         });
-        if (res.ok) { toast(`Printing fee saved: â‚¹${fee}.`); }
+        if (res.ok) { toast(`Printing fee saved: Ã¢â€šÂ¹${fee}.`); }
         else { toast("Failed to save printing fee.", "error"); }
       } catch (err) { toast("Server error saving fee.", "error"); }
     });
@@ -1190,154 +1190,8 @@
       { product: "Relaxed Fit Pants", customer: "Rahul Nair", rating: 5, comment: "My new everyday pants. Perfect fit.", status: "pending" }
     ];
 
-    function money(n) { return "â‚¹" + Number(n).toLocaleString("en-IN"); }
+    function money(n) { return "Ã¢â€šÂ¹" + Number(n).toLocaleString("en-IN"); }
     function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
-
-    /* =========================================================
-       Reusable Table Paginator (10 records/page, compact Gmail-style)
-       ========================================================= */
-    const DEFAULT_PAGE_SIZE = 10;
-
-    function getPaginationPages(currentPage, totalPages) {
-      if (totalPages <= 7) {
-        const pages = [];
-        for (let i = 1; i <= totalPages; i++) pages.push(i);
-        return pages;
-      }
-      if (currentPage <= 4) {
-        return [1, 2, 3, 4, 5, "...", totalPages];
-      }
-      if (currentPage >= totalPages - 3) {
-        return [1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-      }
-      return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
-    }
-
-    class TablePaginator {
-      constructor(options) {
-        this.containerId = options.containerId;
-        this.pageSize = options.pageSize || DEFAULT_PAGE_SIZE;
-        this.currentPage = 1;
-        this.items = [];
-        this.onRenderPage = options.onRenderPage;
-        this.ariaLabel = options.ariaLabel || "Table pagination";
-        this._boundClick = false;
-      }
-
-      get container() {
-        return document.getElementById(this.containerId);
-      }
-
-      setItems(newItems, resetPage = false) {
-        this.items = Array.isArray(newItems) ? newItems : [];
-        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
-        if (resetPage || this.currentPage > totalPages) {
-          this.currentPage = 1;
-        }
-        this.update();
-      }
-
-      goToPage(page) {
-        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
-        const target = Math.max(1, Math.min(page, totalPages));
-        if (target !== this.currentPage) {
-          this.currentPage = target;
-          this.update();
-        }
-      }
-
-      prevPage() {
-        if (this.currentPage > 1) {
-          this.goToPage(this.currentPage - 1);
-        }
-      }
-
-      nextPage() {
-        const totalPages = Math.max(1, Math.ceil(this.items.length / this.pageSize));
-        if (this.currentPage < totalPages) {
-          this.goToPage(this.currentPage + 1);
-        }
-      }
-
-      getCurrentSlice() {
-        const start = (this.currentPage - 1) * this.pageSize;
-        return this.items.slice(start, start + this.pageSize);
-      }
-
-      getInfo() {
-        const total = this.items.length;
-        const totalPages = Math.max(1, Math.ceil(total / this.pageSize));
-        if (total === 0) {
-          return { start: 0, end: 0, total: 0, totalPages: 1, currentPage: 1, pageSize: this.pageSize };
-        }
-        const start = (this.currentPage - 1) * this.pageSize + 1;
-        const end = Math.min(this.currentPage * this.pageSize, total);
-        return { start, end, total, totalPages, currentPage: this.currentPage, pageSize: this.pageSize };
-      }
-
-      update() {
-        const info = this.getInfo();
-        const slice = this.getCurrentSlice();
-        if (typeof this.onRenderPage === "function") {
-          this.onRenderPage(slice, info);
-        }
-        this.renderControls(info);
-      }
-
-      renderControls(info) {
-        const container = this.container;
-        if (!container) return;
-
-        const countText = info.total === 0
-          ? "0 of 0"
-          : `${info.start}\u2013${info.end} of ${info.total}`;
-
-        const pages = getPaginationPages(info.currentPage, info.totalPages);
-
-        const pagesHtml = pages.map(p => {
-          if (p === "...") {
-            return '<span class="a-page-dots" aria-hidden="true">\u2026</span>';
-          }
-          const isActive = p === info.currentPage;
-          return `<button type="button" class="a-page-btn num${isActive ? " active" : ""}" data-page="${p}" ${isActive ? 'aria-current="page"' : ""} aria-label="Page ${p}">${p}</button>`;
-        }).join("");
-
-        const prevDisabled = info.currentPage <= 1 || info.total === 0;
-        const nextDisabled = info.currentPage >= info.totalPages || info.total === 0;
-
-        container.innerHTML = `
-          <div class="a-pagination-info" aria-live="polite">
-            ${countText}
-          </div>
-          <div class="a-pagination-controls" role="navigation" aria-label="${escapeHtml(this.ariaLabel)}">
-            <button type="button" class="a-page-btn prev" data-page-action="prev" title="Previous page" aria-label="Previous page" ${prevDisabled ? "disabled" : ""}>
-              <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
-            </button>
-            ${pagesHtml}
-            <button type="button" class="a-page-btn next" data-page-action="next" title="Next page" aria-label="Next page" ${nextDisabled ? "disabled" : ""}>
-              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-          </div>
-        `;
-
-        if (!this._boundClick) {
-          this._boundClick = true;
-          container.addEventListener("click", (e) => {
-            const pageBtn = e.target.closest(".a-page-btn");
-            if (!pageBtn || pageBtn.disabled) return;
-
-            if (pageBtn.dataset.pageAction === "prev") {
-              this.prevPage();
-            } else if (pageBtn.dataset.pageAction === "next") {
-              this.nextPage();
-            } else if (pageBtn.dataset.page) {
-              this.goToPage(Number(pageBtn.dataset.page));
-            }
-          });
-        }
-      }
-    }
-
 
     /* =========================================================
        User-side & Backend Orders / Customers Management
@@ -1797,7 +1651,7 @@
     });
 
     /* =========================================================
-       Product modal â€” add / edit
+       Product modal Ã¢â‚¬â€ add / edit
        ========================================================= */
     const productModal = document.getElementById("product-modal-backdrop");
     const productForm = document.getElementById("product-form");
@@ -1923,8 +1777,8 @@
 
       const orderId = order.id || order.orderId || "";
       const custName = order.customerName || order.customer_name || order.customer || "Customer";
-      const custEmail = order.customerEmail || order.customer_email || "â€”";
-      const custPhone = order.customerPhone || order.customer_phone || "â€”";
+      const custEmail = order.customerEmail || order.customer_email || "Ã¢â‚¬â€";
+      const custPhone = order.customerPhone || order.customer_phone || "Ã¢â‚¬â€";
       const addr = order.shippingAddress || order.shipping_address || {};
       const addrLine = [addr.address, addr.city, addr.state, addr.pincode].filter(Boolean).join(", ") || "No address provided";
       const payMethod = order.paymentMethod || order.payment_method || order.pay || "Online";
@@ -1944,7 +1798,7 @@
         const unitPrice = Number(item.price) || 0;
         const qty = Number(item.qty) || 1;
         const lineTotal = unitPrice * qty;
-        const variantText = [item.size ? `Size: ${item.size}` : null, item.color ? `Color: ${item.color}` : null].filter(Boolean).join(" â€¢ ");
+        const variantText = [item.size ? `Size: ${item.size}` : null, item.color ? `Color: ${item.color}` : null].filter(Boolean).join(" Ã¢â‚¬Â¢ ");
 
         return `
           <tr style="border-bottom:1px solid #edf0f5;">
@@ -1956,7 +1810,7 @@
               ${variantText ? `<div style="font-size:12px;color:var(--a-muted);margin-top:2px;">${escapeHtml(variantText)}</div>` : ''}
             </td>
             <td style="padding:10px 8px;text-align:right;font-size:13px;">${money(unitPrice)}</td>
-            <td style="padding:10px 8px;text-align:center;font-size:13px;font-weight:600;">× ${qty}</td>
+            <td style="padding:10px 8px;text-align:center;font-size:13px;font-weight:600;">Ã— ${qty}</td>
             <td style="padding:10px 8px;text-align:right;font-weight:700;color:var(--a-navy);font-size:13.5px;">${money(lineTotal)}</td>
           </tr>
         `;
@@ -1995,7 +1849,7 @@
             <div style="font-weight:700;color:var(--a-ink);font-size:14px;">${escapeHtml(custName)}</div>
             <div style="font-size:12.5px;color:var(--a-ink);margin-top:2px;">${escapeHtml(addrLine)}</div>
             <div style="font-size:12px;color:var(--a-muted);margin-top:4px;">
-              âœ‰ï¸ ${escapeHtml(custEmail)} &nbsp;â€¢&nbsp; ðŸ“ž ${escapeHtml(custPhone)}
+              Ã¢Å“â€°Ã¯Â¸Â ${escapeHtml(custEmail)} &nbsp;Ã¢â‚¬Â¢&nbsp; Ã°Å¸â€œÅ¾ ${escapeHtml(custPhone)}
             </div>
           </div>
           <div>
@@ -2108,7 +1962,7 @@
           const newStatus = document.getElementById("modal-status-select").value;
           const note = document.getElementById("modal-status-note").value.trim();
           updateBtn.disabled = true;
-          updateBtn.textContent = "Updatingâ€¦";
+          updateBtn.textContent = "UpdatingÃ¢â‚¬Â¦";
 
           const token = getAdminToken();
 
@@ -2362,10 +2216,10 @@
     });
 
     /* =========================================================
-       Customers tab â€” access control (enable / disable)
+       Customers tab Ã¢â‚¬â€ access control (enable / disable)
        ========================================================= */
     /* =========================================================
-       Customers tab — access control with pagination
+       Customers tab â€” access control with pagination
        ========================================================= */
     const customersPaginator = new TablePaginator({
       containerId: "customers-pagination",
@@ -2434,84 +2288,10 @@
         newStatus === "active"
           ? `${customer ? customer.name : "Customer"} can sign in and order again.`
           : `${customer ? customer.name : "Customer"}'s account is disabled \u2014 they can't sign in or check out.`
-    });
-
-    function getFilteredCustomers() {
-      const q = (document.getElementById("customer-search")?.value || "").toLowerCase().trim();
-      const all = getAllCustomers();
-      return q ? all.filter(c => (c.name || "").toLowerCase().includes(q) || (c.email || "").toLowerCase().includes(q) || (c.phone || "").toLowerCase().includes(q)) : all;
-    }
-
-    function renderCustomers(list, resetPage = false) {
-      const custs = list !== undefined ? list : getFilteredCustomers();
-      customersPaginator.setItems(custs, resetPage);
-    }
-
-    document.getElementById("customers-body").addEventListener("change", (e) => {
-      const toggle = e.target.closest("[data-user-toggle]");
-      if (!toggle) return;
-      const email = toggle.dataset.userToggle;
-      const newStatus = toggle.checked ? "active" : "disabled";
-      setUserStatus(email, newStatus);
-      if (liveCustomers) {
-        const c = liveCustomers.find(item => item.email.toLowerCase() === email.toLowerCase());
-        if (c) c.status = newStatus;
-      }
-      renderCustomers(undefined, false);
-      const customer = getAllCustomers().find(c => c.email.toLowerCase() === email.toLowerCase());
-      toast(
-        newStatus === "active"
-          ? `${customer ? customer.name : "Customer"} can sign in and order again.`
-          : `${customer ? customer.name : "Customer"}'s account is disabled \u2014 they can't sign in or check out.`
-
-        const pwdHtml = rawPwd 
-          ? `<span style="font-family:monospace;background:#242424;padding:3px 6px;border-radius:4px;letter-spacing:0.5px;">${escapeHtml(rawPwd)}</span>`
-          : '<span style="color:#888;font-style:italic;">Encrypted</span>';
-        return `
-    <tr>
-      <td><strong>${escapeHtml(c.name || "Customer")}</strong></td>
-      <td>${escapeHtml(c.email)}</td>
-      <td>${phone}</td>
-      <td>${pwdHtml}</td>
-      <td>${c.orders_count !== undefined ? c.orders_count : (c.orders || 0)}</td>
-      <td>${money(c.total_spent !== undefined ? c.total_spent : (c.ltv || 0))}</td>
-      <td><span class="a-status ${isActive ? "active" : "disabled"}">${isActive ? "Active" : "Disabled"}</span></td>
-      <td>
-        <label class="a-toggle">
-          <input type="checkbox" data-user-toggle="${escapeHtml(c.email)}" ${isActive ? "checked" : ""}>
-          <span class="track"></span>
-          <span class="a-toggle-label">${isActive ? "Allowed" : "Blocked"}</span>
-        </label>
-      </td>
-    </tr>`;
-      }).join("");
-    }
-
-    function renderCustomers(list, resetPage = false) {
-      const custs = list !== undefined ? list : getFilteredCustomers();
-      customersPaginator.setItems(custs, resetPage);
-    }
-
-    document.getElementById("customers-body").addEventListener("change", (e) => {
-      const toggle = e.target.closest("[data-user-toggle]");
-      if (!toggle) return;
-      const email = toggle.dataset.userToggle;
-      const newStatus = toggle.checked ? "active" : "disabled";
-      setUserStatus(email, newStatus);
-      if (liveCustomers) {
-        const c = liveCustomers.find(item => item.email.toLowerCase() === email.toLowerCase());
-        if (c) c.status = newStatus;
-      }
-      renderCustomers(undefined, false);
-      const customer = getAllCustomers().find(c => c.email.toLowerCase() === email.toLowerCase());
-      toast(
-        newStatus === "active"
-          ? `${customer ? customer.name : "Customer"} can sign in and order again.`
-          : `${customer ? customer.name : "Customer"}'s account is disabled â€” they can't sign in or check out.`
       );
     });
 
-    document.getElementById("customer-search").addEventListener("input", () => {
+        document.getElementById("customer-search").addEventListener("input", () => {
       renderCustomers(undefined, true);
     });
 
@@ -2793,18 +2573,18 @@
        Reviews
        ========================================================= */
     document.getElementById("reviews-body").innerHTML = REVIEWS.map(r => `
-  <tr><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer)}</td><td>${"â˜…".repeat(r.rating)}${"â˜†".repeat(5 - r.rating)}</td>
+  <tr><td>${escapeHtml(r.product)}</td><td>${escapeHtml(r.customer)}</td><td>${"Ã¢Ëœâ€¦".repeat(r.rating)}${"Ã¢Ëœâ€ ".repeat(5 - r.rating)}</td>
   <td style="max-width:260px">${escapeHtml(r.comment)}</td>
   <td><span class="a-status ${r.status === "ok" ? "paid" : "pending"}">${r.status === "ok" ? "Published" : "Needs review"}</span></td></tr>`).join("");
 
 
     /* =========================================================
-       Users tab â€” live from backend
+       Users tab Ã¢â‚¬â€ live from backend
        ========================================================= */
     let allUsers = [];
 
     function fmtDate(iso) {
-      if (!iso) return 'â€”';
+      if (!iso) return 'Ã¢â‚¬â€';
       const d = new Date(iso);
       return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     }
@@ -2877,7 +2657,7 @@
             <td style="color:#9ca3af;font-size:12px">${i + 1}</td>
             <td><strong>${escapeHtml(u.name)}</strong></td>
             <td style="font-size:13px">${escapeHtml(u.email)}</td>
-            <td style="font-size:13px">${escapeHtml(u.phone || 'â€”')}</td>
+            <td style="font-size:13px">${escapeHtml(u.phone || 'Ã¢â‚¬â€')}</td>
             <td>${pwdHtml}</td>
             <td style="font-size:12px;color:#6b7280">${fmtDate(u.created_at)}</td>
             <td style="text-align:center">${u.orders_count || 0}</td>
@@ -2988,7 +2768,7 @@
     });
 
     /* =========================================================
-       Messages tab â€” Contact inquiries from customers
+       Messages tab Ã¢â‚¬â€ Contact inquiries from customers
        ========================================================= */
     let allMessages = [];
     let activeMessage = null;
@@ -3133,7 +2913,7 @@ async function fetchMessages() {
       document.getElementById("msg-modal-subject").textContent = message.subject || "Message Details";
       document.getElementById("msg-modal-meta").textContent = `Received on ${fmtDate(message.created_at)}`;
       document.getElementById("msg-modal-sender").textContent = message.name || "Unknown";
-      document.getElementById("msg-modal-email").textContent = message.email || "â€”";
+      document.getElementById("msg-modal-email").textContent = message.email || "Ã¢â‚¬â€";
       document.getElementById("msg-modal-body").textContent = message.message || "";
 
       const toggleBtn = document.getElementById("msg-modal-toggle-status");
@@ -3319,7 +3099,7 @@ async function fetchMessages() {
           window.location.href = "/admin05/login";
         }
       } catch (e) {
-        // Network error â€” keep session alive (offline mode)
+        // Network error Ã¢â‚¬â€ keep session alive (offline mode)
       }
     })();
   </script>

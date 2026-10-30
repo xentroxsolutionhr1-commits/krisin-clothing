@@ -247,14 +247,7 @@ async function requireCustomerAuth(req, res, next) {
    ADMIN AUTHENTICATION MIDDLEWARE
    ========================================================= */
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || (process.env.NODE_ENV !== "production" ? "admin@krisinclothing.com" : "")).trim().toLowerCase();
-const ADMIN_PASS = process.env.ADMIN_PASS || (process.env.NODE_ENV !== "production" ? "AdminPass2026!" : "");
-
-if (!ADMIN_EMAIL || !ADMIN_PASS) {
-  throw new Error("ADMIN_EMAIL and ADMIN_PASS environment variables are required");
-}
-
-function requireAdminAuth(req, res, next) {
+async function requireAdminAuth(req, res, next) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -267,11 +260,22 @@ function requireAdminAuth(req, res, next) {
     const token = authHeader.slice(7);
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    if (
-      !decoded ||
-      decoded.role !== "admin" ||
-      decoded.email !== ADMIN_EMAIL
-    ) {
+    if (!decoded || decoded.role !== "admin" || typeof decoded.email !== "string") {
+      return res.status(403).json({
+        error: "Access denied. Admin authorization required."
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT id, email, role
+       FROM admins
+       WHERE LOWER(email) = LOWER($1)
+         AND role = 'admin'
+       LIMIT 1`,
+      [decoded.email]
+    );
+
+    if (!result.rows[0]) {
       return res.status(403).json({
         error: "Access denied. Admin authorization required."
       });
@@ -589,30 +593,45 @@ app.post("/api/auth/reset-password", async (req, res) => {
    ========================================================= */
 
 // 1. Admin Login
-app.post("/api/admin/login", (req, res) => {
+app.post("/api/admin/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const trimmedEmail = (email || "").trim().toLowerCase();
-
-    if (trimmedEmail === ADMIN_EMAIL && password === ADMIN_PASS) {
-      const token = jwt.sign(
-        { email: trimmedEmail, role: "admin" },
-        JWT_SECRET,
-        { expiresIn: "7d" }
-      );
-
-      return res.json({
-        message: "Admin authenticated successfully.",
-        token,
-        email: trimmedEmail,
-        role: "admin"
-      });
+    const { email, password } = req.body || {};
+    if (typeof email !== "string" || typeof password !== "string") {
+      return res.status(401).json({ error: "Invalid admin email or password." });
     }
 
-    res.status(401).json({ error: "Invalid admin email or password." });
+    const trimmedEmail = email.trim().toLowerCase();
+    const result = await pool.query(
+      `SELECT email, password_hash, role
+       FROM admins
+       WHERE LOWER(email) = LOWER($1)
+       LIMIT 1`,
+      [trimmedEmail]
+    );
+    const admin = result.rows[0];
+
+    if (!admin || admin.role !== "admin" ||
+      typeof admin.password_hash !== "string" ||
+      !(await bcrypt.compare(password, admin.password_hash))) {
+      return res.status(401).json({ error: "Invalid admin email or password." });
+    }
+
+    const normalizedAdminEmail = admin.email.trim().toLowerCase();
+    const token = jwt.sign(
+      { email: normalizedAdminEmail, role: "admin" },
+      JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    return res.json({
+      message: "Admin authenticated successfully.",
+      token,
+      email: normalizedAdminEmail,
+      role: "admin"
+    });
   } catch (err) {
     console.error("Admin login error:", err);
-    res.status(500).json({ error: "Admin login error." });
+    res.status(500).json({ error: "Unable to authenticate admin." });
   }
 });
 

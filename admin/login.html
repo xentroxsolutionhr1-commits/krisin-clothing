@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -38,11 +38,12 @@
   </div>
 
   <script>
-    const API_BASE = window.location.port === "4000"
-      ? ""
-      : (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-          ? "https://krisin-clothing-1.onrender.com"
-          : "https://krisin-clothing-1.onrender.com");
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+    const API_BASE = window.location.port === "4000" || isLocalhost
+      ? "http://localhost:4000"
+      : "https://krisin-clothing-1.onrender.com";
 
     // If already signed in with a real token, verify and redirect to dashboard
     const existingToken = localStorage.getItem("krisin_admin_token") || sessionStorage.getItem("krisin_admin_token");
