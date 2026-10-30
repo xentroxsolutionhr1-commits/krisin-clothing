@@ -1296,64 +1296,6 @@ app.post("/api/orders", async (req, res) => {
       });
     }
 
-    // Check if customised clothing order
-    const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url));
-    const isCustomized = Boolean(body.is_customized || hasCustomItems);
-
-    let customImageUrl = null;
-    let printingFee = 0;
-    let customerMessage = null;
-    let customDetails = null;
-
-    if (isCustomized) {
-      const customItem = Array.isArray(finalItems) ? (finalItems.find(i => i && (i.is_customized || i.custom_image_url)) || {}) : {};
-      const rawUrl = body.custom_image_url || customItem.custom_image_url || "";
-
-      if (!isSafeImageUrl(rawUrl)) {
-        return res.status(400).json({
-          error: "Invalid or unsafe custom image URL. Must be a valid, publicly accessible HTTP or HTTPS link."
-        });
-      }
-      customImageUrl = String(rawUrl).trim();
-
-      // Check product eligibility (only Shirts & T-Shirts)
-      const productId = customItem.productId || customItem.id;
-      if (productId) {
-        const prodResult = await pool.query("SELECT id, name, category, price FROM products WHERE id = $1", [productId]);
-        if (prodResult.rows.length) {
-          const dbProduct = prodResult.rows[0];
-          if (!isCustomisableCategory(dbProduct.category, dbProduct.name)) {
-            return res.status(400).json({
-              error: `Product "${dbProduct.name}" (${dbProduct.category}) is not eligible for customisation. Only shirts and T-shirts can be customised.`
-            });
-          }
-        }
-      }
-
-      // Fetch live printing fee from store_settings
-      try {
-        const feeRes = await pool.query("SELECT value FROM store_settings WHERE key = 'printing_fee'");
-        if (feeRes.rows.length) {
-          printingFee = Number(feeRes.rows[0].value) || 200;
-        } else {
-          printingFee = 200;
-        }
-      } catch (e) {
-        printingFee = 200;
-      }
-
-      const rawMsg = body.customer_message || customItem.customer_message || "";
-      if (rawMsg) {
-        customerMessage = String(rawMsg).trim().slice(0, 1000);
-      }
-
-      customDetails = body.custom_details || customItem.custom_details || {
-        source: "customise_page",
-        print_fee: printingFee,
-        image_url: customImageUrl
-      };
-    }
-
     const result = await pool.query(`
       INSERT INTO orders (
         id,
