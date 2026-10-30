@@ -375,18 +375,13 @@
         : false;
 
       document.querySelectorAll(".main-nav").forEach(nav => {
-        let navCustomise = nav.querySelector(".nav-customise-item");
-        if (!navCustomise) {
-          navCustomise = document.createElement("a");
-          navCustomise.className = "nav-customise-item";
-          navCustomise.href = "customise.html";
-          navCustomise.textContent = "Customise";
-          nav.appendChild(navCustomise);
-        }
-        if (isCustomisePage) {
-          navCustomise.classList.add("active");
-        } else {
-          navCustomise.classList.remove("active");
+        const navCustomise = nav.querySelector('a[href="customise.html"]');
+        if (navCustomise) {
+          if (isCustomisePage) {
+            navCustomise.classList.add("active");
+          } else {
+            navCustomise.classList.remove("active");
+          }
         }
 
         let navOrders = nav.querySelector(".nav-my-orders-item");
@@ -410,18 +405,13 @@
 
       // Update mobile navigation links (cleanly, with Customise beside My Orders)
       document.querySelectorAll(".mobile-nav-links").forEach(mobileNav => {
-        let mobileCustomise = mobileNav.querySelector(".mobile-customise-item");
-        if (!mobileCustomise) {
-          mobileCustomise = document.createElement("a");
-          mobileCustomise.className = "mobile-customise-item";
-          mobileCustomise.href = "customise.html";
-          mobileCustomise.textContent = "Customise";
-          mobileNav.appendChild(mobileCustomise);
-        }
-        if (isCustomisePage) {
-          mobileCustomise.classList.add("active");
-        } else {
-          mobileCustomise.classList.remove("active");
+        const mobileCustomise = mobileNav.querySelector('a[href="customise.html"]');
+        if (mobileCustomise) {
+          if (isCustomisePage) {
+            mobileCustomise.classList.add("active");
+          } else {
+            mobileCustomise.classList.remove("active");
+          }
         }
 
         let mobileOrders = mobileNav.querySelector(".mobile-my-orders-item");
