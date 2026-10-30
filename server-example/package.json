@@ -4,7 +4,7 @@
   "description": "Minimal backend for creating verified Razorpay orders for Krishin Clothing.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.pg-migration.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
