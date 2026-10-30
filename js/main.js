@@ -5,15 +5,22 @@
    ========================================================= */
 
 const STORE = {
-  cartKey: "mc_cart",
+  guestCartKey: "mc_cart_guest",
   wishKey: "mc_wishlist",
 
+  getCartKey() {
+    const customer = typeof AUTH !== "undefined" && AUTH.getCustomer
+      ? AUTH.getCustomer()
+      : null;
+    const userId = customer && customer.id != null ? String(customer.id).trim() : "";
+    return userId ? `mc_cart_user_${encodeURIComponent(userId)}` : this.guestCartKey;
+  },
   getCart() {
-    try { return JSON.parse(localStorage.getItem(this.cartKey)) || []; }
+    try { return JSON.parse(localStorage.getItem(this.getCartKey())) || []; }
     catch (e) { return []; }
   },
   saveCart(cart) {
-    localStorage.setItem(this.cartKey, JSON.stringify(cart));
+    localStorage.setItem(this.getCartKey(), JSON.stringify(cart));
     updateHeaderCounts();
   },
   addToCart(productId, color, size, qty = 1, customData = null) {
@@ -105,6 +112,8 @@ function updateHeaderCounts() {
     el.classList.toggle("hidden", n === 0);
   });
 }
+
+window.addEventListener("customer-session-changed", updateHeaderCounts);
 
 /* ---------- Toast ---------- */
 let toastTimer;

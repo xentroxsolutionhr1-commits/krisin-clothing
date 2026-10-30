@@ -58,6 +58,7 @@
         localStorage.setItem(CUSTOMER_USER_KEY, JSON.stringify(user));
       } catch (e) {}
       this.updateHeaderAuthUI();
+      window.dispatchEvent(new CustomEvent("customer-session-changed"));
     },
 
     clearCustomerSession() {
@@ -68,6 +69,7 @@
         localStorage.removeItem("kc_orders");
       } catch (e) {}
       this.updateHeaderAuthUI();
+      window.dispatchEvent(new CustomEvent("customer-session-changed"));
     },
 
     customerLogout() {

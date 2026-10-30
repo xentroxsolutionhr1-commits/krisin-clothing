@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -557,7 +557,7 @@
       <div class="step-line"></div>
       <div class="step active"><span class="dot">Ã¢Å“â€œ</span>Confirmation</div>`;
         document.getElementById("confirmation").classList.remove("hidden");
-        localStorage.removeItem("mc_cart");
+        localStorage.removeItem(STORE.cartKey);
         updateHeaderCounts();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
