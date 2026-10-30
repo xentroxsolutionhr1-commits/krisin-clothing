@@ -1031,7 +1031,8 @@
         }).join("");
       }
     });
-
+    let liveOrders = null;
+    let liveCustomers = null;
     function getFilteredCustomOrders() {
       const q = (document.getElementById("custom-order-search")?.value || "").toLowerCase().trim();
       const sf = (document.getElementById("custom-order-status-filter")?.value || "").toLowerCase();
@@ -1195,8 +1196,6 @@
     /* =========================================================
        User-side & Backend Orders / Customers Management
        ========================================================= */
-    let liveOrders = null;
-    let liveCustomers = null;
 
     function parseOrderItems(items) {
       if (!items) return [];
