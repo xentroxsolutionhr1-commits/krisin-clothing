@@ -40,7 +40,7 @@ app.get(["/admin05/login", "/admin05/login/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "login.html"));
 });
 
-app.get(["/admin05/dashboard", "/admin05/dashboard/"], (req, res) => {
+app.get(["/admin05/dashboard", "/admin05/dashboard/", "/admin05/dashboard.html"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "dashboard.html"));
 });
 
