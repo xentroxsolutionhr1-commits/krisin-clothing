@@ -1037,12 +1037,14 @@
       const sf = (document.getElementById("custom-order-status-filter")?.value || "").toLowerCase();
       let list = liveCustomOrders;
 
-      // Also pull from localStorage
-      const localRaw = JSON.parse(localStorage.getItem("krisin_orders_v1") || "[]").concat(JSON.parse(localStorage.getItem("kc_orders") || "[]"));
-      const localCustom = localRaw.filter(o => o.is_customized || (o.orderId && String(o.orderId).startsWith("CUST-")));
-      const liveIds = new Set(liveCustomOrders.map(o => String(o.id || o.orderId || "")));
-      const extraLocal = localCustom.filter(o => !liveIds.has(String(o.id || o.orderId || "")));
-      list = [...liveCustomOrders, ...extraLocal];
+      // PostgreSQL is authoritative when the admin API returned a list.
+      if (!Array.isArray(liveOrders)) {
+        const localRaw = JSON.parse(localStorage.getItem("krisin_orders_v1") || "[]").concat(JSON.parse(localStorage.getItem("kc_orders") || "[]"));
+        const localCustom = localRaw.filter(o => o.is_customized || (o.orderId && String(o.orderId).startsWith("CUST-")));
+        const liveIds = new Set(liveCustomOrders.map(o => String(o.id || o.orderId || "")));
+        const extraLocal = localCustom.filter(o => !liveIds.has(String(o.id || o.orderId || "")));
+        list = [...liveCustomOrders, ...extraLocal];
+      }
 
       if (q) list = list.filter(o => {
         const id = String(o.id || o.orderId || "").toLowerCase();
@@ -1258,7 +1260,7 @@
         }
       });
 
-      // 2. If live orders from backend exist, normalize and merge
+      // PostgreSQL is the source of truth whenever the admin API is available.
       if (liveOrders && Array.isArray(liveOrders)) {
         const liveNormalized = liveOrders.map(o => {
           const parsed = parseOrderItems(o.items || o.items_json);
@@ -1309,12 +1311,10 @@
           };
         });
 
-        const liveIds = new Set(liveNormalized.map(o => o.id));
-        const extraLocal = localOrders.filter(o => !liveIds.has(o.id));
-        return [...liveNormalized, ...extraLocal];
+        return liveNormalized;
       }
 
-      // 3. Fallback when no backend: real user orders first, then mock orders
+      // Fallback for an unauthenticated/offline admin preview.
       const userOrderIds = new Set(localOrders.map(o => o.id));
       const remainingMock = ORDERS.filter(o => !userOrderIds.has(o.id));
       return [...localOrders, ...remainingMock];

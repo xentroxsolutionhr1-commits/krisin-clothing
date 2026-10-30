@@ -912,6 +912,100 @@ const razorpay =
     })
     : null;
 
+function verifyRazorpaySignature(orderId, paymentId, signature) {
+  const secret = process.env.RAZORPAY_KEY_SECRET;
+  if (
+    !secret ||
+    typeof orderId !== "string" ||
+    typeof paymentId !== "string" ||
+    typeof signature !== "string" ||
+    !/^[a-f0-9]{64}$/i.test(signature)
+  ) {
+    return false;
+  }
+
+  const expectedBuffer = crypto
+    .createHmac("sha256", secret)
+    .update(`${orderId}|${paymentId}`)
+    .digest();
+  const receivedBuffer = Buffer.from(signature, "hex");
+
+  return (
+    expectedBuffer.length === receivedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  );
+}
+
+async function fetchVerifiedRazorpayPayment(
+  paymentId,
+  razorpayOrderId,
+  expectedAmountPaise
+) {
+  if (!razorpay) {
+    return {
+      ok: false,
+      statusCode: 503,
+      error: "Razorpay is not configured on the server."
+    };
+  }
+
+  let payment;
+  try {
+    payment = await razorpay.payments.fetch(paymentId);
+  } catch (err) {
+    console.error("Razorpay payment lookup error:", err);
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "The submitted Razorpay payment could not be verified."
+    };
+  }
+
+  if (!payment || payment.id !== paymentId) {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "The submitted Razorpay payment ID is invalid."
+    };
+  }
+
+  if (payment.order_id !== razorpayOrderId) {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "The Razorpay payment does not belong to the submitted order."
+    };
+  }
+
+  if (payment.currency !== "INR") {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "The Razorpay payment currency is invalid."
+    };
+  }
+
+  if (Number(payment.amount) !== expectedAmountPaise) {
+    return {
+      ok: false,
+      statusCode: 400,
+      error: "The Razorpay payment amount does not match the expected amount."
+    };
+  }
+
+  if (payment.status !== "captured") {
+    return {
+      ok: false,
+      statusCode: 409,
+      error: payment.status === "authorized"
+        ? "Payment is authorized but not captured yet."
+        : `Payment is not captured (status: ${payment.status || "unknown"}).`
+    };
+  }
+
+  return { ok: true, payment };
+}
+
 // Create Razorpay Order
 app.post("/create-order", async (req, res) => {
   try {
@@ -921,61 +1015,102 @@ app.post("/create-order", async (req, res) => {
       });
     }
 
-    const amountInRupees = Number(req.body.amountInRupees);
-    const { receipt } = req.body;
+    const body = req.body || {};
+    const orderId = body.orderId;
+    const paymentMethod = String(
+      body.paymentMethod || body.payment_method || ""
+    ).trim().toUpperCase();
 
-    if (!Number.isFinite(amountInRupees) || amountInRupees <= 0) {
-      return res.status(400).json({ error: "Invalid amount." });
+    if (
+      typeof orderId !== "string" ||
+      !orderId.trim() ||
+      orderId.length > 64 ||
+      paymentMethod !== "RAZORPAY"
+    ) {
+      return res.status(400).json({
+        error: "A valid order ID and Razorpay payment method are required."
+      });
     }
 
+    const pricing = await calculateOrderPricing(body.items, paymentMethod);
     const order = await razorpay.orders.create({
-      amount: Math.round(amountInRupees * 100),
+      amount: Math.round(pricing.total * 100),
       currency: "INR",
-      receipt: receipt || `order_${Date.now()}`
+      receipt: orderId
     });
 
     res.json(order);
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
     console.error("Razorpay order error:", err);
     res.status(500).json({ error: "Could not create payment order." });
   }
 });
 
 // Verify Razorpay Payment
-app.post("/verify-payment", (req, res) => {
+app.post("/verify-payment", async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
       req.body;
 
-    const secret = process.env.RAZORPAY_KEY_SECRET;
-
-    if (
-      !secret ||
-      !razorpay_order_id ||
-      !razorpay_payment_id ||
-      !razorpay_signature
-    ) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
       return res.status(400).json({
         verified: false,
         error: "Missing payment verification details."
       });
     }
 
-    const expected = crypto
-      .createHmac("sha256", secret)
-      .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest("hex");
-
-    const expectedBuffer = Buffer.from(expected, "hex");
-    const receivedBuffer = Buffer.from(razorpay_signature, "hex");
-
-    if (
-      expectedBuffer.length !== receivedBuffer.length ||
-      !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
-    ) {
+    if (!verifyRazorpaySignature(
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
+    )) {
       return res.status(400).json({
         verified: false,
         error: "Payment signature verification failed."
+      });
+    }
+
+    if (!razorpay) {
+      return res.status(503).json({
+        verified: false,
+        error: "Razorpay is not configured on the server."
+      });
+    }
+
+    let razorpayOrder;
+    try {
+      razorpayOrder = await razorpay.orders.fetch(razorpay_order_id);
+    } catch (err) {
+      console.error("Razorpay order lookup error:", err);
+      return res.status(400).json({
+        verified: false,
+        error: "The submitted Razorpay order could not be verified."
+      });
+    }
+
+    if (
+      !razorpayOrder ||
+      razorpayOrder.id !== razorpay_order_id ||
+      razorpayOrder.currency !== "INR"
+    ) {
+      return res.status(400).json({
+        verified: false,
+        error: "The submitted Razorpay order is invalid."
+      });
+    }
+
+    const paymentVerification = await fetchVerifiedRazorpayPayment(
+      razorpay_payment_id,
+      razorpay_order_id,
+      Number(razorpayOrder.amount)
+    );
+    if (!paymentVerification.ok) {
+      return res.status(paymentVerification.statusCode).json({
+        verified: false,
+        error: paymentVerification.error
       });
     }
 
@@ -1050,6 +1185,137 @@ function isCustomisableCategory(category, productName = "") {
   return false;
 }
 
+async function calculateOrderPricing(items, normalizedMethod) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw Object.assign(new Error("A non-empty cart is required."), { statusCode: 400 });
+  }
+
+  if (!["COD", "RAZORPAY", "ONLINE"].includes(normalizedMethod)) {
+    throw Object.assign(new Error("Invalid payment method."), { statusCode: 400 });
+  }
+
+  const hasCustomItems = items.some(item =>
+    item &&
+    typeof item === "object" &&
+    (item.is_customized || item.custom_image_url || item.custom_details)
+  );
+  let printingFee = 0;
+
+  if (hasCustomItems) {
+    const feeRes = await pool.query(
+      "SELECT value FROM store_settings WHERE key = 'printing_fee'"
+    );
+    if (feeRes.rows.length) {
+      printingFee = Number(feeRes.rows[0].value);
+      if (!Number.isFinite(printingFee) || printingFee < 0) {
+        throw Object.assign(new Error("The configured printing fee is invalid."), {
+          statusCode: 500
+        });
+      }
+    } else {
+      printingFee = 200;
+    }
+  }
+
+  let subtotal = 0;
+  let totalPrintingFee = 0;
+  const verifiedItems = [];
+
+  for (const item of items) {
+    if (!item || typeof item !== "object") {
+      throw Object.assign(new Error("Each order item must be an object."), {
+        statusCode: 400
+      });
+    }
+
+    const isCustomized = Boolean(
+      item.is_customized ||
+      item.custom_image_url ||
+      item.custom_details
+    );
+    const customDetails = item.custom_details &&
+      typeof item.custom_details === "object"
+      ? item.custom_details
+      : null;
+
+    if (isCustomized) {
+      const customImageUrl =
+        item.custom_image_url || customDetails?.image_url || "";
+      if (!customImageUrl || !isSafeImageUrl(String(customImageUrl))) {
+        throw Object.assign(new Error(
+          "Customized items require a valid, publicly accessible design image URL."
+        ), { statusCode: 400 });
+      }
+    }
+
+    const productId = item.productId || item.id;
+    const qty = Number(item.qty);
+    if (
+      (typeof productId !== "string" && typeof productId !== "number") ||
+      !String(productId).trim() ||
+      !Number.isSafeInteger(qty) ||
+      qty < 1
+    ) {
+      throw Object.assign(new Error(
+        "Each order item requires a valid product ID and whole-number quantity."
+      ), { statusCode: 400 });
+    }
+
+    const productResult = await pool.query(
+      "SELECT id, name, category, price FROM products WHERE id = $1",
+      [productId]
+    );
+    if (!productResult.rows.length) {
+      throw Object.assign(new Error(`Product "${productId}" not found in catalogue.`), {
+        statusCode: 400
+      });
+    }
+
+    const product = productResult.rows[0];
+    const unitPrice = Number(product.price);
+    if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+      throw Object.assign(new Error(`Product "${productId}" has an invalid catalogue price.`), {
+        statusCode: 500
+      });
+    }
+
+    const itemPrintingFee = isCustomized ? printingFee : 0;
+    if (isCustomized && !isCustomisableCategory(product.category, product.name)) {
+      throw Object.assign(new Error(
+        `Product "${product.name}" is not eligible for customisation.`
+      ), { statusCode: 400 });
+    }
+
+    totalPrintingFee += itemPrintingFee * qty;
+    subtotal += (unitPrice + itemPrintingFee) * qty;
+    verifiedItems.push({
+      ...item,
+      id: product.id,
+      productId: product.id,
+      name: product.name,
+      price: unitPrice,
+      qty,
+      printing_fee: itemPrintingFee
+    });
+  }
+
+  const shippingFee = subtotal < 1999 ? 99 : 0;
+  const codFee = normalizedMethod === "COD" ? 49 : 0;
+  const discount = 0;
+  const total = subtotal + shippingFee + codFee - discount;
+
+  return {
+    subtotal,
+    shippingFee,
+    codFee,
+    discount,
+    total,
+    printingFee,
+    totalPrintingFee,
+    verifiedItems
+  };
+}
+
 /* =========================================================
    STORE SETTINGS & CONFIG APIS (PRINTING CHARGE)
    ========================================================= */
@@ -1105,16 +1371,24 @@ app.post("/api/orders", async (req, res) => {
     const body = req.body || {};
 
     const finalOrderId = body.orderId || body.id;
-    const finalItems = body.items || [];
+    const finalItems = body.items;
 
     const rawTotal =
       body.total !== undefined ? body.total : body.total_amount;
     const finalTotal = Number(rawTotal);
 
-    if (!finalOrderId || rawTotal === undefined ||
-      !Number.isFinite(finalTotal) || finalTotal < 0) {
+    if (
+      typeof finalOrderId !== "string" ||
+      !finalOrderId.trim() ||
+      finalOrderId.length > 64 ||
+      !Array.isArray(finalItems) ||
+      finalItems.length === 0 ||
+      rawTotal === undefined ||
+      !Number.isFinite(finalTotal) ||
+      finalTotal < 0
+    ) {
       return res.status(400).json({
-        error: "Missing or invalid order details."
+        error: "Missing or invalid order details. A non-empty cart and valid total are required."
       });
     }
 
@@ -1172,9 +1446,14 @@ app.post("/api/orders", async (req, res) => {
 
     const paymentMethod = String(
       body.paymentMethod || body.payment_method || "Online"
-    );
+    ).trim();
 
     const normalizedMethod = paymentMethod.toUpperCase();
+    if (!["COD", "RAZORPAY", "ONLINE"].includes(normalizedMethod)) {
+      return res.status(400).json({
+        error: "Invalid payment method. Use COD or Razorpay."
+      });
+    }
 
     const paymentId =
       body.razorpay_payment_id ||
@@ -1182,27 +1461,76 @@ app.post("/api/orders", async (req, res) => {
       body.payment_id ||
       null;
 
-    const razorpayOrderId =
-      body.razorpay_order_id || null;
+    const razorpayOrderId = body.razorpay_order_id || null;
 
-    const razorpaySignature =
-      body.razorpay_signature || null;
+    const razorpaySignature = body.razorpay_signature || null;
 
-    const requestedStatus = String(body.status || "").toLowerCase();
+    if (normalizedMethod === "COD" && paymentId) {
+      return res.status(400).json({
+        error: "COD orders cannot include a Razorpay payment ID."
+      });
+    }
 
-    const paymentStatus =
-      requestedStatus === "paid" || paymentId
-        ? "paid"
-        : normalizedMethod === "COD"
-          ? "pending"
-          : "pending";
+    if (normalizedMethod !== "COD" && !paymentId) {
+      return res.status(400).json({
+        error: "Razorpay payment details are required for online orders."
+      });
+    }
+
+    let verifiedRazorpayOrder = null;
+    if (normalizedMethod !== "COD") {
+      if (!razorpayOrderId || !razorpaySignature) {
+        return res.status(400).json({
+          error: "Razorpay order ID, payment ID, and signature are required for online orders."
+        });
+      }
+
+      if (!verifyRazorpaySignature(
+        razorpayOrderId,
+        paymentId,
+        razorpaySignature
+      )) {
+        return res.status(400).json({
+          error: "Payment signature verification failed."
+        });
+      }
+
+      if (!razorpay) {
+        return res.status(503).json({
+          error: "Razorpay is not configured on the server."
+        });
+      }
+
+      try {
+        verifiedRazorpayOrder = await razorpay.orders.fetch(razorpayOrderId);
+      } catch (razorpayError) {
+        console.error("Razorpay order lookup error:", razorpayError);
+        return res.status(400).json({
+          error: "The submitted Razorpay order could not be verified."
+        });
+      }
+
+      if (
+        !verifiedRazorpayOrder ||
+        verifiedRazorpayOrder.receipt !== finalOrderId ||
+        verifiedRazorpayOrder.currency !== "INR"
+      ) {
+        return res.status(400).json({
+          error: "The Razorpay order does not match this checkout."
+        });
+      }
+    }
+
+    const paymentStatus = normalizedMethod === "COD" ? "pending" : "paid";
+    const orderStatus = normalizedMethod === "COD" ? "pending" : "paid";
 
     // Recalculate trusted Subtotal and check customisation
     const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url || i.custom_details));
     const isCustomized = Boolean(body.is_customized || hasCustomItems || String(finalOrderId).startsWith("CUST-"));
+    const pricing = await calculateOrderPricing(finalItems, normalizedMethod);
 
     let customImageUrl = null;
-    let printingFee = 0;
+    const printingFee = pricing.printingFee;
     let customerMessage = null;
     let customDetails = null;
 
@@ -1225,31 +1553,13 @@ app.post("/api/orders", async (req, res) => {
         });
       }
 
-      const prodResult = await pool.query("SELECT id, name, category, price FROM products WHERE id = $1", [productId]);
-      if (!prodResult.rows.length) {
+      const verifiedCustomItem = pricing.verifiedItems.find(item =>
+        String(item.productId) === String(productId)
+      );
+      if (!verifiedCustomItem) {
         return res.status(400).json({
           error: `Selected product "${productId}" does not exist in the catalogue.`
         });
-      }
-
-      const dbProduct = prodResult.rows[0];
-      if (!isCustomisableCategory(dbProduct.category, dbProduct.name)) {
-        return res.status(400).json({
-          error: `Product "${dbProduct.name}" (${dbProduct.category}) is not eligible for customisation. Only shirts and T-shirts can be customised.`
-        });
-      }
-
-      // Fetch live printing fee from store_settings
-      try {
-        const feeRes = await pool.query("SELECT value FROM store_settings WHERE key = 'printing_fee'");
-        if (feeRes.rows.length) {
-          const val = Number(feeRes.rows[0].value);
-          printingFee = (Number.isFinite(val) && val >= 0) ? val : 200;
-        } else {
-          printingFee = 200;
-        }
-      } catch (e) {
-        printingFee = 200;
       }
 
       const rawMsg = body.customer_message || customItem.customer_message || "";
@@ -1263,8 +1573,8 @@ app.post("/api/orders", async (req, res) => {
 
       customDetails = {
         source: "customise_page",
-        product_name: dbProduct.name,
-        product_id: dbProduct.id,
+        product_name: verifiedCustomItem.name,
+        product_id: verifiedCustomItem.id,
         size: size,
         color: color,
         print_position: printPos,
@@ -1278,40 +1588,39 @@ app.post("/api/orders", async (req, res) => {
       }
     }
 
-    // Recalculate trusted Subtotal using trusted Database prices
-    let calculatedSubtotal = 0;
-    const verifiedItems = [];
+    const calculatedSubtotal = pricing.subtotal;
+    const calculatedShippingFee = pricing.shippingFee;
+    const calculatedCodFee = pricing.codFee;
+    const calculatedDiscount = pricing.discount;
+    const calculatedTotal = pricing.total;
+    const calculatedPrintingFee = pricing.totalPrintingFee;
+    const verifiedItems = pricing.verifiedItems;
 
-    for (const item of finalItems) {
-      if (!item) continue;
-      const pId = item.productId || item.id;
-      const qty = Math.max(1, parseInt(item.qty, 10) || 1);
-      let unitPrice = 0;
-      let itemName = item.name || "Apparel Item";
+    if (
+      normalizedMethod !== "COD" &&
+      Number(verifiedRazorpayOrder.amount) !== Math.round(calculatedTotal * 100)
+    ) {
+      return res.status(400).json({
+        error: "The Razorpay order amount does not match the current checkout pricing."
+      });
+    }
 
-      if (pId) {
-        const pRes = await pool.query("SELECT id, name, category, price FROM products WHERE id = $1", [pId]);
-        if (pRes.rows.length) {
-          unitPrice = Number(pRes.rows[0].price);
-          itemName = pRes.rows[0].name;
-        } else if (isCustomized) {
-          return res.status(400).json({ error: `Product "${pId}" not found in catalogue.` });
-        } else if (Number.isFinite(Number(item.price)) && Number(item.price) >= 0) {
-          unitPrice = Number(item.price);
-        }
-      } else if (!isCustomized && Number.isFinite(Number(item.price)) && Number(item.price) >= 0) {
-        unitPrice = Number(item.price);
+    if (normalizedMethod !== "COD") {
+      const paymentVerification = await fetchVerifiedRazorpayPayment(
+        paymentId,
+        razorpayOrderId,
+        Math.round(calculatedTotal * 100)
+      );
+      if (!paymentVerification.ok) {
+        return res.status(paymentVerification.statusCode).json({
+          error: paymentVerification.error
+        });
       }
+    }
 
-      calculatedSubtotal += unitPrice * qty;
-
-      verifiedItems.push({
-        ...item,
-        id: pId || item.id,
-        productId: pId || item.productId,
-        name: itemName,
-        price: unitPrice,
-        qty: qty
+    if (Math.abs(finalTotal - calculatedTotal) > 0.01) {
+      return res.status(400).json({
+        error: "Order total does not match the current catalogue and checkout pricing."
       });
     }
 
@@ -1364,10 +1673,10 @@ app.post("/api/orders", async (req, res) => {
       razorpayOrderId,
       paymentId,
       razorpaySignature,
-      requestedStatus || "pending",
+      orderStatus,
       isCustomized,
       customImageUrl,
-      printingFee,
+      calculatedPrintingFee,
       customerMessage,
       customDetails ? JSON.stringify(customDetails) : null
     ]);
@@ -1378,6 +1687,10 @@ app.post("/api/orders", async (req, res) => {
       is_customized: isCustomized
     });
   } catch (err) {
+    if (err.statusCode) {
+      return res.status(err.statusCode).json({ error: err.message });
+    }
+
     if (err.code === "23505") {
       return res.status(409).json({
         error: "Order ID already exists. Please try again."

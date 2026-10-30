@@ -272,6 +272,7 @@
       const form = document.getElementById("checkout-form");
       const payCta = document.getElementById("pay-cta");
       const cart = STORE.getCart();
+      let orderSubmissionInProgress = false;
 
       if (cart.length === 0) {
         window.location.href = "cart.html";
@@ -369,21 +370,8 @@
         }
       } catch (e) {}
 
-      async function completeOrder(orderId, paymentRef) {
-        const method = getSelectedMethod();
-        const { total, subtotal, shipping, codFee } = totals();
-        const name = (document.getElementById("fname")?.value || "").trim() || "Customer";
-        const email = (document.getElementById("email")?.value || "").trim() || "customer@example.com";
-        const phone = (document.getElementById("phone")?.value || "").trim() || "";
-        const address = (document.getElementById("address")?.value || document.getElementById("addr")?.value || "").trim();
-        const city = (document.getElementById("city")?.value || "").trim();
-        const state = (document.getElementById("state")?.value || "").trim();
-        const pincode = (document.getElementById("pincode")?.value || document.getElementById("pin")?.value || "").trim();
-
-        const hasCustom = cart.some(i => i.is_customized);
-        const customItem = cart.find(i => i.is_customized);
-
-        const orderedItems = cart.map(item => {
+      function getCheckoutItems() {
+        return cart.map(item => {
           const p = getProduct(item.productId) || {};
           const itemImg = (p.images && p.images[0]) || p.image || "";
           return {
@@ -402,6 +390,26 @@
             custom_details: item.custom_details || null
           };
         });
+      }
+
+      async function completeOrder(orderId, paymentDetails = null) {
+        const method = getSelectedMethod();
+        const { total, subtotal, shipping, codFee } = totals();
+        const paymentRef = paymentDetails && paymentDetails.razorpay_payment_id
+          ? paymentDetails.razorpay_payment_id
+          : null;
+        const name = (document.getElementById("fname")?.value || "").trim() || "Customer";
+        const email = (document.getElementById("email")?.value || "").trim() || "customer@example.com";
+        const phone = (document.getElementById("phone")?.value || "").trim() || "";
+        const address = (document.getElementById("address")?.value || document.getElementById("addr")?.value || "").trim();
+        const city = (document.getElementById("city")?.value || "").trim();
+        const state = (document.getElementById("state")?.value || "").trim();
+        const pincode = (document.getElementById("pincode")?.value || document.getElementById("pin")?.value || "").trim();
+
+        const hasCustom = cart.some(i => i.is_customized);
+        const customItem = cart.find(i => i.is_customized);
+
+        const orderedItems = getCheckoutItems();
         const itemsCount = cart.reduce((n, i) => n + i.qty, 0);
 
         const orderData = {
@@ -423,6 +431,9 @@
           pay: method === "cod" ? "COD" : (paymentRef ? "Razorpay" : "Online"),
           payment_method: method === "cod" ? "COD" : (paymentRef ? "Razorpay" : "Online"),
           payment_id: paymentRef || null,
+          razorpay_order_id: paymentDetails ? paymentDetails.razorpay_order_id : null,
+          razorpay_payment_id: paymentRef,
+          razorpay_signature: paymentDetails ? paymentDetails.razorpay_signature : null,
           status: method === "cod" ? "pending" : "paid",
           is_customized: hasCustom,
           custom_image_url: customItem ? customItem.custom_image_url : null,
@@ -433,18 +444,7 @@
           created_at: new Date().toISOString()
         };
 
-        // 1. Save order to localStorage so admin dashboard immediately sees it
-        try {
-          const raw = localStorage.getItem("krisin_orders_v1");
-          const existing = raw ? JSON.parse(raw) : [];
-          existing.unshift(orderData);
-          localStorage.setItem("krisin_orders_v1", JSON.stringify(existing));
-          localStorage.setItem("kc_orders", JSON.stringify(existing));
-        } catch (e) {
-          console.error("Order localStorage save error:", e);
-        }
-
-        // 2. Save customer to localStorage
+        // Save customer profile metadata locally; the order itself is stored in PostgreSQL.
         try {
           const rawCust = localStorage.getItem("krisin_customers_v1");
           const customers = rawCust ? JSON.parse(rawCust) : [];
@@ -467,7 +467,7 @@
           localStorage.setItem("krisin_customers_v1", JSON.stringify(customers));
         } catch (e) {}
 
-        // 3. Deduct stock in overrides
+        // Deduct stock in local overrides used by the existing storefront.
         try {
           const LS_OVERRIDES = "krisin_admin_product_overrides_v1";
           const rawOverrides = localStorage.getItem(LS_OVERRIDES);
@@ -483,7 +483,7 @@
           localStorage.setItem(LS_OVERRIDES, JSON.stringify(overrides));
         } catch (e) {}
 
-        // 4. Save order to backend and check the result
+        // Save the order to PostgreSQL and check the result before showing confirmation.
         try {
           const apiBase = (window.AUTH && window.AUTH.getApiBase)
             ? window.AUTH.getApiBase()
@@ -518,6 +518,9 @@
                 ? `Payment reference: ${paymentRef}\nDo not pay again. Contact the store with this reference.`
                 : "Your cart has been kept. Contact the store before trying again.")
             );
+            orderSubmissionInProgress = false;
+            payCta.disabled = false;
+            renderSummary();
             return;
           }
 
@@ -541,6 +544,9 @@
               ? `Payment reference: ${paymentRef}\nDo not pay again. Contact the store with this reference.`
               : "Your cart has been kept. Contact the store before trying again.")
           );
+          orderSubmissionInProgress = false;
+          payCta.disabled = false;
+          renderSummary();
           return;
         }
         document.getElementById("order-id").textContent = "#" + orderId;
@@ -566,13 +572,14 @@
       }
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (orderSubmissionInProgress) return;
   if (!form.checkValidity()) {
     form.reportValidity();
     return;
   }
   const method = getSelectedMethod();
-  const { total } = totals();
   const orderId = makeOrderId();
+  orderSubmissionInProgress = true;
   const name = document.getElementById("fname").value.trim();
   const email = document.getElementById("email").value.trim();
   const phone = document.getElementById("phone").value.trim();
@@ -595,8 +602,9 @@ form.addEventListener("submit", async (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        amountInRupees: total,
-        receipt: orderId
+        orderId: orderId,
+        payment_method: "RAZORPAY",
+        items: getCheckoutItems()
       })
     });
 
@@ -648,7 +656,11 @@ form.addEventListener("submit", async (e) => {
           }
 
           // Only save the order as paid after verification succeeds.
-          await completeOrder(orderId, response.razorpay_payment_id);
+          await completeOrder(orderId, {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          });
         } catch (error) {
           console.error("Razorpay verification error:", error);
           alert(
@@ -662,6 +674,7 @@ form.addEventListener("submit", async (e) => {
 
       modal: {
         ondismiss: function () {
+          orderSubmissionInProgress = false;
           payCta.disabled = false;
           renderSummary();
         }
@@ -670,6 +683,7 @@ form.addEventListener("submit", async (e) => {
 
     rzp.on("payment.failed", function (response) {
       console.error("Razorpay payment failed:", response.error);
+      orderSubmissionInProgress = false;
       payCta.disabled = false;
       renderSummary();
       showToast("Payment failed. Please try again.");
@@ -678,6 +692,7 @@ form.addEventListener("submit", async (e) => {
     rzp.open();
   } catch (error) {
     console.error("Razorpay checkout error:", error);
+    orderSubmissionInProgress = false;
     alert(error.message || "Unable to start payment. Please try again.");
     payCta.disabled = false;
     renderSummary();
