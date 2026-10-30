@@ -579,12 +579,27 @@
               <img src="${itemImg}" alt="${escapeHtml(item.name || 'Clothing item')}">
             </div>
             <div class="order-item-details">
-              <div class="order-item-name">${escapeHtml(item.name || 'Product')}</div>
+              <div class="order-item-name">
+                ${escapeHtml(item.name || 'Product')}
+                ${(item.is_customized || item.custom_image_url) ? `<span style="margin-left:6px;font-size:10px;font-weight:700;text-transform:uppercase;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;">Customised Print</span>` : ''}
+              </div>
               <div class="order-item-variants">
                 ${item.size ? `<span>Size: <strong>${escapeHtml(item.size)}</strong></span>` : ""}
                 ${item.color ? `<span>Color: <strong>${escapeHtml(item.color)}</strong></span>` : ""}
                 <span>Qty: <strong>${qty}</strong></span>
+                ${(item.is_customized && item.printing_fee) ? `<span>Print fee: <strong>${formatPrice(item.printing_fee)}</strong></span>` : ''}
               </div>
+              ${item.custom_image_url ? `
+                <div style="margin-top:5px;display:flex;align-items:center;gap:6px;">
+                  <img src="${escapeHtml(item.custom_image_url)}" alt="Custom Artwork" style="width:24px;height:24px;object-fit:cover;border-radius:3px;border:1px solid var(--line,#e5e7eb);">
+                  <a href="${escapeHtml(item.custom_image_url)}" target="_blank" rel="noopener noreferrer" style="font-size:11.5px;color:var(--navy,#14244b);text-decoration:underline;">View uploaded print artwork ↗</a>
+                </div>
+              ` : ''}
+              ${item.customer_message ? `
+                <div style="font-size:11.5px;color:var(--charcoal,#333);margin-top:4px;font-style:italic;">
+                  Special note: "${escapeHtml(item.customer_message)}"
+                </div>
+              ` : ''}
             </div>
             <div class="order-item-price-col">
               <div class="order-item-price">${formatPrice(total)}</div>

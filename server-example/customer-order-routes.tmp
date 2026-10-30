@@ -1,0 +1,135 @@
+﻿function formatCustomerOrder(row) {
+  return {
+    id: row.id,
+    createdAt: row.created_at,
+    totalAmount: Number(row.total),
+    total: Number(row.total),
+    status: row.status,
+    paymentMethod: row.payment_method,
+    paymentStatus: row.payment_status,
+    paymentId: row.razorpay_payment_id || null,
+    customerName: row.customer_name,
+    customerEmail: row.customer_email,
+    customerPhone: row.customer_phone,
+    shippingAddress: row.shipping_address || {},
+    items: row.items || [],
+    subtotal: Number(row.subtotal),
+    shippingFee: Number(row.shipping_fee),
+    codFee: Number(row.cod_fee),
+    estimatedDelivery: null,
+    cancelledAt: null,
+    cancellationReason: null,
+    timeline: []
+  };
+}
+
+async function findCustomerOrder(orderId, customerEmail) {
+  const result = await pool.query(
+    `SELECT * FROM orders
+     WHERE id = $1 AND LOWER(customer_email) = LOWER($2)
+     LIMIT 1`,
+    [orderId, customerEmail]
+  );
+  return result.rows[0] || null;
+}
+
+// Get orders belonging to the signed-in customer
+app.get("/api/orders/my-orders", requireCustomerAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM orders
+       WHERE LOWER(customer_email) = LOWER($1)
+       ORDER BY created_at DESC`,
+      [req.user.email]
+    );
+    res.json(result.rows.map(formatCustomerOrder));
+  } catch (err) {
+    console.error("Fetch customer orders error:", err);
+    res.status(500).json({ error: "Could not fetch your orders." });
+  }
+});
+
+// Get one order belonging to the signed-in customer
+app.get("/api/orders/:id", requireCustomerAuth, async (req, res) => {
+  try {
+    const order = await findCustomerOrder(req.params.id, req.user.email);
+
+    if (!order) {
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    res.json(formatCustomerOrder(order));
+  } catch (err) {
+    console.error("Fetch customer order error:", err);
+    res.status(500).json({ error: "Could not fetch this order." });
+  }
+});
+
+// Cancel an eligible order belonging to the signed-in customer
+app.patch("/api/orders/:id/cancel", requireCustomerAuth, async (req, res) => {
+  let client;
+
+  try {
+    client = await pool.connect();
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `SELECT * FROM orders
+       WHERE id = $1 AND LOWER(customer_email) = LOWER($2)
+       LIMIT 1 FOR UPDATE`,
+      [req.params.id, req.user.email]
+    );
+
+    const order = result.rows[0];
+
+    if (!order) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Order not found." });
+    }
+
+    const eligibleStatuses = [
+      "order placed",
+      "order confirmed",
+      "processing",
+      "pending",
+      "confirmed",
+      "paid"
+    ];
+
+    if (!eligibleStatuses.includes(String(order.status || "").toLowerCase())) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        error: "This order can no longer be cancelled online."
+      });
+    }
+
+    const updated = await client.query(
+      `UPDATE orders
+       SET status = 'cancelled'
+       WHERE id = $1
+       RETURNING *`,
+      [req.params.id]
+    );
+
+    await client.query("COMMIT");
+
+    res.json({
+      message: "Order cancelled. This does not automatically process a payment refund.",
+      order: formatCustomerOrder(updated.rows[0])
+    });
+  } catch (err) {
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        console.error("Order cancellation rollback error:", rollbackErr);
+      }
+    }
+
+    console.error("Cancel customer order error:", err);
+    res.status(500).json({ error: "Could not cancel this order." });
+  } finally {
+    if (client) client.release();
+  }
+});
+

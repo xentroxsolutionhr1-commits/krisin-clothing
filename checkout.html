@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -290,13 +290,48 @@
         return el ? el.value : "online";
       }
 
+      function escapeHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+      }
+
       function renderSummary() {
         const { subtotal, shipping, codFee, total } = totals();
         summaryEl.innerHTML = `
       <h3>Order summary</h3>
       ${cart.map(item => {
-          const p = getProduct(item.productId);
-          return `<div class="summary-line"><span>${p.name} Ã— ${item.qty}</span><span class="mono-price">${formatPrice(p.price * item.qty)}</span></div>`;
+          const p = getProduct(item.productId) || {};
+          const printFee = item.is_customized ? Number(item.printing_fee || 200) : 0;
+          const lineTotal = (Number(p.price || 0) + printFee) * item.qty;
+          return `
+            <div class="summary-line" style="align-items:flex-start;">
+              <div>
+                <div style="font-weight:600;">${escapeHtml(p.name || item.name || 'Product')} × ${item.qty}</div>
+                ${item.is_customized ? `
+                  <div style="margin:3px 0 2px;">
+                    <span style="font-size:10px;font-weight:700;text-transform:uppercase;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;">Customised Shirt (+${formatPrice(printFee)} print)</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--stone);">
+                    Size: <strong>${escapeHtml(item.size || 'M')}</strong>${item.color ? ` · Color: <strong>${escapeHtml(item.color)}</strong>` : ''}
+                  </div>
+                  ${item.custom_image_url ? `
+                    <div style="margin-top:4px;display:flex;align-items:center;gap:6px;">
+                      <img src="${escapeHtml(item.custom_image_url)}" alt="Custom Artwork" style="width:28px;height:28px;object-fit:cover;border-radius:4px;border:1px solid var(--line);">
+                      <a href="${escapeHtml(item.custom_image_url)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--navy);text-decoration:underline;">View uploaded print artwork</a>
+                    </div>
+                  ` : ''}
+                  ${item.customer_message ? `
+                    <div style="font-size:11.5px;color:var(--charcoal);margin-top:4px;background:#f9fafb;border-left:2px solid var(--navy);padding:2px 6px;border-radius:2px;">
+                      <strong>Note:</strong> "${escapeHtml(item.customer_message)}"
+                    </div>
+                  ` : ''}
+                ` : `
+                  <div style="font-size:12px;color:var(--stone);">Size: <strong>${escapeHtml(item.size || 'M')}</strong>${item.color ? ` · Color: <strong>${escapeHtml(item.color)}</strong>` : ''}</div>
+                `}
+              </div>
+              <span class="mono-price">${formatPrice(lineTotal)}</span>
+            </div>
+          `;
         }).join("")}
       <div class="summary-line" style="border-top:1px solid var(--line);margin-top:10px;padding-top:14px"><span>Subtotal</span><span class="mono-price">${formatPrice(subtotal)}</span></div>
       <div class="summary-line"><span>Shipping</span><span class="mono-price">${shipping === 0 ? "Free" : formatPrice(shipping)}</span></div>
@@ -339,6 +374,9 @@
         const state = (document.getElementById("state")?.value || "").trim();
         const pincode = (document.getElementById("pincode")?.value || document.getElementById("pin")?.value || "").trim();
 
+        const hasCustom = cart.some(i => i.is_customized);
+        const customItem = cart.find(i => i.is_customized);
+
         const orderedItems = cart.map(item => {
           const p = getProduct(item.productId) || {};
           const itemImg = (p.images && p.images[0]) || p.image || "";
@@ -350,7 +388,12 @@
             qty: item.qty,
             color: item.color || null,
             size: item.size || null,
-            image: itemImg
+            image: itemImg,
+            is_customized: Boolean(item.is_customized),
+            custom_image_url: item.custom_image_url || null,
+            printing_fee: Number(item.printing_fee || 0),
+            customer_message: item.customer_message || null,
+            custom_details: item.custom_details || null
           };
         });
         const itemsCount = cart.reduce((n, i) => n + i.qty, 0);
@@ -369,11 +412,17 @@
           total_amount: total,
           subtotal: subtotal,
           shipping: shipping,
+          shipping_fee: shipping,
           cod_fee: codFee,
           pay: method === "cod" ? "COD" : (paymentRef ? "Razorpay" : "Online"),
           payment_method: method === "cod" ? "COD" : (paymentRef ? "Razorpay" : "Online"),
           payment_id: paymentRef || null,
           status: method === "cod" ? "pending" : "paid",
+          is_customized: hasCustom,
+          custom_image_url: customItem ? customItem.custom_image_url : null,
+          printing_fee: customItem ? Number(customItem.printing_fee || 0) : 0,
+          customer_message: customItem ? customItem.customer_message : null,
+          custom_details: customItem ? (customItem.custom_details || null) : null,
           date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
           created_at: new Date().toISOString()
         };

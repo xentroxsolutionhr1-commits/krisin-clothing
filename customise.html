@@ -199,7 +199,6 @@
                 <img id="cust-preview-img" class="cust-preview-img" src="" alt="Your design preview">
                 <button id="cust-preview-remove" class="cust-preview-remove" aria-label="Remove design">&#x2715;</button>
               </div>
-              <div id="cust-upload-status" style="margin-top:8px;font-size:12.5px;display:none;"></div>
               <div style="margin-top:16px;font-size:13px;color:var(--stone);text-align:center;">or paste a direct image URL</div>
               <div class="cust-url-row" style="margin-top:8px;">
                 <input type="url" id="cust-url-input" placeholder="https://example.com/my-design.png" aria-label="Design image URL">
@@ -345,107 +344,35 @@
     }
     document.querySelectorAll('.cust-print-chip').forEach(function(chip){chip.addEventListener('click',function(){document.querySelectorAll('.cust-print-chip').forEach(function(c){c.classList.remove('selected');});chip.classList.add('selected');selPos=chip.dataset.pos;document.getElementById('sum-position').textContent=selPos;});});
     var fi=document.getElementById('cust-file-input'),uz=document.getElementById('cust-upload-zone');
-    var isUploading=false;
-    var statusEl=document.getElementById('cust-upload-status');
-
-    function setUploadStatus(html, color) {
-      if (!statusEl) statusEl = document.getElementById('cust-upload-status');
-      if (!statusEl) return;
-      statusEl.style.display = html ? 'block' : 'none';
-      statusEl.style.color = color || 'inherit';
-      statusEl.innerHTML = html;
-    }
-
     uz.addEventListener('dragover',function(e){e.preventDefault();uz.classList.add('drag-over');});
     uz.addEventListener('dragleave',function(){uz.classList.remove('drag-over');});
     uz.addEventListener('drop',function(e){e.preventDefault();uz.classList.remove('drag-over');var f=e.dataTransfer.files[0];if(f)doUpload(f);});
     fi.addEventListener('change',function(){var f=fi.files[0];if(f)doUpload(f);});
-
-    async function doUpload(file){
-      var validMime = file.type.match(/^image\/(png|jpe?g|webp|svg\+xml)$/i) || file.name.match(/\.(png|jpe?g|webp|svg)$/i);
-      if(!validMime){
-        alert('Please upload a valid image file (PNG, JPG, WebP, SVG).');
-        return;
-      }
-      if(file.size > 5*1024*1024){
-        alert('File is too large. Maximum size is 5 MB.');
-        return;
-      }
-
-      // Show instant local preview while uploading
-      var localPreview = URL.createObjectURL(file);
-      showPreview(localPreview);
-      setUploadStatus('<span style="color:#6366f1;">&#x23F3; Uploading artwork to secure server&hellip;</span>');
-
-      isUploading = true;
-      var placeBtn = document.getElementById('cust-place-btn');
-      if (placeBtn) {
-        placeBtn.disabled = true;
-        placeBtn.textContent = 'Uploading artwork\u2026';
-      }
-
-      var fd = new FormData();
-      fd.append('artwork', file, file.name);
-
-      try {
-        var res = await fetch(API_BASE + '/api/upload-artwork', {
-          method: 'POST',
-          body: fd
-        });
-        var data = await res.json();
-        if (res.ok && data.url) {
-          designUrl = data.url;
-          setUploadStatus('<span style="color:#10b981;font-weight:600;">&#x2713; Artwork uploaded securely</span>');
-          document.getElementById('sum-design').textContent = 'Uploaded \u2713';
-          updSteps(2);
-        } else {
-          throw new Error(data.error || 'Server rejected artwork upload.');
-        }
-      } catch (err) {
-        designUrl = '';
-        setUploadStatus('<span style="color:#e11d48;">Upload failed: ' + esc(err.message) + '. You can paste an image URL below instead.</span>');
-        document.getElementById('sum-design').textContent = 'Upload failed';
-      } finally {
-        isUploading = false;
-        if (placeBtn) {
-          placeBtn.disabled = false;
-          placeBtn.textContent = 'Place Custom Order \u2192';
-        }
-        updSummary();
-      }
+    function doUpload(file){
+      if(!file.type.startsWith('image/')){alert('Please upload an image file (PNG, JPG, SVG).');return;}
+      if(file.size>10*1024*1024){alert('File too large. Max 10 MB.');return;}
+      var r=new FileReader();r.onload=function(e){designUrl=e.target.result;showPreview(e.target.result);updSummary();};r.readAsDataURL(file);
     }
-
     function showPreview(src){
       document.getElementById('cust-preview-img').src=src;
       document.getElementById('cust-preview-wrap').classList.add('visible');uz.style.display='none';
       document.getElementById('sum-design-thumb').src=src;document.getElementById('sum-design-thumb').classList.add('visible');
-      document.getElementById('sum-design').textContent='Artwork attached';updSteps(2);
+      document.getElementById('sum-design').textContent='Image uploaded \u2713';updSteps(2);
     }
-
     document.getElementById('cust-preview-remove').addEventListener('click',function(){
       designUrl='';fi.value='';
       document.getElementById('cust-preview-wrap').classList.remove('visible');document.getElementById('cust-preview-img').src='';
       document.getElementById('sum-design-thumb').src='';document.getElementById('sum-design-thumb').classList.remove('visible');
       document.getElementById('sum-design').textContent='\u2014';uz.style.display='';
       document.getElementById('cust-url-input').value='';document.getElementById('cust-url-error').style.display='none';
-      setUploadStatus('');
-      updSummary();
     });
-
     document.getElementById('cust-url-use').addEventListener('click',function(){
       var url=document.getElementById('cust-url-input').value.trim(),err=document.getElementById('cust-url-error');
       err.style.display='none';
       if(!url){err.textContent='Please enter a URL.';err.style.display='block';return;}
-      if(!/^https?:\/\/.+/i.test(url)){err.textContent='Enter a valid http:// or https:// URL.';err.style.display='block';return;}
-      designUrl=url;
-      showPreview(url);
-      setUploadStatus('<span style="color:#10b981;font-weight:600;">&#x2713; Direct artwork URL applied</span>');
-      document.getElementById('cust-preview-img').onerror=function(){
-        err.textContent='Could not load image from that URL. Please verify the link.';
-        err.style.display='block';
-        designUrl='';
-        setUploadStatus('');
-      };
+      if(!/^https?:\/\/.+/i.test(url)){err.textContent='Enter a valid http/https URL.';err.style.display='block';return;}
+      designUrl=url;showPreview(url);
+      document.getElementById('cust-preview-img').onerror=function(){err.textContent='Could not load image from that URL.';err.style.display='block';designUrl='';};
       updSummary();
     });
     function updSummary(){
@@ -469,11 +396,9 @@
     document.getElementById('cust-place-btn').addEventListener('click',async function(){
       var err=document.getElementById('cust-place-error');err.style.display='none';
       var errs=[];
-      if(isUploading)errs.push('Please wait for your artwork to finish uploading.');
       if(!selProd)errs.push('Please choose a base product.');
       if(!selSize)errs.push('Please select a size.');
-      if(!designUrl)errs.push('Please upload your artwork or provide a valid image URL.');
-      if(designUrl && !/^https?:\/\/.+/i.test(designUrl))errs.push('Please wait for artwork upload to complete or enter a valid HTTP/HTTPS image URL.');
+      if(!designUrl)errs.push('Please upload or link your design image.');
       var cName,cEmail,cPhone,addr=document.getElementById('cust-address').value.trim();
       if(isLoggedIn){cName=customer.name||'';cEmail=customer.email||'';cPhone=customer.phone||'';}
       else{
@@ -490,7 +415,7 @@
       var base=Number(selProd.price),ship=base+printFee>=1999?0:99,total=base+printFee+ship;
       var msg=document.getElementById('cust-message').value.trim();
       var oid='CUST-'+Date.now()+'-'+Math.random().toString(36).substr(2,5).toUpperCase();
-      var imgUrl=designUrl;
+      var imgUrl=designUrl.startsWith('data:')?'':designUrl;
       var sa={address:addr};
       var payload={orderId:oid,items:[{id:selProd.id,productId:selProd.id,name:selProd.name,price:base,qty:1,size:selSize,color:selColor||'',image:(selProd.images&&selProd.images[0])||'',is_customized:true,custom_image_url:imgUrl,customer_message:msg}],total:total,total_amount:total,subtotal:base,shippingFee:ship,shippingAddress:sa,shipping_address:sa,paymentMethod:'COD',payment_method:'COD',status:'Pending',is_customized:true,custom_image_url:imgUrl,printing_fee:printFee,customer_message:msg,customer_name:cName,customer_email:cEmail,customer_phone:cPhone,custom_details:{source:'customise_page',product_name:selProd.name,size:selSize,color:selColor||'',print_position:selPos,image_url:imgUrl||'[uploaded-file]'}};
       var localRecord = Object.assign({}, payload, {

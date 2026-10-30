@@ -16,11 +16,37 @@ const STORE = {
     localStorage.setItem(this.cartKey, JSON.stringify(cart));
     updateHeaderCounts();
   },
-  addToCart(productId, color, size, qty = 1) {
+  addToCart(productId, color, size, qty = 1, customData = null) {
     const cart = this.getCart();
-    const existing = cart.find(i => i.productId === productId && i.color === color && i.size === size);
-    if (existing) existing.qty += qty;
-    else cart.push({ productId, color, size, qty });
+    if (customData) {
+      const existing = cart.find(i => 
+        i.productId === productId && 
+        i.color === color && 
+        i.size === size && 
+        i.is_customized && 
+        i.custom_image_url === customData.custom_image_url &&
+        (i.customer_message || '') === (customData.customer_message || '')
+      );
+      if (existing) {
+        existing.qty += qty;
+      } else {
+        cart.push({
+          productId,
+          color,
+          size,
+          qty,
+          is_customized: true,
+          custom_image_url: customData.custom_image_url,
+          printing_fee: Number(customData.printing_fee || 200),
+          customer_message: customData.customer_message || "",
+          custom_details: customData.custom_details || null
+        });
+      }
+    } else {
+      const existing = cart.find(i => !i.is_customized && i.productId === productId && i.color === color && i.size === size);
+      if (existing) existing.qty += qty;
+      else cart.push({ productId, color, size, qty });
+    }
     this.saveCart(cart);
   },
   removeFromCart(index) {
@@ -40,7 +66,9 @@ const STORE = {
   cartTotal() {
     return this.getCart().reduce((sum, i) => {
       const p = getProduct(i.productId);
-      return p ? sum + p.price * i.qty : sum;
+      if (!p) return sum;
+      const printFee = i.is_customized ? Number(i.printing_fee || 200) : 0;
+      return sum + (p.price + printFee) * i.qty;
     }, 0);
   },
 
@@ -258,15 +286,20 @@ function renderDrawer() {
     body.innerHTML = cart.map((item, i) => {
       const p = getProduct(item.productId);
       if (!p) return "";
+      const printFee = item.is_customized ? Number(item.printing_fee || 200) : 0;
+      const lineTotal = (p.price + printFee) * item.qty;
       return `
       <div class="cart-row">
         <img src="${p.images[0]}" alt="${p.name}">
         <div>
           <div class="name">${p.name}</div>
+          ${item.is_customized ? `
+            <div style="margin:2px 0 3px;"><span style="font-size:10px;font-weight:700;text-transform:uppercase;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;">Custom Print (+${formatPrice(printFee)})</span></div>
+          ` : ''}
           <div class="meta">${item.size ? `Size ${item.size}, ` : ""}qty ${item.qty}</div>
           <button class="cart-remove" onclick="STORE.removeFromCart(${i});renderDrawer();">Remove</button>
         </div>
-        <div class="price mono-price">${formatPrice(p.price * item.qty)}</div>
+        <div class="price mono-price">${formatPrice(lineTotal)}</div>
       </div>`;
     }).join("");
   }

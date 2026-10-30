@@ -40,7 +40,11 @@ app.get(["/admin05/login", "/admin05/login/"], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "login.html"));
 });
 
-app.get(["/admin05/dashboard", "/admin05/dashboard/", "/admin05/dashboard.html"], (req, res) => {
+app.get([
+  "/admin05/dashboard",
+  "/admin05/dashboard/",
+  "/admin05/dashboard.html"
+], (req, res) => {
   res.sendFile(path.join(staticRoot, "admin", "dashboard.html"));
 });
 
@@ -782,9 +786,9 @@ app.post("/api/admin/products", requireAdminAuth, async (req, res) => {
     const p = req.body;
 
     if (!p || !String(p.name || "").trim() ||
-        p.price === undefined || p.price === null ||
-        p.price === "" || !Number.isFinite(Number(p.price)) ||
-        Number(p.price) < 0) {
+      p.price === undefined || p.price === null ||
+      p.price === "" || !Number.isFinite(Number(p.price)) ||
+      Number(p.price) < 0) {
       return res.status(400).json({
         error: "A valid product name and price are required."
       });
@@ -884,9 +888,9 @@ app.delete("/api/admin/products/:id", requireAdminAuth, async (req, res) => {
 const razorpay =
   process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
     ? new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET
-      })
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET
+    })
     : null;
 
 // Create Razorpay Order
@@ -967,111 +971,6 @@ app.post("/verify-payment", (req, res) => {
 });
 
 
-
-// Artwork Buffer Validation (Magic Bytes & MIME Security)
-function validateImageBuffer(buffer, mimeType) {
-  if (!buffer || buffer.length < 12) return { valid: false, reason: "File is empty or corrupted." };
-
-  const isPng = buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47;
-  const isJpg = buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF;
-  const isWebp = buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46 &&
-                 buffer[8] === 0x57 && buffer[9] === 0x45 && buffer[10] === 0x42 && buffer[11] === 0x50;
-
-  let isSvg = false;
-  if (mimeType === "image/svg+xml" || buffer.slice(0, 100).toString("utf-8").toLowerCase().includes("<svg")) {
-    const text = buffer.toString("utf-8", 0, Math.min(buffer.length, 10000)).toLowerCase();
-    if (text.includes("<svg") && !text.includes("<script") && !text.includes("javascript:") && !text.includes("onload=") && !text.includes("onerror=")) {
-      isSvg = true;
-    } else {
-      return { valid: false, reason: "SVG file contains prohibited scripts or tags." };
-    }
-  }
-
-  if (isPng) return { valid: true, ext: "png", mime: "image/png" };
-  if (isJpg) return { valid: true, ext: "jpg", mime: "image/jpeg" };
-  if (isWebp) return { valid: true, ext: "webp", mime: "image/webp" };
-  if (isSvg) return { valid: true, ext: "svg", mime: "image/svg+xml" };
-
-  return { valid: false, reason: "Unsupported image format. Please upload PNG, JPG, WebP, or SVG." };
-}
-
-// Multer in-memory upload (max 5MB)
-const artworkUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
-
-// POST /api/upload-artwork
-app.post("/api/upload-artwork", (req, res) => {
-  artworkUpload.single("artwork")(req, res, async (err) => {
-    if (err) {
-      if (err.code === "LIMIT_FILE_SIZE") {
-        return res.status(400).json({ error: "Artwork file exceeds 5MB size limit." });
-      }
-      return res.status(400).json({ error: err.message || "Failed to parse upload." });
-    }
-
-    if (!req.file || !req.file.buffer) {
-      return res.status(400).json({ error: "No artwork file was provided." });
-    }
-
-    const validation = validateImageBuffer(req.file.buffer, req.file.mimetype);
-    if (!validation.valid) {
-      return res.status(400).json({ error: validation.reason });
-    }
-
-    // Cloudinary Support if credentials exist
-    const cName = process.env.CLOUDINARY_CLOUD_NAME;
-    const cKey = process.env.CLOUDINARY_API_KEY;
-    const cSecret = process.env.CLOUDINARY_API_SECRET;
-
-    if (cName && cKey && cSecret) {
-      try {
-        const timestamp = Math.floor(Date.now() / 1000);
-        const folder = "krisin_custom_artworks";
-        const strToSign = `folder=${folder}&timestamp=${timestamp}${cSecret}`;
-        const signature = crypto.createHash("sha1").update(strToSign).digest("hex");
-
-        const form = new FormData();
-        form.append("file", new Blob([req.file.buffer], { type: validation.mime }), req.file.originalname);
-        form.append("api_key", cKey);
-        form.append("timestamp", String(timestamp));
-        form.append("signature", signature);
-        form.append("folder", folder);
-
-        const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/${cName}/image/upload`, {
-          method: "POST",
-          body: form
-        });
-
-        if (cloudRes.ok) {
-          const cData = await cloudRes.json();
-          return res.json({ url: cData.secure_url, storage: "cloudinary" });
-        }
-      } catch (cErr) {
-        console.error("Cloudinary upload failed, falling back to local storage:", cErr);
-      }
-    }
-
-    // Local Disk Storage Fallback
-    try {
-      const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${validation.ext}`;
-      const destPath = path.join(artworkDir, filename);
-      fs.writeFileSync(destPath, req.file.buffer);
-
-      const forwardedProto = req.headers["x-forwarded-proto"];
-      const proto = (forwardedProto ? forwardedProto.split(",")[0].trim() : req.protocol) || "https";
-      const host = req.headers["x-forwarded-host"] || req.get("host");
-      const fileUrl = `${proto}://${host}/uploads/artworks/${filename}`;
-
-      return res.json({ url: fileUrl, storage: "local" });
-    } catch (fsErr) {
-      console.error("Failed to save artwork:", fsErr);
-      return res.status(500).json({ error: "Failed to save artwork image on server." });
-    }
-  });
-});
-
 // SSRF and Image URL Validation
 function isSafeImageUrl(rawUrl) {
   if (!rawUrl || typeof rawUrl !== "string") return false;
@@ -1092,41 +991,32 @@ function isSafeImageUrl(rawUrl) {
 
   const hostname = parsed.hostname.toLowerCase();
 
-  // Always block cloud metadata endpoints and internal domains regardless of environment
+  // Block local/private IPs and internal hostnames (SSRF prevention)
   if (
-    hostname === "169.254.169.254" ||
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal") ||
     hostname === "metadata.google.internal" ||
-    hostname.endsWith(".internal")
+    hostname === "169.254.169.254"
   ) {
     return false;
   }
 
-  // In production, block localhost, private networks, and internal hostnames
-  const isDev = process.env.NODE_ENV !== "production";
-  if (!isDev) {
-    if (
-      hostname === "localhost" ||
-      hostname === "127.0.0.1" ||
-      hostname === "0.0.0.0" ||
-      hostname === "::1" ||
-      hostname.endsWith(".localhost") ||
-      hostname.endsWith(".local")
-    ) {
-      return false;
-    }
-
-    const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
-    const match = hostname.match(ipv4Regex);
-    if (match) {
-      const p1 = parseInt(match[1], 10);
-      const p2 = parseInt(match[2], 10);
-      if (p1 === 10) return false;
-      if (p1 === 127) return false;
-      if (p1 === 169 && p2 === 254) return false;
-      if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
-      if (p1 === 192 && p2 === 168) return false;
-      if (p1 === 0) return false;
-    }
+  const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const match = hostname.match(ipv4Regex);
+  if (match) {
+    const p1 = parseInt(match[1], 10);
+    const p2 = parseInt(match[2], 10);
+    if (p1 === 10) return false;
+    if (p1 === 127) return false;
+    if (p1 === 169 && p2 === 254) return false;
+    if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
+    if (p1 === 192 && p2 === 168) return false;
+    if (p1 === 0) return false;
   }
 
   return true;
@@ -1202,7 +1092,8 @@ app.post("/api/orders", async (req, res) => {
       body.total !== undefined ? body.total : body.total_amount;
     const finalTotal = Number(rawTotal);
 
-    if (!finalOrderId || (rawTotal !== undefined && (!Number.isFinite(finalTotal) || finalTotal < 0))) {
+    if (!finalOrderId || rawTotal === undefined ||
+      !Number.isFinite(finalTotal) || finalTotal < 0) {
       return res.status(400).json({
         error: "Missing or invalid order details."
       });
@@ -1405,26 +1296,63 @@ app.post("/api/orders", async (req, res) => {
       });
     }
 
-    if (verifiedItems.length === 0) {
-      return res.status(400).json({ error: "Order must contain at least one valid item." });
+    // Check if customised clothing order
+    const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url));
+    const isCustomized = Boolean(body.is_customized || hasCustomItems);
+
+    let customImageUrl = null;
+    let printingFee = 0;
+    let customerMessage = null;
+    let customDetails = null;
+
+    if (isCustomized) {
+      const customItem = Array.isArray(finalItems) ? (finalItems.find(i => i && (i.is_customized || i.custom_image_url)) || {}) : {};
+      const rawUrl = body.custom_image_url || customItem.custom_image_url || "";
+
+      if (!isSafeImageUrl(rawUrl)) {
+        return res.status(400).json({
+          error: "Invalid or unsafe custom image URL. Must be a valid, publicly accessible HTTP or HTTPS link."
+        });
+      }
+      customImageUrl = String(rawUrl).trim();
+
+      // Check product eligibility (only Shirts & T-Shirts)
+      const productId = customItem.productId || customItem.id;
+      if (productId) {
+        const prodResult = await pool.query("SELECT id, name, category, price FROM products WHERE id = $1", [productId]);
+        if (prodResult.rows.length) {
+          const dbProduct = prodResult.rows[0];
+          if (!isCustomisableCategory(dbProduct.category, dbProduct.name)) {
+            return res.status(400).json({
+              error: `Product "${dbProduct.name}" (${dbProduct.category}) is not eligible for customisation. Only shirts and T-shirts can be customised.`
+            });
+          }
+        }
+      }
+
+      // Fetch live printing fee from store_settings
+      try {
+        const feeRes = await pool.query("SELECT value FROM store_settings WHERE key = 'printing_fee'");
+        if (feeRes.rows.length) {
+          printingFee = Number(feeRes.rows[0].value) || 200;
+        } else {
+          printingFee = 200;
+        }
+      } catch (e) {
+        printingFee = 200;
+      }
+
+      const rawMsg = body.customer_message || customItem.customer_message || "";
+      if (rawMsg) {
+        customerMessage = String(rawMsg).trim().slice(0, 1000);
+      }
+
+      customDetails = body.custom_details || customItem.custom_details || {
+        source: "customise_page",
+        print_fee: printingFee,
+        image_url: customImageUrl
+      };
     }
-
-    // Trusted Shipping: Free if subtotal (plus printing fee for custom orders) >= 1999, else 99
-    const eligibleAmount = calculatedSubtotal + (isCustomized ? printingFee : 0);
-    const calculatedShippingFee = eligibleAmount >= 1999 ? 0 : 99;
-
-    // Trusted COD handling fee: 49 for COD, 0 otherwise
-    const calculatedCodFee = normalizedMethod === "COD" ? 49 : 0;
-
-    // Trusted Discount
-    let calculatedDiscount = 0;
-    const submittedDiscount = Number(body.discount || 0);
-    if (Number.isFinite(submittedDiscount) && submittedDiscount > 0) {
-      calculatedDiscount = Math.min(submittedDiscount, calculatedSubtotal);
-    }
-
-    // Grand total: Subtotal + (Custom Printing Fee included exactly once) + Shipping + COD - Discount
-    const calculatedTotal = calculatedSubtotal + (isCustomized ? printingFee : 0) + calculatedShippingFee + calculatedCodFee - calculatedDiscount;
 
     const result = await pool.query(`
       INSERT INTO orders (
@@ -1478,7 +1406,7 @@ app.post("/api/orders", async (req, res) => {
       requestedStatus || "pending",
       isCustomized,
       customImageUrl,
-      isCustomized ? printingFee : 0,
+      printingFee,
       customerMessage,
       customDetails ? JSON.stringify(customDetails) : null
     ]);
@@ -1486,8 +1414,7 @@ app.post("/api/orders", async (req, res) => {
     res.status(201).json({
       message: "Order placed successfully.",
       orderId: result.rows[0].id,
-      is_customized: isCustomized,
-      total: calculatedTotal
+      is_customized: isCustomized
     });
   } catch (err) {
     if (err.code === "23505") {
@@ -1615,7 +1542,7 @@ app.patch("/api/orders/:id/cancel", requireCustomerAuth, async (req, res) => {
       });
     }
 
-       const updated = await client.query(
+    const updated = await client.query(
       `UPDATE orders
        SET status = 'cancelled'
        WHERE id = $1

@@ -77,6 +77,9 @@
             <path d="M16 3.1a4 4 0 010 7.8" />
             <path d="M22 21c-1-3.5-3-5-6-5" />
           </svg>Users</button>
+        <button data-tab="custom-orders"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+            <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z" />
+          </svg>Customised Orders<span id="nav-custom-badge" style="display:none;margin-left:auto;background:#7c3aed;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700;">0</span></button>
       </nav>
       <div class="a-sidebar-foot">
         Signed in as<br><strong style="color:#fff" id="a-signed-in-email">Admin</strong><br>
@@ -375,12 +378,12 @@
         </div>
       </section>
 
-<!-- CUSTOMISED ORDERS -->
+      <!-- CUSTOMISED ORDERS -->
       <section class="a-tab" id="tab-custom-orders">
         <div class="a-actions" style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px;">
           <div class="a-searchbar" style="flex:1;min-width:200px">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
-            <input placeholder="Search by order ID or customer nameâ€¦" id="custom-order-search">
+            <input placeholder="Search by order ID or customer name…" id="custom-order-search">
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <select id="custom-order-status-filter" style="padding:8px 12px;font-size:13px;border:1px solid var(--a-line);border-radius:6px;background:#fff;">
@@ -430,7 +433,8 @@
           <div id="custom-orders-pagination" class="a-pagination"></div>
         </div>
       </section>
-</main>
+
+    </main>
   </div>
 
   <!-- ================= PRODUCT MODAL ================= -->
@@ -774,9 +778,9 @@
       orders: ["Orders", "View and fulfil customer orders."],
       customers: ["Customers", "Everyone who has shopped with Krisin Clothing, and their account access."],
       messages: ["Messages", "Contact inquiries and customer feedback."],
-      reviews: ["Reviews", "Moderate product reviews from customers."],
-      "custom-orders": ["Customised Orders", "Review, update, and fulfil custom printed shirt orders."],
-      users: ["Users", "Manage user logins and customer account access."]
+
+      users: ["Users", "Manage user logins and customer account access."],
+      "custom-orders": ["Customised Orders", "Review, update, and fulfil custom printed shirt orders."]
     };
     document.getElementById("a-nav").addEventListener("click", (e) => {
       const btn = e.target.closest("button[data-tab]");
@@ -1961,10 +1965,10 @@
       const subtotal = order.subtotal !== undefined ? Number(order.subtotal) : items.reduce((s, i) => s + (Number(i.price) || 0) * (Number(i.qty) || 1), 0);
       const isCustom = Boolean(order.is_customized || order.custom_image_url || order.custom_details || String(order.id || order.orderId || '').startsWith('CUST-') || (items && items.some(i => i.custom_details || i.is_customized)));
       const customDetails = order.custom_details || (items[0] && items[0].custom_details) || {};
-      const customImg = order.custom_image_url || customDetails.image_url || customDetails.custom_image_url || (items[0] && items[0].custom_image_url) || "";
-      const printPos = order.print_position || customDetails.print_position || (items[0] && items[0].print_position) || "Front Centre";
+      const customImg = order.custom_image_url || customDetails.custom_image_url || (items[0] && items[0].custom_image_url) || "";
+      const printPos = order.print_position || customDetails.print_position || (items[0] && items[0].print_position) || "Center Chest";
       const customNote = order.customer_message || customDetails.customer_message || (items[0] && items[0].customer_message) || order.notes || "";
-      const printFee = Number(order.printing_fee !== undefined ? order.printing_fee : (customDetails.print_fee || customDetails.printing_fee || (items[0] && items[0].printing_fee) || 0));
+      const printFee = Number(order.printing_fee !== undefined ? order.printing_fee : (customDetails.printing_fee || (items[0] && items[0].printing_fee) || 0));
       const shippingFee = order.shippingFee !== undefined ? Number(order.shippingFee) : (subtotal >= 1999 ? 0 : 99);
       const codFee = order.codFee !== undefined ? Number(order.codFee) : ((payMethod.toUpperCase() === "COD") ? 49 : 0);
       const grandTotal = order.totalAmount !== undefined ? Number(order.totalAmount) : (order.total || (subtotal + shippingFee + codFee + (isCustom ? printFee : 0)));
@@ -2027,8 +2031,8 @@
           </div>
           ${(customImg && customImg !== "[uploaded-file]") ? `
             <div style="text-align:center;flex-shrink:0;">
-              <a href="${escapeHtml(customImg)}" target="_blank" rel="noopener noreferrer" title="Click to view full design" style="display:block;position:relative;border-radius:6px;overflow:hidden;border:2px solid #7c3aed;box-shadow:0 2px 8px rgba(124,58,237,0.2);">
-                <img src="${escapeHtml(customImg)}" alt="Design Artwork" style="width:64px;height:64px;object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<span style=\'font-size:11px;color:#7c3aed;\'>View Artwork</span>';">
+              <a href="${customImg}" target="_blank" rel="noopener noreferrer" title="Click to view full design" style="display:block;position:relative;border-radius:6px;overflow:hidden;border:2px solid #7c3aed;box-shadow:0 2px 8px rgba(124,58,237,0.2);">
+                <img src="${customImg}" alt="Design Artwork" style="width:64px;height:64px;object-fit:cover;display:block;">
                 <span style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);color:#fff;font-size:9px;padding:2px 0;">ARTWORK</span>
               </a>
             </div>
@@ -2558,6 +2562,223 @@
         .catch(() => { });
     }
 
+    /* =========================================================
+       Customised Orders tab — fetch, render, status update
+       ========================================================= */
+    let liveCustomOrders = [];
+
+    const customOrdersPaginator = new TablePaginator({
+      containerId: "custom-orders-pagination",
+      pageSize: 10,
+      ariaLabel: "Customised orders pagination",
+      onRenderPage: (slice) => {
+        const tbody = document.getElementById("custom-orders-body");
+        if (!tbody) return;
+        if (!slice.length) {
+          tbody.innerHTML = `<tr><td colspan="8"><div class="a-empty">No customised orders found.</div></td></tr>`;
+          return;
+        }
+        tbody.innerHTML = slice.map(o => {
+          const orderId = o.id || o.orderId || o.order_id || "";
+          const custName = o.customer_name || o.customerName || o.customer || "Customer";
+          const custEmail = o.customer_email || o.customerEmail || "";
+          const custPhone = o.customer_phone || o.customerPhone || "";
+          const total = Number(o.total_amount || o.total || 0);
+          const printFee = Number(o.printing_fee || 0);
+          const payMethod = o.payment_method || o.paymentMethod || "COD";
+          const payStatus = o.payment_status || o.paymentStatus || "Pending";
+          const currentStatus = o.status || "Pending";
+          const createdAt = o.created_at || o.createdAt || "";
+          const orderDate = createdAt ? new Date(createdAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+
+          // Items / product details
+          let items = o.items || [];
+          if (typeof items === "string") { try { items = JSON.parse(items); } catch(e) { items = []; } }
+          const firstItem = Array.isArray(items) && items[0] ? items[0] : {};
+          const prodName = firstItem.name || o.custom_details?.product_name || "—";
+          const size = firstItem.size || o.custom_details?.size || "—";
+          const color = firstItem.color || o.custom_details?.color || "—";
+          const printPos = o.custom_details?.print_position || "—";
+          const custMsg = firstItem.customer_message || o.customer_message || "";
+
+          // Design image
+          const designUrl = firstItem.custom_image_url || o.custom_image_url || o.custom_details?.image_url || "";
+          const isImgValid = designUrl && designUrl !== "[uploaded-file]" && (designUrl.startsWith("http") || designUrl.startsWith("data:image/"));
+          const designHtml = isImgValid
+            ? `<a href="${escapeHtml(designUrl)}" target="_blank" rel="noopener" style="display:inline-block;"><img src="${escapeHtml(designUrl)}" style="width:52px;height:64px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.parentElement.innerHTML='<span style=\'color:#9ca3af;font-size:12px;\'>No preview</span>';"></a>`
+            : `<span style="font-size:12px;color:#9ca3af;">${designUrl === "[uploaded-file]" ? "Uploaded file" : "No image"}</span>`;
+
+          const statusStages = ["Pending","Design Approved","Printing","Shipped","Delivered","Cancelled"];
+          const stageOpts = statusStages.map(s => `<option value="${s}" ${s === currentStatus ? "selected" : ""}>${s}</option>`).join("");
+
+          const statusLower = currentStatus.toLowerCase();
+          let statusClass = "pending";
+          if (statusLower === "delivered") statusClass = "ok";
+          else if (statusLower === "shipped") statusClass = "active";
+          else if (statusLower === "design approved" || statusLower === "printing") statusClass = "paid";
+          else if (statusLower === "cancelled") statusClass = "disabled";
+
+          return `
+          <tr>
+            <td><a href="#" style="color:var(--a-navy);font-weight:700;text-decoration:underline;font-size:12.5px;" data-custom-order-view="${orderId}">#${orderId}</a><div style="font-size:11px;color:var(--a-muted);margin-top:2px;">${orderDate}</div></td>
+            <td>
+              <div style="font-weight:600;">${escapeHtml(custName)}</div>
+              ${custEmail ? `<div style="font-size:11.5px;color:var(--a-muted);">${escapeHtml(custEmail)}</div>` : ""}
+              ${custPhone ? `<div style="font-size:11.5px;color:var(--a-muted);">&#128222; ${escapeHtml(custPhone)}</div>` : ""}
+            </td>
+            <td>
+              <div style="font-weight:600;font-size:13px;">${escapeHtml(prodName)}</div>
+              <div style="font-size:12px;color:var(--a-muted);margin-top:2px;">Size: ${escapeHtml(size)} &bull; ${escapeHtml(color)}</div>
+              <div style="font-size:12px;color:var(--a-muted);">Position: ${escapeHtml(printPos)}</div>
+              ${custMsg ? `<div style="font-size:11.5px;color:#6b7280;margin-top:3px;font-style:italic;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(custMsg)}">&#128172; ${escapeHtml(custMsg)}</div>` : ""}
+            </td>
+            <td>${designHtml}</td>
+            <td>
+              <strong>${money(total)}</strong>
+              ${printFee ? `<div style="font-size:11.5px;color:var(--a-muted);">+${money(printFee)} print fee</div>` : ""}
+            </td>
+            <td>
+              <div>${escapeHtml(payMethod)}</div>
+              <div style="font-size:11px;color:var(--a-muted);">${escapeHtml(payStatus)}</div>
+            </td>
+            <td><span class="a-status ${statusClass}">${escapeHtml(currentStatus)}</span></td>
+            <td>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <select class="a-btn small" data-custom-status-select="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#1b2234;color:#fff;border:1px solid #323b54;border-radius:4px;cursor:pointer;">${stageOpts}</select>
+                <button class="a-btn small" data-custom-order-view="${orderId}" style="padding:4px 8px;font-size:11.5px;background:#f0f3fa;color:var(--a-navy);border:1px solid #d5dded;">View Details</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join("");
+      }
+    });
+
+    function getFilteredCustomOrders() {
+      const q = (document.getElementById("custom-order-search")?.value || "").toLowerCase().trim();
+      const sf = (document.getElementById("custom-order-status-filter")?.value || "").toLowerCase();
+      let list = liveCustomOrders;
+
+      // Also pull from localStorage
+      const localRaw = JSON.parse(localStorage.getItem("krisin_orders_v1") || "[]").concat(JSON.parse(localStorage.getItem("kc_orders") || "[]"));
+      const localCustom = localRaw.filter(o => o.is_customized || (o.orderId && String(o.orderId).startsWith("CUST-")));
+      const liveIds = new Set(liveCustomOrders.map(o => String(o.id || o.orderId || "")));
+      const extraLocal = localCustom.filter(o => !liveIds.has(String(o.id || o.orderId || "")));
+      list = [...liveCustomOrders, ...extraLocal];
+
+      if (q) list = list.filter(o => {
+        const id = String(o.id || o.orderId || "").toLowerCase();
+        const name = (o.customer_name || o.customerName || o.customer || "").toLowerCase();
+        return id.includes(q) || name.includes(q);
+      });
+      if (sf) list = list.filter(o => (o.status || "").toLowerCase() === sf);
+      return list;
+    }
+
+    function renderCustomOrders(resetPage = false) {
+      const list = getFilteredCustomOrders();
+      // Update badge
+      const pendingCount = list.filter(o => (o.status || "Pending") === "Pending").length;
+      const badge = document.getElementById("nav-custom-badge");
+      if (badge) {
+        badge.textContent = pendingCount;
+        badge.style.display = pendingCount > 0 ? "inline" : "none";
+      }
+      customOrdersPaginator.setItems(list, resetPage);
+    }
+
+    function fetchCustomOrders() {
+      const token = getAdminToken();
+      if (!token) { renderCustomOrders(true); return; }
+      fetch(`${ADMIN_API}/api/admin/custom-orders`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            liveCustomOrders = data;
+            renderCustomOrders(true);
+          }
+        })
+        .catch(() => renderCustomOrders(true));
+    }
+
+    // Custom order status update via dropdown
+    document.getElementById("custom-orders-body").addEventListener("change", async (e) => {
+      const sel = e.target.closest("[data-custom-status-select]");
+      if (!sel) return;
+      const orderId = sel.dataset.customStatusSelect;
+      const newStatus = sel.value;
+      const token = getAdminToken();
+
+      liveCustomOrders = liveCustomOrders.map(o =>
+        (String(o.id || o.orderId || "") === orderId) ? { ...o, status: newStatus } : o
+      );
+      ["krisin_orders_v1","kc_orders"].forEach(key => {
+        const list = lsGet(key, []);
+        lsSet(key, list.map(o => (String(o.id || o.orderId || "") === orderId) ? { ...o, status: newStatus } : o));
+      });
+      renderCustomOrders(false);
+
+      if (token) {
+        try {
+          await fetch(`${ADMIN_API}/api/admin/orders/${encodeURIComponent(orderId)}/status`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ status: newStatus })
+          });
+        } catch (err) {}
+      }
+      toast(`Custom order #${orderId} updated to "${newStatus}".`);
+    });
+
+    // View details click
+    document.getElementById("custom-orders-body").addEventListener("click", (e) => {
+      const viewBtn = e.target.closest("[data-custom-order-view]");
+      if (!viewBtn) return;
+      e.preventDefault();
+      const orderId = viewBtn.dataset.customOrderView;
+      const all = getFilteredCustomOrders();
+      const found = all.find(o => String(o.id || o.orderId || "") === orderId);
+      if (found) openOrderDetailsModal(found);
+    });
+
+    // Search & filter handlers
+    const coSearch = document.getElementById("custom-order-search");
+    if (coSearch) coSearch.addEventListener("input", () => renderCustomOrders(true));
+    const coFilter = document.getElementById("custom-order-status-filter");
+    if (coFilter) coFilter.addEventListener("change", () => renderCustomOrders(true));
+
+    // Refresh button
+    const refreshBtn = document.getElementById("btn-refresh-custom-orders");
+    if (refreshBtn) refreshBtn.addEventListener("click", () => { fetchCustomOrders(); toast("Refreshing customised orders…"); });
+
+    // Printing fee save
+    const saveFeeBtn = document.getElementById("btn-save-printing-fee");
+    if (saveFeeBtn) saveFeeBtn.addEventListener("click", async () => {
+      const fee = Number(document.getElementById("printing-fee-input").value);
+      if (isNaN(fee) || fee < 0) { toast("Enter a valid printing fee.", "error"); return; }
+      const token = getAdminToken();
+      if (!token) { toast("Not authenticated.", "error"); return; }
+      try {
+        const res = await fetch(`${ADMIN_API}/api/admin/config/printing-fee`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ printing_fee: fee })
+        });
+        if (res.ok) { toast(`Printing fee saved: ₹${fee}.`); }
+        else { toast("Failed to save printing fee.", "error"); }
+      } catch (err) { toast("Server error saving fee.", "error"); }
+    });
+
+    // Load current printing fee from backend
+    fetch(`${ADMIN_API}/api/config/printing-fee`)
+      .then(r => r.json())
+      .then(d => {
+        const inp = document.getElementById("printing-fee-input");
+        if (inp && d.printing_fee !== undefined) inp.value = d.printing_fee;
+      })
+      .catch(() => {});
+
     // Live sync across tabs when orders are placed on user storefront
     window.addEventListener("storage", (e) => {
       if (e.key === "krisin_orders_v1" || e.key === "kc_orders" || e.key === "krisin_customers_v1" || e.key === "krisin_admin_product_overrides_v1") {
@@ -3043,6 +3264,9 @@ async function fetchMessages() {
       if (e.target.closest('[data-tab="messages"]')) {
         fetchMessages();
       }
+      if (e.target.closest('[data-tab="custom-orders"]')) {
+        fetchCustomOrders();
+      }
     });
 
     /* =========================================================
@@ -3052,6 +3276,7 @@ async function fetchMessages() {
     renderOrders();
     renderCustomers();
     renderReviews();
+    renderCustomOrders();
     fetchBackendData();
     fetchUsers(); // Preload users on dashboard open
     fetchMessages(); // Preload messages and badge

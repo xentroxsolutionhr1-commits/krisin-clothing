@@ -1,0 +1,345 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Krisin Clothing | Everyday Essentials</title>
+  <meta name="description"
+    content="Considered essentials for daily wear: t-shirts, shirts, pants, hoodies, glasses and accessories, designed in Tamil Nadu.">
+  <link rel="icon" href="assets/logo-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- ================= HEADER ================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <button class="menu-toggle icon-btn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6h18M3 12h18M3 18h18" />
+        </svg>
+      </button>
+      <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+      <nav class="main-nav">
+        <a href="index.html" class="active">Home</a>
+        <a href="shop.html">Shop</a>
+        <a href="new-arrivals.html">New Arrivals</a>
+        <a href="collections.html">Collections</a>
+        <a href="about.html">About Us</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn" data-search-toggle aria-label="Search">
+          <svg viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M21 21l-4.3-4.3" />
+          </svg>
+        </button>
+        <div class="search-bar"><input type="text" placeholder="Search products…"></div>
+        <a href="login.html" class="icon-btn" aria-label="Account">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c1.5-4 5-6 8-6s6.5 2 8 6" />
+          </svg>
+        </a>
+        <a href="shop.html?filter=wishlist" class="icon-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M12 21s-7.5-4.6-10-9.2C.4 8.4 2 4.5 6 4c2.4-.3 4.2 1 6 3 1.8-2 3.6-3.3 6-3 4 .5 5.6 4.4 4 7.8C19.5 16.4 12 21 12 21z" />
+          </svg>
+          <span class="count-badge hidden" data-wish-count>0</span>
+        </a>
+        <button class="icon-btn" data-cart-open aria-label="Cart">
+          <svg viewBox="0 0 24 24">
+            <path d="M6 8h12l-1 12H7L6 8z" />
+            <path d="M9 8V6a3 3 0 016 0v2" />
+          </svg>
+          <span class="count-badge hidden" data-cart-count>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile nav -->
+  <div class="mobile-nav">
+    <div class="mobile-nav-top">
+      <a href="index.html" class="brand"><img src="assets/logo-horizontal.png" alt="Krisin Clothing"></a>
+      <button class="icon-btn mobile-nav-close" aria-label="Close menu">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+    <nav class="mobile-nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="new-arrivals.html">New Arrivals</a>
+      <a href="collections.html">Collections</a>
+      <a href="about.html">About Us</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <div class="mobile-nav-foot">
+      <a href="cart.html">Cart</a>
+      <a href="shop.html?filter=wishlist">Wishlist</a>
+    </div>
+  </div>
+
+  <!-- Cart drawer -->
+  <div class="drawer-overlay" data-cart-close></div>
+  <aside class="cart-drawer">
+    <div class="drawer-head">
+      <span class="heading" style="font-size:18px">Your Bag</span>
+      <button class="icon-btn" data-cart-close aria-label="Close">
+        <svg viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      </button>
+    </div>
+    <div class="drawer-body"></div>
+    <div class="drawer-foot">
+      <div class="summary-line total"><span>Subtotal</span><span data-drawer-total>₹0</span></div>
+      <a href="cart.html" class="btn btn-outline btn-block" style="margin-top:12px">View Bag</a>
+      <a href="checkout.html" class="btn btn-primary btn-block" style="margin-top:10px">Checkout</a>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- ================= HERO CAROUSEL ================= -->
+    <section class="hero hero-carousel" id="hero-carousel">
+      <!-- Carousel slides -->
+      <div class="carousel-track">
+        <div class="carousel-slide active">
+          <img src="assets/carousel/slide-1.jpg" alt="Krisin Clothing editorial lookbook — casual essentials">
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/carousel/slide-2.png" alt="Krisin Clothing editorial — layered outerwear look">
+        </div>
+        <div class="carousel-slide">
+          <img src="assets/carousel/slide-3.jpg" alt="Krisin Clothing editorial — multi-look collection showcase">
+        </div>
+      </div>
+
+
+      <!-- Carousel dots -->
+      <div class="carousel-dots">
+        <button class="carousel-dot active" data-slide="0" aria-label="Go to slide 1"></button>
+        <button class="carousel-dot" data-slide="1" aria-label="Go to slide 2"></button>
+        <button class="carousel-dot" data-slide="2" aria-label="Go to slide 3"></button>
+      </div>
+
+      <!-- Carousel progress bar -->
+      <div class="carousel-progress">
+        <div class="carousel-progress-bar"></div>
+      </div>
+
+      <!-- Hero content overlay (unchanged) -->
+      <div class="container hero-content">
+        <span class="eyebrow">Fall 2026</span>
+        <h1>Fewer pieces.<br>Worn on repeat.</h1>
+        <p>Everyday essentials, designed with intention.</p>
+        <div class="hero-actions">
+          <a href="collections.html" class="btn btn-primary">Shop the collection</a>
+          <a href="new-arrivals.html" class="btn btn-outline">New Arrivals</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= NEW ARRIVALS ================= -->
+    <section class="section" id="new-arrivals" data-scroll-reveal>
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="heading">New Arrivals</h2>
+            <p class="sub">Fresh pieces for everyday wear.</p>
+          </div>
+          <a href="shop.html?filter=new" class="link-underline">View all</a>
+        </div>
+        <div class="product-grid" id="new-arrivals-grid"></div>
+      </div>
+    </section>
+
+    <!-- ================= SHOP BY CATEGORY ================= -->
+    <section class="section section-tight" style="padding-top:0" data-scroll-reveal>
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="heading">Shop by Category</h2>
+            <p class="sub">Five essentials, built to layer and last.</p>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="category-grid">
+          <a class="category-block" href="shop.html?cat=T-Shirts">
+            <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=900&auto=format&fit=crop"
+              alt="T-Shirts">
+            <span class="category-label">T-Shirts</span>
+          </a>
+          <a class="category-block" href="shop.html?cat=Shirts">
+            <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=900&auto=format&fit=crop"
+              alt="Shirts">
+            <span class="category-label">Shirts</span>
+          </a>
+          <a class="category-block" href="shop.html?cat=Pants">
+            <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=900&auto=format&fit=crop"
+              alt="Pants">
+            <span class="category-label">Pants</span>
+          </a>
+          <a class="category-block" href="shop.html?cat=Hoodies">
+            <img src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=900&auto=format&fit=crop"
+              alt="Hoodies">
+            <span class="category-label">Hoodies</span>
+          </a>
+          <a class="category-block" href="shop.html?cat=Glasses">
+            <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=900&auto=format&fit=crop"
+              alt="Glasses">
+            <span class="category-label">Glasses</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURED COLLECTION ================= -->
+    <section class="feature-band" data-scroll-reveal>
+      <img
+        src="https://images.unsplash.com/photo-1633655442136-bbc120229009?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+        alt="Editorial shot of the Everyday Collection">
+      <div class="container feature-band-content">
+        <h2 class="display-2">The everyday collection</h2>
+        <p>Designed for movement. Made for everyday.</p>
+        <a href="shop.html" class="btn btn-outline">Explore the collection</a>
+      </div>
+    </section>
+
+    <!-- ================= BEST SELLERS ================= -->
+    <section class="section" data-scroll-reveal>
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="heading">Best Sellers</h2>
+            <p class="sub">The pieces our customers keep coming back for.</p>
+          </div>
+          <a href="shop.html" class="link-underline">View all</a>
+        </div>
+        <div class="product-grid" id="best-sellers-grid"></div>
+      </div>
+    </section>
+
+    <!-- ================= BRAND STORY ================= -->
+    <section class="section" data-scroll-reveal>
+      <div class="container">
+        <div class="split">
+          <div class="split-media">
+            <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?q=80&w=1200&auto=format&fit=crop"
+              alt="Close detail of minimalist clothing fabric">
+          </div>
+          <div class="split-text">
+            <span class="eyebrow">Our philosophy</span>
+            <h2 class="display-2">Simplicity is the statement.</h2>
+            <p>Krisin Clothing is built around clean silhouettes, everyday comfort and effortless style. We believe
+              great clothing doesn't need to be complicated.</p>
+            <a href="about.html" class="link-underline">Read our story</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LOOKBOOK ================= -->
+    <section class="section section-tight" data-scroll-reveal>
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2 class="heading">Lookbook</h2>
+            <p class="sub">Fall 2026, shot in Chennai.</p>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <div class="lookbook-grid">
+          <div class="look-item l1"><img src="https://i.pinimg.com/736x/f5/3e/20/f53e205504436bd2ec7f924a18c17636.jpg"
+              alt="Lookbook editorial 1"></div>
+          <div class="look-item l2"><img src="https://i.pinimg.com/736x/5c/08/84/5c08848cafbf058671c9d8597d27c61f.jpg"
+              alt="Lookbook editorial 2"></div>
+          <div class="look-item l3"><img
+              src="https://images.unsplash.com/photo-1633655442168-c6ef0ed2f984?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D"
+              alt="Lookbook editorial 3"></div>
+          <div class="look-item l4"><img
+              src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=700&auto=format&fit=crop"
+              alt="Lookbook editorial 4"></div>
+          <div class="look-item l5"><img
+              src="https://images.unsplash.com/photo-1622445275576-721325763afe?q=80&w=900&auto=format&fit=crop"
+              alt="Lookbook editorial 5"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <img src="assets/logo-horizontal-onDark.png" alt="Krisin Clothing">
+          <p>Minimal. Modern. Everyday. Considered essentials, designed in-house and made to last.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Shop</h4>
+          <ul>
+            <li><a href="shop.html?cat=T-Shirts">T-Shirts</a></li>
+            <li><a href="shop.html?cat=Shirts">Shirts</a></li>
+            <li><a href="shop.html?cat=Pants">Pants</a></li>
+            <li><a href="shop.html?cat=Hoodies">Hoodies</a></li>
+            <li><a href="shop.html?cat=Glasses">Glasses</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Help</h4>
+          <ul>
+            <li><a href="contact.html">Shipping</a></li>
+            <li><a href="contact.html">Returns</a></li>
+            <li><a href="product.html?id=mc-001">Size Guide</a></li>
+            <li><a href="contact.html">FAQs</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <ul>
+            <li><a href="about.html">About</a></li>
+            <li><a href="about.html">Our Story</a></li>
+            <li><a href="#">Privacy</a></li>
+            <li><a href="#">Terms</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Social</h4>
+          <ul>
+            <li><a href="#">Instagram</a></li>
+            <li><a href="#">Facebook</a></li>
+            <li><a href="#">WhatsApp</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>© 2026 Krisin Clothing</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/data.js?v=2"></script>
+  <script src="js/auth.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
+  <script>
+    renderProductGrid(document.getElementById("new-arrivals-grid"), getAdminProducts().filter(p => p.isNew).slice(0, 4));
+    renderProductGrid(document.getElementById("best-sellers-grid"), getAdminProducts().filter(p => p.bestSeller).slice(0, 4));
+  </script>
+</body>
+
+</html>

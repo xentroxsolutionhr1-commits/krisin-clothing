@@ -375,8 +375,25 @@
       const isOrdersPage = (typeof window !== "undefined" && window.location.pathname) 
         ? window.location.pathname.toLowerCase().endsWith("orders.html") 
         : false;
+      const isCustomisePage = (typeof window !== "undefined" && window.location.pathname) 
+        ? window.location.pathname.toLowerCase().endsWith("customise.html") 
+        : false;
 
       document.querySelectorAll(".main-nav").forEach(nav => {
+        let navCustomise = nav.querySelector(".nav-customise-item");
+        if (!navCustomise) {
+          navCustomise = document.createElement("a");
+          navCustomise.className = "nav-customise-item";
+          navCustomise.href = "customise.html";
+          navCustomise.textContent = "Customise";
+          nav.appendChild(navCustomise);
+        }
+        if (isCustomisePage) {
+          navCustomise.classList.add("active");
+        } else {
+          navCustomise.classList.remove("active");
+        }
+
         let navOrders = nav.querySelector(".nav-my-orders-item");
         if (isCustomer && customer) {
           if (!navOrders) {
@@ -396,8 +413,22 @@
         }
       });
 
-      // Update mobile navigation links (cleanly, without duplicate "My Orders")
+      // Update mobile navigation links (cleanly, with Customise beside My Orders)
       document.querySelectorAll(".mobile-nav-links").forEach(mobileNav => {
+        let mobileCustomise = mobileNav.querySelector(".mobile-customise-item");
+        if (!mobileCustomise) {
+          mobileCustomise = document.createElement("a");
+          mobileCustomise.className = "mobile-customise-item";
+          mobileCustomise.href = "customise.html";
+          mobileCustomise.textContent = "Customise";
+          mobileNav.appendChild(mobileCustomise);
+        }
+        if (isCustomisePage) {
+          mobileCustomise.classList.add("active");
+        } else {
+          mobileCustomise.classList.remove("active");
+        }
+
         let mobileOrders = mobileNav.querySelector(".mobile-my-orders-item");
         if (isCustomer && customer) {
           if (!mobileOrders) {
@@ -405,8 +436,12 @@
             mobileOrders.className = "mobile-my-orders-item";
             mobileOrders.href = "orders.html";
             mobileOrders.textContent = "My Orders";
-            if (isOrdersPage) mobileOrders.classList.add("active");
             mobileNav.appendChild(mobileOrders);
+          }
+          if (isOrdersPage) {
+            mobileOrders.classList.add("active");
+          } else {
+            mobileOrders.classList.remove("active");
           }
         } else {
           if (mobileOrders) mobileOrders.remove();
@@ -500,6 +535,10 @@
           <a href="orders.html">
             <svg viewBox="0 0 24 24"><path d="M6 2l1.5 4h9L18 2"/><rect x="4" y="6" width="16" height="15" rx="1"/><path d="M10 10h4M10 14h4"/></svg>
             My Orders
+          </a>
+          <a href="customise.html">
+            <svg viewBox="0 0 24 24"><path d="M12 2l4 3 4-1-2 5 2 2-3 2v8H7v-8l-3-2 2-2-2-5 4 1 4-3z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="11" r="2"/></svg>
+            Customise Clothing
           </a>
           <div class="dropdown-divider"></div>
           <button class="logout-link" id="dropdown-logout-btn">

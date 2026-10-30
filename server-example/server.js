@@ -203,8 +203,39 @@ try {
       }
     }
   }
+
+  // Orders customisation schema migrations
+  const orderColumns = new Set(
+    db.prepare("PRAGMA table_info(orders)").all().map(col => col.name)
+  );
+  if (!orderColumns.has("is_customized")) {
+    try { db.exec("ALTER TABLE orders ADD COLUMN is_customized INTEGER DEFAULT 0;"); } catch (e) {}
+  }
+  if (!orderColumns.has("custom_image_url")) {
+    try { db.exec("ALTER TABLE orders ADD COLUMN custom_image_url TEXT;"); } catch (e) {}
+  }
+  if (!orderColumns.has("printing_fee")) {
+    try { db.exec("ALTER TABLE orders ADD COLUMN printing_fee REAL DEFAULT 0;"); } catch (e) {}
+  }
+  if (!orderColumns.has("customer_message")) {
+    try { db.exec("ALTER TABLE orders ADD COLUMN customer_message TEXT;"); } catch (e) {}
+  }
+  if (!orderColumns.has("custom_details")) {
+    try { db.exec("ALTER TABLE orders ADD COLUMN custom_details TEXT;"); } catch (e) {}
+  }
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS store_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  try {
+    db.prepare("INSERT OR IGNORE INTO store_settings (key, value) VALUES ('printing_fee', '200');").run();
+  } catch (e) {}
 } catch (err) {
-  console.error("Fatal error migrating custom_products table schema:", err);
+  console.error("Fatal error migrating database schema:", err);
   process.exit(1);
 }
 
@@ -814,6 +845,111 @@ app.post("/verify-payment", (req, res) => {
   }
 });
 
+// SSRF and Image URL Validation
+function isSafeImageUrl(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== "string") return false;
+  const trimmed = rawUrl.trim();
+  if (trimmed.length > 2048) return false;
+
+  let parsed;
+  try {
+    parsed = new URL(trimmed);
+  } catch (e) {
+    return false;
+  }
+
+  // Only allow http: and https:
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    return false;
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+
+  // Block local/private IPs and internal hostnames (SSRF prevention)
+  if (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    hostname.endsWith(".localhost") ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".internal") ||
+    hostname === "metadata.google.internal" ||
+    hostname === "169.254.169.254"
+  ) {
+    return false;
+  }
+
+  const ipv4Regex = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+  const match = hostname.match(ipv4Regex);
+  if (match) {
+    const p1 = parseInt(match[1], 10);
+    const p2 = parseInt(match[2], 10);
+    if (p1 === 10) return false;
+    if (p1 === 127) return false;
+    if (p1 === 169 && p2 === 254) return false;
+    if (p1 === 172 && p2 >= 16 && p2 <= 31) return false;
+    if (p1 === 192 && p2 === 168) return false;
+    if (p1 === 0) return false;
+  }
+
+  return true;
+}
+
+// Category Validator for Customisation (Shirts & T-Shirts only)
+function isCustomisableCategory(category, productName = "") {
+  const cat = String(category || "").toLowerCase().trim();
+  const name = String(productName || "").toLowerCase().trim();
+  if (cat.includes("shirt") || cat.includes("tee") || cat.includes("t-shirt")) return true;
+  if (name.includes("shirt") || name.includes("tee") || name.includes("t-shirt")) return true;
+  return false;
+}
+
+/* =========================================================
+   STORE SETTINGS & CONFIG APIS (PRINTING CHARGE)
+   ========================================================= */
+
+// Public endpoint for frontend customisation page
+app.get("/api/config/printing-fee", (req, res) => {
+  try {
+    const row = db.prepare("SELECT value FROM store_settings WHERE key = 'printing_fee'").get();
+    const fee = row ? Number(row.value) : 200;
+    res.json({ printing_fee: Number.isFinite(fee) ? fee : 200 });
+  } catch (err) {
+    res.json({ printing_fee: 200 });
+  }
+});
+
+// Admin get printing fee
+app.get("/api/admin/settings/printing-fee", requireAdminAuth, (req, res) => {
+  try {
+    const row = db.prepare("SELECT value FROM store_settings WHERE key = 'printing_fee'").get();
+    const fee = row ? Number(row.value) : 200;
+    res.json({ printing_fee: Number.isFinite(fee) ? fee : 200 });
+  } catch (err) {
+    res.status(500).json({ error: "Could not fetch printing fee." });
+  }
+});
+
+// Admin update printing fee
+app.post("/api/admin/settings/printing-fee", requireAdminAuth, (req, res) => {
+  try {
+    const fee = Number(req.body.fee ?? req.body.printing_fee);
+    if (!Number.isFinite(fee) || fee < 0) {
+      return res.status(400).json({ error: "Invalid printing fee. Must be a non-negative number." });
+    }
+    db.prepare(`
+      INSERT INTO store_settings (key, value, updated_at)
+      VALUES ('printing_fee', ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+    `).run(String(fee));
+    res.json({ message: "Printing fee updated successfully.", printing_fee: fee });
+  } catch (err) {
+    console.error("Update printing fee error:", err);
+    res.status(500).json({ error: "Could not update printing fee." });
+  }
+});
+
 // Save Placed Order (Authenticated Customer or Guest Checkout)
 app.post("/api/orders", (req, res) => {
   try {
@@ -852,10 +988,61 @@ app.post("/api/orders", (req, res) => {
     const finalMethod = (paymentMethod || payment_method || "Online").toUpperCase();
     const finalStatus = status ? (status.toLowerCase() === "paid" ? "Paid" : "Pending") : (finalMethod === "COD" ? "Pending" : "Paid");
 
+    // Check if customised clothing order
+    const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url));
+    const isCustomized = Boolean(req.body.is_customized || hasCustomItems);
+
+    let customImageUrl = null;
+    let printingFee = 0;
+    let customerMessage = null;
+    let customDetails = null;
+
+    if (isCustomized) {
+      const customItem = Array.isArray(finalItems) ? (finalItems.find(i => i && (i.is_customized || i.custom_image_url)) || {}) : {};
+      const rawUrl = req.body.custom_image_url || customItem.custom_image_url || "";
+
+      if (!isSafeImageUrl(rawUrl)) {
+        return res.status(400).json({
+          error: "Invalid or unsafe custom image URL. Must be a valid, publicly accessible HTTP or HTTPS link."
+        });
+      }
+      customImageUrl = String(rawUrl).trim();
+
+      // Check product eligibility (only Shirts & T-Shirts)
+      const productId = customItem.productId || customItem.id;
+      if (productId) {
+        const dbProduct = db.prepare("SELECT id, name, category, price FROM custom_products WHERE id = ?").get(productId);
+        if (dbProduct && !isCustomisableCategory(dbProduct.category, dbProduct.name)) {
+          return res.status(400).json({
+            error: `Product "${dbProduct.name}" (${dbProduct.category}) is not eligible for customisation. Only shirts and T-shirts can be customised.`
+          });
+        }
+      }
+
+      // Fetch live printing fee from store_settings
+      try {
+        const feeRow = db.prepare("SELECT value FROM store_settings WHERE key = 'printing_fee'").get();
+        printingFee = feeRow ? (Number(feeRow.value) || 200) : 200;
+      } catch (e) {
+        printingFee = 200;
+      }
+
+      const rawMsg = req.body.customer_message || customItem.customer_message || "";
+      if (rawMsg) {
+        customerMessage = String(rawMsg).trim().slice(0, 1000);
+      }
+
+      customDetails = req.body.custom_details || customItem.custom_details || {
+        source: "customise_page",
+        print_fee: printingFee,
+        image_url: customImageUrl
+      };
+    }
+
     try {
       db.prepare(`
-        INSERT INTO orders (id, customer_id, customer_name, customer_email, customer_phone, shipping_address, items_json, total_amount, payment_method, payment_id, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO orders (id, customer_id, customer_name, customer_email, customer_phone, shipping_address, items_json, total_amount, payment_method, payment_id, status, is_customized, custom_image_url, printing_fee, customer_message, custom_details)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         finalOrderId,
         customerId,
@@ -867,17 +1054,21 @@ app.post("/api/orders", (req, res) => {
         finalTotal,
         paymentMethod || payment_method || "Online",
         paymentId || payment_id || null,
-        finalStatus
+        finalStatus,
+        isCustomized ? 1 : 0,
+        customImageUrl,
+        printingFee,
+        customerMessage,
+        customDetails ? JSON.stringify(customDetails) : null
       );
     } catch (e) {
-      // SQLite constraint failure (e.g., duplicate orderId)
       if (e && e.code === 'SQLITE_CONSTRAINT') {
         return res.status(409).json({ error: 'Order ID already exists. Please try again.' });
       }
       throw e;
     }
     
-    res.status(201).json({ message: "Order placed successfully", orderId: finalOrderId });
+    res.status(201).json({ message: "Order placed successfully", orderId: finalOrderId, is_customized: isCustomized });
   } catch (err) {
     console.error("Save order error:", err);
     res.status(500).json({ error: "Could not save order." });
@@ -887,6 +1078,12 @@ app.post("/api/orders", (req, res) => {
 // Admin Orders API
 app.get("/api/admin/orders", requireAdminAuth, (req, res) => {
   const orders = db.prepare("SELECT * FROM orders ORDER BY created_at DESC").all();
+  res.json(orders);
+});
+
+// Admin Customised Orders API
+app.get("/api/admin/customised-orders", requireAdminAuth, (req, res) => {
+  const orders = db.prepare("SELECT * FROM orders WHERE is_customized = 1 OR custom_image_url IS NOT NULL ORDER BY created_at DESC").all();
   res.json(orders);
 });
 
