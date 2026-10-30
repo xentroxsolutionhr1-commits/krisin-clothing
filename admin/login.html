@@ -48,7 +48,7 @@
     // If already signed in with a real token, verify and redirect to dashboard
     const existingToken = localStorage.getItem("krisin_admin_token") || sessionStorage.getItem("krisin_admin_token");
     if (existingToken && sessionStorage.getItem("krisin_admin_session") === "1") {
-      window.location.href = "/admin/dashboard.html";
+      window.location.href = "/admin05/dashboard";
     }
 
     document.getElementById("login-form").addEventListener("submit", async (e) => {
@@ -78,7 +78,7 @@
           localStorage.setItem("krisin_admin_session", "1");
           localStorage.setItem("krisin_admin_email", email);
           sessionStorage.setItem("krisin_admin_email", email);
-          window.location.href = "/admin/dashboard.html";
+          window.location.href = "/admin05/dashboard";
         } else {
           errBox.textContent = data.error || "Invalid email or password.";
           errBox.classList.add("show");
