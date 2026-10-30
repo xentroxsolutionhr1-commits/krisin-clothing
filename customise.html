@@ -253,7 +253,7 @@
     if(isLoggedIn){var al=document.getElementById('hdr-account-link');if(al)al.href='profile.html';}
     if(!isLoggedIn){
       document.getElementById('cust-auth-notice').classList.add('visible');
-      document.getElementById('cust-auth-notice').innerHTML='<strong>Please sign in to place a customised order.</strong> <a href="login.html?redirect=customise.html" style="color:#92400e;font-weight:700;">Sign in</a> to continue.';
+      document.getElementById('cust-auth-notice').innerHTML='<strong>Your details and shipping address will be collected at checkout.</strong>';
     }else{
       document.getElementById('cust-auth-notice').classList.remove('visible');
     }
@@ -384,47 +384,31 @@
       if(!selProd)errs.push('Please choose a base product.');
       if(!selSize)errs.push('Please select a size.');
       if(!designUrl)errs.push('Please upload or link your design image.');
-      var cName=isLoggedIn?(customer.name||'Customer'):'';
-      var cEmail=isLoggedIn?(customer.email||''):'';
-      var cPhone=isLoggedIn?(customer.phone||''):'';
-      if(!isLoggedIn)errs.push('Please sign in before placing a customised order.');
-      if(!cEmail||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cEmail))errs.push('Your account must have a valid email address.');
       if(errs.length){err.innerHTML=errs.map(function(e){return'\u2022 '+e;}).join('<br>');err.style.display='block';err.scrollIntoView({behavior:'smooth',block:'center'});return;}
-      var btn=document.getElementById('cust-place-btn');btn.disabled=true;btn.textContent='Placing order\u2026';
+      var btn=document.getElementById('cust-place-btn');btn.disabled=true;btn.textContent='Opening checkout\u2026';
       var base=Number(selProd.price),ship=base+printFee>=1999?0:99,total=base+printFee+ship;
       var msg=document.getElementById('cust-message').value.trim();
       var oid='CUST-'+Date.now()+'-'+Math.random().toString(36).substr(2,5).toUpperCase();
-      var imgUrl=designUrl.startsWith('data:')?'':designUrl;
-      var payload={orderId:oid,items:[{id:selProd.id,productId:selProd.id,name:selProd.name,price:base,qty:1,size:selSize,color:selColor||'',image:(selProd.images&&selProd.images[0])||'',is_customized:true,custom_image_url:imgUrl,customer_message:msg}],total:total,total_amount:total,subtotal:base,shippingFee:ship,shippingAddress:{},shipping_address:{},paymentMethod:'COD',payment_method:'COD',status:'Pending',is_customized:true,custom_image_url:imgUrl,printing_fee:printFee,customer_message:msg,customer_name:cName,customer_email:cEmail,customer_phone:cPhone,custom_details:{source:'customise_page',product_name:selProd.name,size:selSize,color:selColor||'',print_position:selPos,image_url:imgUrl||'[uploaded-file]'}};
-      var localRecord = Object.assign({}, payload, {
-        id: oid,
-        orderId: oid,
-        created_at: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        custom_image_url: designUrl || imgUrl
+      var customDetails={source:'customise_page',custom_order_id:oid,product_id:selProd.id,product_name:selProd.name,size:selSize,color:selColor||'',print_position:selPos,image_url:designUrl||'[uploaded-file]',printing_fee:printFee,shipping_fee:ship,total:total};
+      var cart=STORE.getCart();
+      cart=cart.filter(function(item){
+        return !(item.is_customized &&
+          item.productId===selProd.id &&
+          item.color===(selColor||'') &&
+          item.size===selSize &&
+          item.custom_image_url===designUrl &&
+          (item.customer_message||'')===msg);
       });
-      if(localRecord.items && localRecord.items[0]) {
-        localRecord.items[0].custom_image_url = designUrl || imgUrl;
-      }
-      try{
-        var st1=JSON.parse(localStorage.getItem('krisin_orders_v1')||'[]');
-        st1.unshift(localRecord);
-        localStorage.setItem('krisin_orders_v1',JSON.stringify(st1));
-        var st2=JSON.parse(localStorage.getItem('kc_orders')||'[]');
-        st2.unshift(localRecord);
-        localStorage.setItem('kc_orders',JSON.stringify(st2));
-      }catch(e){}
-      try{
-        var hdrs={'Content-Type':'application/json'};
-        var tok=(localStorage.getItem('krisin_customer_token')||sessionStorage.getItem('krisin_customer_token')||'');
-        if(tok)hdrs['Authorization']='Bearer '+tok;
-        await fetch(API_BASE+'/api/orders',{method:'POST',headers:hdrs,body:JSON.stringify(payload)});
-      }catch(e){}
-      var badge = document.getElementById('cust-success-oid-badge');
-      if(badge) badge.textContent = 'Order #' + oid;
-      document.getElementById('cust-form-area').style.display='none';
-      document.getElementById('cust-success-view').classList.add('visible');
-      updSteps(3);window.scrollTo({top:0,behavior:'smooth'});
+      STORE.saveCart(cart);
+      STORE.addToCart(selProd.id,selColor||'',selSize,1,{
+        name:selProd.name,
+        price:base,
+        custom_image_url:designUrl,
+        printing_fee:printFee,
+        customer_message:msg,
+        custom_details:customDetails
+      });
+      window.location.href='checkout.html';
     });
   })();
   </script>

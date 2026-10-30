@@ -167,7 +167,7 @@
     <div class="page-hero" style="padding-top:40px;padding-bottom:0;border:none">
       <h1 class="heading">Checkout</h1>
       <div class="steps">
-        <div class="step done"><span class="dot">âœ“</span>Bag</div>
+        <div class="step done"><span class="dot">Ã¢Å“â€œ</span>Bag</div>
         <div class="step-line"></div>
         <div class="step active"><span class="dot">2</span>Details &amp; payment</div>
         <div class="step-line"></div>
@@ -206,7 +206,7 @@
             <input type="radio" name="pay" value="cod">
             <div>
               <div class="pm-title">Cash on delivery</div>
-              <div class="pm-sub">Pay in cash when your order arrives. A â‚¹49 handling fee applies.</div>
+              <div class="pm-sub">Pay in cash when your order arrives. A Ã¢â€šÂ¹49 handling fee applies.</div>
             </div>
           </label>
           <div class="rz-note">
@@ -242,7 +242,7 @@
   <footer class="site-footer">
     <div class="container">
       <div class="footer-bottom" style="border:none;padding-top:0">
-        <span>Â© 2026 Krisin Clothing</span>
+        <span>Ã‚Â© 2026 Krisin Clothing</span>
       </div>
     </div>
   </footer>
@@ -302,18 +302,24 @@
       ${cart.map(item => {
           const p = getProduct(item.productId) || {};
           const printFee = item.is_customized ? Number(item.printing_fee || 200) : 0;
-          const lineTotal = (Number(p.price || 0) + printFee) * item.qty;
+          const lineTotal = (Number(p.price || item.price || 0) + printFee) * item.qty;
           return `
             <div class="summary-line" style="align-items:flex-start;">
               <div>
-                <div style="font-weight:600;">${escapeHtml(p.name || item.name || 'Product')} × ${item.qty}</div>
+                <div style="font-weight:600;">${escapeHtml(p.name || item.name || 'Product')} Ã— ${item.qty}</div>
                 ${item.is_customized ? `
                   <div style="margin:3px 0 2px;">
                     <span style="font-size:10px;font-weight:700;text-transform:uppercase;background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;">Customised Shirt (+${formatPrice(printFee)} print)</span>
                   </div>
                   <div style="font-size:12px;color:var(--stone);">
-                    Size: <strong>${escapeHtml(item.size || 'M')}</strong>${item.color ? ` · Color: <strong>${escapeHtml(item.color)}</strong>` : ''}
+                    Size: <strong>${escapeHtml(item.size || 'M')}</strong>${item.color ? ` Â· Color: <strong>${escapeHtml(item.color)}</strong>` : ''}
                   </div>
+                  ${item.custom_details && (item.custom_details.print_position || item.custom_details.custom_order_id) ? `
+                    <div style="font-size:11px;color:var(--stone);margin-top:3px;">
+                      ${item.custom_details.print_position ? `Print position: <strong>${escapeHtml(item.custom_details.print_position)}</strong>` : ''}
+                      ${item.custom_details.custom_order_id ? `${item.custom_details.print_position ? ' Â· ' : ''}Custom order: <strong>${escapeHtml(item.custom_details.custom_order_id)}</strong>` : ''}
+                    </div>
+                  ` : ''}
                   ${item.custom_image_url ? `
                     <div style="margin-top:4px;display:flex;align-items:center;gap:6px;">
                       <img src="${escapeHtml(item.custom_image_url)}" alt="Custom Artwork" style="width:28px;height:28px;object-fit:cover;border-radius:4px;border:1px solid var(--line);">
@@ -326,7 +332,7 @@
                     </div>
                   ` : ''}
                 ` : `
-                  <div style="font-size:12px;color:var(--stone);">Size: <strong>${escapeHtml(item.size || 'M')}</strong>${item.color ? ` · Color: <strong>${escapeHtml(item.color)}</strong>` : ''}</div>
+                  <div style="font-size:12px;color:var(--stone);">Size: <strong>${escapeHtml(item.size || 'M')}</strong>${item.color ? ` Â· Color: <strong>${escapeHtml(item.color)}</strong>` : ''}</div>
                 `}
               </div>
               <span class="mono-price">${formatPrice(lineTotal)}</span>
@@ -383,8 +389,8 @@
           return {
             id: item.productId,
             productId: item.productId,
-            name: p.name || item.productId,
-            price: p.price || 0,
+            name: p.name || item.name || item.productId,
+            price: p.price || item.price || 0,
             qty: item.qty,
             color: item.color || null,
             size: item.size || null,
@@ -545,11 +551,11 @@
         }
         form.classList.add("hidden");
         document.querySelector(".steps").innerHTML = `
-      <div class="step done"><span class="dot">âœ“</span>Bag</div>
+      <div class="step done"><span class="dot">Ã¢Å“â€œ</span>Bag</div>
       <div class="step-line"></div>
-      <div class="step done"><span class="dot">âœ“</span>Details &amp; payment</div>
+      <div class="step done"><span class="dot">Ã¢Å“â€œ</span>Details &amp; payment</div>
       <div class="step-line"></div>
-      <div class="step active"><span class="dot">âœ“</span>Confirmation</div>`;
+      <div class="step active"><span class="dot">Ã¢Å“â€œ</span>Confirmation</div>`;
         document.getElementById("confirmation").classList.remove("hidden");
         localStorage.removeItem("mc_cart");
         updateHeaderCounts();

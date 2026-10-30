@@ -32,6 +32,8 @@ const STORE = {
       } else {
         cart.push({
           productId,
+          name: customData.name || "",
+          price: Number(customData.price || 0),
           color,
           size,
           qty,
@@ -66,9 +68,10 @@ const STORE = {
   cartTotal() {
     return this.getCart().reduce((sum, i) => {
       const p = getProduct(i.productId);
-      if (!p) return sum;
+      const price = p ? Number(p.price || 0) : Number(i.price || 0);
+      if (!price) return sum;
       const printFee = i.is_customized ? Number(i.printing_fee || 200) : 0;
-      return sum + (p.price + printFee) * i.qty;
+      return sum + (price + printFee) * i.qty;
     }, 0);
   },
 
