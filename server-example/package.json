@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Minimal backend for creating verified Razorpay orders for Krishin Clothing.",
   "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server.pg-migration.js"
   },
@@ -16,6 +19,7 @@
     "multer": "^2.5.0",
     "pg": "^8.23.1",
     "razorpay": "^2.9.4",
+    "resend": "^6.37.0",
     "sqlite3": "^6.0.1"
   }
 }

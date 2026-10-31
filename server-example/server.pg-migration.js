@@ -18,6 +18,7 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { v2: cloudinary } = require("cloudinary");
+const { Resend } = require("resend");
 const pool = require("./db");
 const Razorpay = require("razorpay");
 
@@ -144,6 +145,140 @@ pool.query(`
 `).catch((err) => {
   console.error("Neon PostgreSQL contact_messages table error:", err.message);
 });
+
+const passwordResetOtpTableReady = pool.query(`
+  CREATE TABLE IF NOT EXISTS password_reset_otps (
+    id BIGSERIAL PRIMARY KEY,
+    customer_id TEXT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    otp_hash CHAR(64) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    resend_allowed_at TIMESTAMPTZ NOT NULL,
+    failed_attempts INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    consumed_at TIMESTAMPTZ,
+    reset_token_hash CHAR(64),
+    reset_token_expires TIMESTAMPTZ,
+    reset_completed_at TIMESTAMPTZ
+  );
+`).catch((err) => {
+  console.error("Password reset OTP table error:", err.message);
+  throw err;
+});
+
+const resendClient = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+const passwordResetGenericMessage =
+  "If that email is registered, a verification code will be sent shortly.";
+const passwordResetSendLimits = new Map();
+const passwordResetVerifyLimits = new Map();
+const PASSWORD_RESET_WINDOW_MS = 10 * 60 * 1000;
+const PASSWORD_RESET_SEND_LIMIT = 5;
+const PASSWORD_RESET_VERIFY_LIMIT = 10;
+
+function cleanPasswordResetRateLimits() {
+  const now = Date.now();
+  for (const [key, timestamps] of passwordResetSendLimits.entries()) {
+    const valid = timestamps.filter(timestamp => now - timestamp < PASSWORD_RESET_WINDOW_MS);
+    if (valid.length === 0) passwordResetSendLimits.delete(key);
+    else passwordResetSendLimits.set(key, valid);
+  }
+  for (const [key, timestamps] of passwordResetVerifyLimits.entries()) {
+    const valid = timestamps.filter(timestamp => now - timestamp < PASSWORD_RESET_WINDOW_MS);
+    if (valid.length === 0) passwordResetVerifyLimits.delete(key);
+    else passwordResetVerifyLimits.set(key, valid);
+  }
+}
+
+const passwordResetRateLimitCleanup = setInterval(
+  cleanPasswordResetRateLimits,
+  5 * 60 * 1000
+);
+passwordResetRateLimitCleanup.unref();
+
+function getRequestIp(req) {
+  return req.ip || req.connection?.remoteAddress || "unknown";
+}
+
+function hasExceededRateLimit(rateLimits, key, limit) {
+  const now = Date.now();
+  const timestamps = (rateLimits.get(key) || []).filter(
+    timestamp => now - timestamp < PASSWORD_RESET_WINDOW_MS
+  );
+  if (timestamps.length >= limit) {
+    rateLimits.set(key, timestamps);
+    return true;
+  }
+  timestamps.push(now);
+  rateLimits.set(key, timestamps);
+  return false;
+}
+
+function hashPasswordResetValue(value) {
+  return crypto.createHash("sha256").update(String(value)).digest("hex");
+}
+
+function hashPasswordResetOtp(otp) {
+  const secret = process.env.PASSWORD_RESET_OTP_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      "Password reset OTP configuration is missing or invalid."
+    );
+  }
+  return crypto.createHmac("sha256", secret).update(String(otp)).digest("hex");
+}
+
+function hashesMatch(left, right) {
+  const leftBuffer = Buffer.from(String(left), "hex");
+  const rightBuffer = Buffer.from(String(right), "hex");
+  return leftBuffer.length === rightBuffer.length &&
+    crypto.timingSafeEqual(leftBuffer, rightBuffer);
+}
+
+function generatePasswordResetOtp() {
+  return crypto.randomInt(0, 10000).toString().padStart(4, "0");
+}
+
+function generatePasswordResetToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+function isValidPasswordResetEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 255;
+}
+
+async function sendPasswordResetOtpEmail(email, otp) {
+  if (!resendClient || !process.env.RESEND_FROM_EMAIL) {
+    throw new Error("Resend password reset configuration is missing.");
+  }
+
+  const result = await resendClient.emails.send({
+    from: process.env.RESEND_FROM_EMAIL,
+    to: [email],
+    subject: "Your Krisin Clothing password reset code",
+    text: [
+      "Hello,",
+      "",
+      `Your Krisin Clothing password reset code is ${otp}.`,
+      "This code expires in 5 minutes.",
+      "If you did not request a password reset, you can ignore this email.",
+      "",
+      "Krisin Clothing"
+    ].join("\n"),
+    html: `
+      <p>Hello,</p>
+      <p>Your Krisin Clothing password reset code is:</p>
+      <p style="font-size:28px;font-weight:700;letter-spacing:8px;">${otp}</p>
+      <p>This code expires in 5 minutes.</p>
+      <p>If you did not request a password reset, you can ignore this email.</p>
+      <p>Krisin Clothing</p>
+    `
+  });
+  if (result && result.error) {
+    throw new Error("Resend password reset delivery failed.");
+  }
+}
 
 
 
@@ -503,121 +638,292 @@ app.post("/api/auth/logout", (_req, res) => {
   res.json({ message: "Signed out successfully." });
 });
 
-// 5. Forgot Password
+// 5. Forgot Password - send OTP
 app.post("/api/auth/forgot-password", async (req, res) => {
   try {
+    hashPasswordResetOtp("configuration-check");
     const email = String((req.body || {}).email || "")
       .trim()
       .toLowerCase();
+    const genericResponse = { message: passwordResetGenericMessage };
 
-    if (!email) {
-      return res.status(400).json({ error: "Email is required." });
+    if (!isValidPasswordResetEmail(email)) {
+      return res.status(400).json({ error: "Please provide a valid email address." });
+    }
+
+    const ip = getRequestIp(req);
+    if (
+      hasExceededRateLimit(passwordResetSendLimits, `ip:${ip}`, PASSWORD_RESET_SEND_LIMIT) ||
+      hasExceededRateLimit(passwordResetSendLimits, `email:${email}`, PASSWORD_RESET_SEND_LIMIT)
+    ) {
+      return res.status(429).json({
+        error: "Too many password reset requests. Please try again later."
+      });
+    }
+
+    if (!resendClient || !process.env.RESEND_FROM_EMAIL) {
+      console.error("Password reset email service is not configured.");
+      return res.status(503).json({
+        error: "Password reset is temporarily unavailable. Please try again later."
+      });
     }
 
     const result = await pool.query(
       "SELECT id, email FROM customers WHERE LOWER(email) = LOWER($1)",
       [email]
     );
-
     const user = result.rows[0];
 
-    // Same response whether or not the account exists.
     if (!user) {
-      return res.json({
-        message: "If that email is registered, password reset instructions will be provided."
+      return res.json(genericResponse);
+    }
+
+    const client = await pool.connect();
+    let otp;
+    try {
+      await client.query("BEGIN");
+      const activeOtp = await client.query(
+        `SELECT resend_allowed_at
+         FROM password_reset_otps
+         WHERE LOWER(email) = LOWER($1)
+           AND consumed_at IS NULL
+           AND expires_at > NOW()
+         ORDER BY created_at DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [email]
+      );
+
+      if (
+        activeOtp.rows.length &&
+        new Date(activeOtp.rows[0].resend_allowed_at).getTime() > Date.now()
+      ) {
+        await client.query("COMMIT");
+        return res.json(genericResponse);
+      }
+
+      otp = generatePasswordResetOtp();
+      await client.query(
+        `UPDATE password_reset_otps
+         SET consumed_at = COALESCE(consumed_at, NOW()),
+             expires_at = NOW()
+         WHERE LOWER(email) = LOWER($1)
+           AND consumed_at IS NULL`,
+        [email]
+      );
+      await client.query(
+        `INSERT INTO password_reset_otps
+          (customer_id, email, otp_hash, expires_at, resend_allowed_at)
+         VALUES ($1, $2, $3, NOW() + INTERVAL '5 minutes',
+                 NOW() + INTERVAL '60 seconds')`,
+        [String(user.id), user.email, hashPasswordResetOtp(otp)]
+      );
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    try {
+      await sendPasswordResetOtpEmail(user.email, otp);
+    } catch (err) {
+      console.error("Password reset email delivery failed.");
+      await pool.query(
+        `UPDATE password_reset_otps
+         SET expires_at = NOW(), consumed_at = COALESCE(consumed_at, NOW())
+         WHERE LOWER(email) = LOWER($1)
+           AND otp_hash = $2
+           AND consumed_at IS NULL`,
+        [email, hashPasswordResetOtp(otp)]
+      ).catch(() => {
+        console.error("Unable to invalidate the undelivered password reset code.");
+      });
+      return res.status(502).json({
+        error: "Unable to send the verification code. Please try again later."
       });
     }
 
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256")
-      .update(resetToken)
-      .digest("hex");
-
-    await pool.query(`
-      ALTER TABLE customers
-      ADD COLUMN IF NOT EXISTS reset_token_hash TEXT
-    `);
-
-    await pool.query(`
-      ALTER TABLE customers
-      ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMPTZ
-    `);
-
-    await pool.query(
-      `UPDATE customers
-       SET reset_token_hash = $1,
-           reset_token_expires = NOW() + INTERVAL '30 minutes'
-       WHERE id = $2`,
-      [tokenHash, user.id]
-    );
-
-    // Development only: don't expose reset tokens in production.
-    const response = {
-      message: "If that email is registered, password reset instructions will be provided."
-    };
-
-    if (process.env.NODE_ENV !== "production") {
-      response.resetToken = resetToken;
-      response.resetUrl = "/reset-password.html?token=" + resetToken;
-    }
-
-    res.json(response);
+    return res.json(genericResponse);
   } catch (err) {
-    console.error("Forgot password error:", err);
-    res.status(500).json({
+    console.error("Forgot password error:", err.message);
+    return res.status(500).json({
       error: "Unable to process request. Please try again."
     });
   }
 });
 
-// 6. Reset Password
-app.post("/api/auth/reset-password", async (req, res) => {
+// 6. Verify password reset OTP
+app.post("/api/auth/verify-reset-otp", async (req, res) => {
   try {
-    const { token, newPassword, password } = req.body || {};
-    const newPass = newPassword || password;
+    hashPasswordResetOtp("configuration-check");
+    const email = String((req.body || {}).email || "")
+      .trim()
+      .toLowerCase();
+    const otp = String((req.body || {}).otp || "").trim();
 
-    if (!token || !newPass) {
+    if (!isValidPasswordResetEmail(email) || !/^\d{4}$/.test(otp)) {
       return res.status(400).json({
-        error: "Token and new password are required."
+        error: "The verification code is invalid or has expired."
       });
     }
 
-    if (String(newPass).length < 6) {
+    const ip = getRequestIp(req);
+    if (
+      hasExceededRateLimit(passwordResetVerifyLimits, `ip:${ip}`, PASSWORD_RESET_VERIFY_LIMIT) ||
+      hasExceededRateLimit(passwordResetVerifyLimits, `email:${email}`, PASSWORD_RESET_VERIFY_LIMIT)
+    ) {
+      return res.status(429).json({
+        error: "Too many verification attempts. Please request a new code later."
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `SELECT id, otp_hash, expires_at, failed_attempts
+         FROM password_reset_otps
+         WHERE LOWER(email) = LOWER($1)
+           AND consumed_at IS NULL
+           AND reset_token_hash IS NULL
+         ORDER BY created_at DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [email]
+      );
+      const record = result.rows[0];
+
+      if (
+        !record ||
+        new Date(record.expires_at).getTime() <= Date.now() ||
+        Number(record.failed_attempts) >= 5
+      ) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: "The verification code is invalid or has expired."
+        });
+      }
+
+      const otpMatches = hashesMatch(record.otp_hash, hashPasswordResetOtp(otp));
+      if (!otpMatches) {
+        const failedAttempts = Number(record.failed_attempts) + 1;
+        await client.query(
+          `UPDATE password_reset_otps
+           SET failed_attempts = $1,
+               consumed_at = CASE WHEN $1 >= 5 THEN NOW() ELSE consumed_at END,
+               expires_at = CASE WHEN $1 >= 5 THEN NOW() ELSE expires_at END
+           WHERE id = $2`,
+          [failedAttempts, record.id]
+        );
+        await client.query("COMMIT");
+        return res.status(400).json({
+          error: "The verification code is invalid or has expired."
+        });
+      }
+
+      const resetToken = generatePasswordResetToken();
+      await client.query(
+        `UPDATE password_reset_otps
+         SET consumed_at = NOW(),
+             reset_token_hash = $1,
+             reset_token_expires = NOW() + INTERVAL '10 minutes'
+         WHERE id = $2`,
+        [hashPasswordResetValue(resetToken), record.id]
+      );
+      await client.query("COMMIT");
+
+      return res.json({
+        message: "Verification successful. You can now set a new password.",
+        resetToken
+      });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Reset OTP verification error:", err.message);
+    return res.status(500).json({
+      error: "Unable to verify the code. Please try again."
+    });
+  }
+});
+
+// 7. Reset Password after OTP verification
+app.post("/api/auth/reset-password", async (req, res) => {
+  try {
+    const { resetToken, newPassword, password } = req.body || {};
+    const newPass = newPassword || password;
+
+    if (
+      typeof resetToken !== "string" ||
+      !resetToken ||
+      typeof newPass !== "string" ||
+      !newPass
+    ) {
+      return res.status(400).json({
+        error: "Verification and new password are required."
+      });
+    }
+
+    if (newPass.length < 6) {
       return res.status(400).json({
         error: "Password must be at least 6 characters."
       });
     }
 
-    const tokenHash = crypto.createHash("sha256")
-      .update(String(token))
-      .digest("hex");
+    const passwordHash = await bcrypt.hash(newPass, 12);
+    const resetTokenHash = hashPasswordResetValue(resetToken);
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await client.query(
+        `UPDATE password_reset_otps
+         SET reset_completed_at = NOW()
+         WHERE reset_token_hash = $1
+           AND reset_token_expires > NOW()
+           AND reset_completed_at IS NULL
+         RETURNING customer_id`,
+        [resetTokenHash]
+      );
 
-    const passwordHash = await bcrypt.hash(String(newPass), 12);
+      if (result.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: "Verification has expired or is invalid. Please request a new code."
+        });
+      }
 
-    const result = await pool.query(
-      `UPDATE customers
-       SET password_hash = $1,
-           reset_token_hash = NULL,
-           reset_token_expires = NULL,
-           updated_at = NOW()
-       WHERE reset_token_hash = $2
-         AND reset_token_expires > NOW()
-       RETURNING id`,
-      [passwordHash, tokenHash]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(400).json({
-        error: "Reset link has expired or is invalid. Please request a new one."
-      });
+      const customerUpdate = await client.query(
+        `UPDATE customers
+         SET password_hash = $1,
+             updated_at = NOW()
+         WHERE id::text = $2`,
+        [passwordHash, result.rows[0].customer_id]
+      );
+      if (customerUpdate.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: "Verification has expired or is invalid. Please request a new code."
+        });
+      }
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
     }
 
-    res.json({
+    return res.json({
       message: "Password updated successfully. You can now sign in."
     });
   } catch (err) {
-    console.error("Reset password error:", err);
-    res.status(500).json({
+    console.error("Reset password error:", err.message);
+    return res.status(500).json({
       error: "Unable to reset password. Please try again."
     });
   }
@@ -2185,10 +2491,17 @@ app.delete("/api/admin/messages/:id", requireAdminAuth, async (req, res) => {
 
 const port = Number(process.env.PORT || 4000);
 
-const server = app.listen(port, () => {
-  console.log(`Krisin Clothing PostgreSQL migration server listening on port ${port}`);
-});
+passwordResetOtpTableReady
+  .then(() => {
+    const server = app.listen(port, () => {
+      console.log(`Krisin Clothing PostgreSQL migration server listening on port ${port}`);
+    });
 
-server.on("error", (err) => {
-  console.error("Server startup error:", err);
-});
+    server.on("error", (err) => {
+      console.error("Server startup error:", err);
+    });
+  })
+  .catch(() => {
+    console.error("Server startup aborted because password reset storage is unavailable.");
+    process.exitCode = 1;
+  });
