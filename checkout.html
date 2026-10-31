@@ -392,6 +392,46 @@
         });
       }
 
+      function removePlacedItems() {
+        const placedItems = getCheckoutItems();
+        const currentCart = STORE.getCart();
+        const signatureFor = item => JSON.stringify([
+          item.productId,
+          item.color || null,
+          item.size || null,
+          Boolean(item.is_customized),
+          item.custom_image_url || null,
+          item.customer_message || null
+        ]);
+        const remainingPurchasedQty = new Map();
+
+        placedItems.forEach(item => {
+          const signature = signatureFor(item);
+          const quantity = Number(item.qty);
+          if (Number.isSafeInteger(quantity) && quantity > 0) {
+            remainingPurchasedQty.set(
+              signature,
+              (remainingPurchasedQty.get(signature) || 0) + quantity
+            );
+          }
+        });
+
+        const remainingCart = currentCart.map(currentItem => {
+          const signature = signatureFor(currentItem);
+          const purchasedQty = remainingPurchasedQty.get(signature) || 0;
+          const currentQty = Number(currentItem.qty);
+          if (!Number.isSafeInteger(currentQty) || currentQty < 1 || purchasedQty < 1) {
+            return currentItem;
+          }
+
+          const removedQty = Math.min(currentQty, purchasedQty);
+          const remainingQty = currentQty - removedQty;
+          remainingPurchasedQty.set(signature, purchasedQty - removedQty);
+          return remainingQty > 0 ? { ...currentItem, qty: remainingQty } : null;
+        }).filter(Boolean);
+        STORE.saveCart(remainingCart);
+      }
+
       async function completeOrder(orderId, paymentDetails = null) {
         const method = getSelectedMethod();
         const { total, subtotal, shipping, codFee } = totals();
@@ -563,8 +603,7 @@
       <div class="step-line"></div>
       <div class="step active"><span class="dot">Ã¢Å“â€œ</span>Confirmation</div>`;
         document.getElementById("confirmation").classList.remove("hidden");
-        localStorage.removeItem(STORE.cartKey);
-        updateHeaderCounts();
+        removePlacedItems();
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
       function makeOrderId() {
