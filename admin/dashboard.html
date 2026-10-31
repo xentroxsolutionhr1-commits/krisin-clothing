@@ -107,23 +107,23 @@
         <div class="a-stats">
           <div class="a-card">
             <div class="lbl">Total Balance</div>
-            <div class="val" id="stat-balance">?0</div>
+            <div class="val" id="stat-balance">&#8377;0</div>
             <div class="delta up">Available Payout</div>
           </div>
           <div class="a-card">
             <div class="lbl">Revenue (30d)</div>
-            <div class="val" id="stat-revenue">?0</div>
-            <div class="delta up">? 12.4% vs last month</div>
+            <div class="val" id="stat-revenue">&#8377;0</div>
+            <div class="delta up">&#8593; 12.4% vs last month</div>
           </div>
           <div class="a-card">
             <div class="lbl">Orders (30d)</div>
             <div class="val" id="stat-orders">0</div>
-            <div class="delta up">? 8.1% vs last month</div>
+            <div class="delta up">&#8593; 8.1% vs last month</div>
           </div>
           <div class="a-card">
             <div class="lbl">Customers</div>
             <div class="val" id="stat-customers">0</div>
-            <div class="delta up">? 5 new this week</div>
+            <div class="delta up">&#8593; 5 new this week</div>
           </div>
           <div class="a-card">
             <div class="lbl">Low Stock Items</div>
@@ -1190,7 +1190,7 @@
       { product: "Relaxed Fit Pants", customer: "Rahul Nair", rating: 5, comment: "My new everyday pants. Perfect fit.", status: "pending" }
     ];
 
-    function money(n) { return "?" + Number(n).toLocaleString("en-IN"); }
+    function money(n) { return "\u20B9" + Number(n).toLocaleString("en-IN"); }
     function escapeHtml(s) { return String(s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m])); }
 
     /* =========================================================
