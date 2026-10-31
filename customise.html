@@ -191,8 +191,8 @@
               <div id="cust-upload-zone" class="cust-upload-zone">
                 <div class="cust-upload-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
                 <div class="cust-upload-text">Click to upload or drag &amp; drop</div>
-                <div class="cust-upload-hint">PNG, JPG, SVG &mdash; max 10 MB</div>
-                <input type="file" id="cust-file-input" class="cust-upload-hidden" accept="image/*" aria-label="Upload design file">
+                <div class="cust-upload-hint">PNG, JPG, WebP &mdash; max 10 MB</div>
+                <input type="file" id="cust-file-input" class="cust-upload-hidden" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" aria-label="Upload design file">
               </div>
               <div id="cust-preview-wrap" class="cust-preview-wrap" style="margin-top:14px;">
                 <img id="cust-preview-img" class="cust-preview-img" src="" alt="Your design preview">
@@ -333,10 +333,39 @@
     uz.addEventListener('dragleave',function(){uz.classList.remove('drag-over');});
     uz.addEventListener('drop',function(e){e.preventDefault();uz.classList.remove('drag-over');var f=e.dataTransfer.files[0];if(f)doUpload(f);});
     fi.addEventListener('change',function(){var f=fi.files[0];if(f)doUpload(f);});
-    function doUpload(file){
-      if(!file.type.startsWith('image/')){alert('Please upload an image file (PNG, JPG, SVG).');return;}
-      if(file.size>10*1024*1024){alert('File too large. Max 10 MB.');return;}
-      var r=new FileReader();r.onload=function(e){designUrl=e.target.result;showPreview(e.target.result);updSummary();};r.readAsDataURL(file);
+    async function doUpload(file){
+      var err=document.getElementById('cust-url-error');
+      err.style.display='none';
+      var extension=(file.name||'').toLowerCase().split('.').pop();
+      var allowed={jpg:true,jpeg:true,png:true,webp:true};
+      if(!allowed[extension]||['image/jpeg','image/png','image/webp'].indexOf(file.type)===-1){
+        err.textContent='Please upload a JPG, JPEG, PNG, or WebP image.';
+        err.style.display='block';
+        return;
+      }
+      if(file.size>10*1024*1024){
+        err.textContent='File too large. Max 10 MB.';
+        err.style.display='block';
+        return;
+      }
+      var formData=new FormData();
+      formData.append('design',file);
+      uz.classList.add('is-uploading');
+      try{
+        var response=await fetch(API_BASE+'/api/uploads/design',{method:'POST',body:formData});
+        var data=await response.json().catch(function(){return{};});
+        if(!response.ok||!data.image_url||!/^https:\/\//i.test(data.image_url)){
+          throw new Error(data.error||'Could not upload the design image.');
+        }
+        designUrl=data.image_url;
+        showPreview(designUrl);
+        updSummary();
+      }catch(uploadError){
+        err.textContent=uploadError.message||'Could not upload the design image. Please try again.';
+        err.style.display='block';
+      }finally{
+        uz.classList.remove('is-uploading');
+      }
     }
     function showPreview(src){
       document.getElementById('cust-preview-img').src=src;

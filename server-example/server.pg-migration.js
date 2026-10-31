@@ -13,11 +13,11 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const crypto = require("crypto");
-const fs = require("fs");
 const multer = require("multer");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { v2: cloudinary } = require("cloudinary");
 const pool = require("./db");
 const Razorpay = require("razorpay");
 
@@ -76,11 +76,45 @@ app.use((req, res, next) => {
 });
 // Serve static frontend files from parent directory
 app.use(express.static(staticRoot));
-const artworkDir = path.join(staticRoot, "uploads", "artworks");
-if (!fs.existsSync(artworkDir)) {
-  fs.mkdirSync(artworkDir, { recursive: true });
+
+const allowedArtworkTypes = new Map([
+  [".jpg", "image/jpeg"],
+  [".jpeg", "image/jpeg"],
+  [".png", "image/png"],
+  [".webp", "image/webp"]
+]);
+
+const artworkUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const extension = path.extname(file.originalname || "").toLowerCase();
+    if (!allowedArtworkTypes.has(extension) || file.mimetype !== allowedArtworkTypes.get(extension)) {
+      return cb(new Error("Only JPG, JPEG, PNG, and WebP images are allowed."));
+    }
+    cb(null, true);
+  }
+});
+
+const cloudinaryConfigured = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+);
+
+if (cloudinaryConfigured) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
+  });
+} else {
+  console.error(
+    "Cloudinary image storage is not configured. Set CLOUDINARY_CLOUD_NAME, " +
+    "CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET."
+  );
 }
-app.use("/uploads", express.static(path.join(staticRoot, "uploads"), { dotfiles: "ignore", maxAge: "7d" }));
 
 
 // Initialize Neon PostgreSQL connection
@@ -1315,6 +1349,89 @@ async function calculateOrderPricing(items, normalizedMethod) {
     verifiedItems
   };
 }
+
+// In-memory rate limiting for design uploads: max 10 attempts per 10 minutes per IP
+const designUploadRateLimits = new Map();
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, timestamps] of designUploadRateLimits.entries()) {
+    const valid = timestamps.filter(t => now - t < 10 * 60 * 1000);
+    if (valid.length === 0) designUploadRateLimits.delete(ip);
+    else designUploadRateLimits.set(ip, valid);
+  }
+}, 5 * 60 * 1000);
+
+app.post("/api/uploads/design", (req, res) => {
+  const ip = req.ip || req.connection?.remoteAddress || "unknown";
+  const now = Date.now();
+  const timestamps = (designUploadRateLimits.get(ip) || []).filter(
+    t => now - t < 10 * 60 * 1000
+  );
+  if (timestamps.length >= 10) {
+    return res.status(429).json({
+      error: "Too many design upload attempts. Please wait a few minutes before trying again."
+    });
+  }
+  timestamps.push(now);
+  designUploadRateLimits.set(ip, timestamps);
+
+  if (!cloudinaryConfigured) {
+    return res.status(503).json({
+      error: "Cloudinary image storage is not configured on the server."
+    });
+  }
+
+  artworkUpload.single("design")(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+        return res.status(413).json({ error: "Image is too large. The maximum size is 10 MB." });
+      }
+      return res.status(400).json({
+        error: err.message || "Could not upload the design image."
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: "A JPG, JPEG, PNG, or WebP design image is required."
+      });
+    }
+
+    const uploadStream = cloudinary.uploader.upload_stream({
+      folder: "krisin-clothing/designs",
+      resource_type: "image",
+      allowed_formats: ["jpg", "jpeg", "png", "webp"],
+      use_filename: false,
+      unique_filename: true,
+      overwrite: false
+    }, (uploadError, result) => {
+      if (uploadError || !result || typeof result.secure_url !== "string") {
+        console.error(
+          "Cloudinary design upload error:",
+          uploadError ? uploadError.message : "Missing secure_url in response."
+        );
+        return res.status(502).json({
+          error: "Could not store the design image. Please try again."
+        });
+      }
+
+      const publicUrl = result.secure_url;
+      if (!/^https:\/\//i.test(publicUrl) || !isSafeImageUrl(publicUrl)) {
+        console.error("Cloudinary returned an invalid design image URL.");
+        return res.status(502).json({
+          error: "Could not store the design image. Please try again."
+        });
+      }
+
+      return res.status(201).json({ image_url: publicUrl });
+    });
+
+    uploadStream.on("error", (uploadError) => {
+      console.error("Cloudinary design upload stream error:", uploadError.message);
+    });
+    uploadStream.end(req.file.buffer);
+  });
+});
 
 /* =========================================================
    STORE SETTINGS & CONFIG APIS (PRINTING CHARGE)

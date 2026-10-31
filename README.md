@@ -19,6 +19,14 @@ Since Express serves the frontend files from the parent directory, you can open:
 
 *(If you run a separate frontend static server such as `npx http-server . -p 8000`, the frontend automatically communicates with the backend via CORS at `http://localhost:4000`)*.
 
+### Custom design image storage
+
+Custom design uploads are sent to Cloudinary by the Express upload endpoint and
+stored in the `krisin-clothing/designs` folder. Configure
+`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` only
+on the backend/Render service. The endpoint rejects invalid image types and
+files larger than 10 MB, and returns Cloudinary's HTTPS `secure_url`.
+
 ---
 
 ## Features & Implementation Overview
@@ -64,4 +72,3 @@ Since Express serves the frontend files from the parent directory, you can open:
 
 
 - **Sample Customer:** Register a new customer via the **Sign Up** button on the store.
-
