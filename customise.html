@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Customise Your Shirt | Krisin Clothing</title>
-  <meta name="description" content="Design your own custom printed shirt or T-shirt at Krisin Clothing. Upload your artwork, choose your base product, pick your size and colour, then order directly.">
+  <meta name="description" content="Design your own custom printed shirt or T-shirt at Krisin Clothing. Upload your artwork, choose your base product, pick your size, then order directly.">
   <link rel="icon" href="assets/logo-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,500&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -75,10 +75,6 @@
     .cust-skeleton{height:160px;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%);background-size:200% 100%;animation:shimmer 1.2s infinite;border-radius:10px}
     @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
     .cust-empty{text-align:center;padding:32px;color:var(--stone);font-size:14px}
-    .cust-color-grid{display:flex;flex-wrap:wrap;gap:8px}
-    .cust-color-btn{width:30px;height:30px;border-radius:50%;border:2.5px solid transparent;cursor:pointer;transition:transform .15s,box-shadow .15s;outline:none}
-    .cust-color-btn:hover{transform:scale(1.15)}
-    .cust-color-btn.selected{border-color:var(--black);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--black)}
     .cust-print-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
     .cust-print-chip{border:1.5px solid var(--line);border-radius:100px;padding:5px 14px;font-size:12.5px;font-weight:600;cursor:pointer;background:#fff;transition:all .18s}
     .cust-print-chip.selected{background:var(--black);border-color:var(--black);color:#fff}
@@ -171,10 +167,6 @@
               <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Select Size</div>
               <div class="cust-size-grid" id="cust-size-grid"></div>
             </div>
-            <div id="color-section" style="display:none;margin-top:16px;">
-              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Select Colour</div>
-              <div class="cust-color-grid" id="cust-color-grid"></div>
-            </div>
           </div>
           <div class="cust-panel">
             <div class="cust-panel-title"><span class="cust-panel-num">2</span> Upload Your Design</div>
@@ -218,7 +210,6 @@
             <img id="sum-design-thumb" class="cust-preview-thumb" src="" alt="Design preview">
             <div class="cust-summary-row"><span class="label">Base Product</span><span class="val" id="sum-product">&mdash;</span></div>
             <div class="cust-summary-row"><span class="label">Size</span><span class="val" id="sum-size">&mdash;</span></div>
-            <div class="cust-summary-row"><span class="label">Colour</span><span class="val" id="sum-color">&mdash;</span></div>
             <div class="cust-summary-row"><span class="label">Print Position</span><span class="val" id="sum-position">Front Centre</span></div>
             <div class="cust-summary-row"><span class="label">Design</span><span class="val" id="sum-design">&mdash;</span></div>
             <div style="height:10px;"></div>
@@ -257,7 +248,7 @@
     }else{
       document.getElementById('cust-auth-notice').classList.remove('visible');
     }
-    var selProd=null,selSize=null,selColor=null,selPos='Front Centre',designUrl='',printFee=200;
+    var selProd=null,selSize=null,selPos='Front Centre',designUrl='',printFee=200;
     fetch(API_BASE+'/api/config/printing-fee').then(function(r){return r.json();}).then(function(d){
       printFee=Number(d.printing_fee)||200;
       document.getElementById('sum-printing-fee').textContent=money(printFee);
@@ -312,19 +303,13 @@
     function selProduct(pid){
       var list=window._custProds||[];
       var p=list.find(function(x){return x.id===pid;});if(!p)return;
-      selProd=p;selSize=null;selColor=null;
+      selProd=p;selSize=null;
       document.querySelectorAll('.cust-product-card').forEach(function(c){var s=c.dataset.pid===pid;c.classList.toggle('selected',s);c.setAttribute('aria-checked',s?'true':'false');});
       var sizes=(p.sizes&&p.sizes.length)?p.sizes:['S','M','L','XL'];
       var sg=document.getElementById('cust-size-grid');
       sg.innerHTML=sizes.map(function(s){return'<div class="cust-size-chip" data-size="'+esc(s)+'">'+esc(s)+'</div>';}).join('');
       document.getElementById('size-section').style.display='block';
       sg.querySelectorAll('.cust-size-chip').forEach(function(chip){chip.addEventListener('click',function(){sg.querySelectorAll('.cust-size-chip').forEach(function(c){c.classList.remove('selected');});chip.classList.add('selected');selSize=chip.dataset.size;updSummary();});});
-      var colors=(p.colors&&p.colors.length)?p.colors:[{name:'White',hex:'#ffffff'},{name:'Black',hex:'#1a1a1a'},{name:'Navy',hex:'#14244b'}];
-      var cg=document.getElementById('cust-color-grid');
-      cg.innerHTML=colors.map(function(c){var b=(c.hex==='#ffffff'||c.hex==='#fff')?'#d1d5db':'transparent';return'<button class="cust-color-btn" data-color="'+esc(c.name)+'" style="background:'+esc(c.hex)+';border-color:'+b+';" title="'+esc(c.name)+'" aria-label="Colour: '+esc(c.name)+'"></button>';}).join('');
-      document.getElementById('color-section').style.display='flex';
-      cg.querySelectorAll('.cust-color-btn').forEach(function(btn){btn.addEventListener('click',function(){cg.querySelectorAll('.cust-color-btn').forEach(function(b){b.classList.remove('selected');});btn.classList.add('selected');selColor=btn.dataset.color;updSummary();});});
-      var fc=cg.querySelector('.cust-color-btn');if(fc)fc.click();
       updSummary();updSteps(1);
     }
     document.querySelectorAll('.cust-print-chip').forEach(function(chip){chip.addEventListener('click',function(){document.querySelectorAll('.cust-print-chip').forEach(function(c){c.classList.remove('selected');});chip.classList.add('selected');selPos=chip.dataset.pos;document.getElementById('sum-position').textContent=selPos;});});
@@ -392,7 +377,6 @@
     function updSummary(){
       document.getElementById('sum-product').textContent=selProd?selProd.name:'\u2014';
       document.getElementById('sum-size').textContent=selSize||'\u2014';
-      document.getElementById('sum-color').textContent=selColor||'\u2014';
       document.getElementById('sum-position').textContent=selPos;
       updateTotal();
     }
@@ -418,18 +402,18 @@
       var base=Number(selProd.price),ship=base+printFee>=1999?0:99,total=base+printFee+ship;
       var msg=document.getElementById('cust-message').value.trim();
       var oid='CUST-'+Date.now()+'-'+Math.random().toString(36).substr(2,5).toUpperCase();
-      var customDetails={source:'customise_page',custom_order_id:oid,product_id:selProd.id,product_name:selProd.name,size:selSize,color:selColor||'',print_position:selPos,image_url:designUrl||'[uploaded-file]',printing_fee:printFee,shipping_fee:ship,total:total};
+      var customDetails={source:'customise_page',custom_order_id:oid,product_id:selProd.id,product_name:selProd.name,size:selSize,color:'',print_position:selPos,image_url:designUrl||'[uploaded-file]',printing_fee:printFee,shipping_fee:ship,total:total};
       var cart=STORE.getCart();
       cart=cart.filter(function(item){
         return !(item.is_customized &&
           item.productId===selProd.id &&
-          item.color===(selColor||'') &&
+          item.color==='' &&
           item.size===selSize &&
           item.custom_image_url===designUrl &&
           (item.customer_message||'')===msg);
       });
       STORE.saveCart(cart);
-      STORE.addToCart(selProd.id,selColor||'',selSize,1,{
+      STORE.addToCart(selProd.id,'',selSize,1,{
         name:selProd.name,
         price:base,
         custom_image_url:designUrl,
