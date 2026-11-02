@@ -2281,7 +2281,7 @@ app.patch("/api/orders/:id/cancel", requireCustomerAuth, async (req, res) => {
 app.get("/api/admin/orders", requireAdminAuth, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM orders ORDER BY created_at DESC"
+      "SELECT * FROM orders WHERE COALESCE(is_customized, FALSE) = FALSE AND custom_image_url IS NULL ORDER BY created_at DESC"
     );
 
     res.json(result.rows);
