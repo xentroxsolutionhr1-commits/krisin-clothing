@@ -11,9 +11,11 @@
     href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Work+Sans:wght@400;500;600;700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="stylesheet" href="/css/logo-loader.css">
 </head>
 
 <body class="a-login-body">
+  <script src="/js/logo-loader.js"></script>
 
   <div class="a-login-card">
     <img src="/assets/logo-horizontal.png" alt="Krisin Clothing">
@@ -22,7 +24,7 @@
 
     <div class="a-login-error" id="login-error">That email or password isn't right. Try again.</div>
 
-    <form id="login-form">
+    <form id="login-form" data-logo-manual>
       <div class="a-field">
         <label for="li-email">Email</label>
         <input type="email" id="li-email" autocomplete="username" required>
@@ -61,6 +63,11 @@
       errBox.classList.remove("show");
       btn.textContent = "Signing in\u2026";
       btn.disabled = true;
+      // Animated logo while the credentials are checked
+      const logoIntro = window.KrisinLogo
+        ? KrisinLogo.show({ message: "Signing you in", waiting: true })
+        : Promise.resolve();
+      const hideLogo = () => (window.KrisinLogo ? KrisinLogo.hide(900) : Promise.resolve());
 
       try {
         const res = await fetch(`${API_BASE}/api/admin/login`, {
@@ -78,14 +85,23 @@
           localStorage.setItem("krisin_admin_session", "1");
           localStorage.setItem("krisin_admin_email", email);
           sessionStorage.setItem("krisin_admin_email", email);
+          // Let the logo finish, say welcome, then open the dashboard
+          await logoIntro;
+          if (window.KrisinLogo) {
+            KrisinLogo.setMessage("Welcome back");
+            await new Promise(r => setTimeout(r, 650));
+            KrisinLogo.handoff(true);
+          }
           window.location.href = "/admin05/dashboard";
         } else {
+          await hideLogo();
           errBox.textContent = data.error || "Invalid email or password.";
           errBox.classList.add("show");
           btn.textContent = "Sign in";
           btn.disabled = false;
         }
       } catch (err) {
+        await hideLogo();
         errBox.textContent = "Cannot reach server. Make sure the backend is running on port 4000.";
         errBox.classList.add("show");
         btn.textContent = "Sign in";

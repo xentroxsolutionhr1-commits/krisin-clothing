@@ -1,0 +1,122 @@
+/* =========================================================
+   KRISIN CLOTHING — animated logo (loader + login)
+   Used by js/logo-loader.js. Works on storefront and admin pages.
+   Sequence: gold ring draws -> deer rises from the neck up
+   (antlers last) -> gold shine sweeps -> KRISIN wipes in.
+   ========================================================= */
+.klogo-overlay{
+  position:fixed;inset:0;z-index:10000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;
+  background:radial-gradient(120% 90% at 50% 40%,#1c3264 0%,#14244b 55%,#0e1a38 100%);
+  color:#fff;font-family:'Work Sans','Helvetica Neue',Arial,sans-serif;
+  transition:clip-path 1s cubic-bezier(.76,0,.24,1);
+  clip-path:inset(0 0 0 0);
+}
+.klogo-overlay.leave{clip-path:inset(0 0 100% 0);}
+.klogo-overlay.leave .klogo-stage{transform:translateY(-40px);opacity:0;transition:transform .8s cubic-bezier(.76,0,.24,1),opacity .5s ease;}
+
+/* Faint moving grain of light behind the logo */
+.klogo-overlay::before{
+  content:"";position:absolute;width:520px;height:520px;border-radius:50%;
+  background:radial-gradient(circle,rgba(223,176,82,.16) 0%,rgba(223,176,82,0) 65%);
+  animation:klogoGlow 3.2s ease-in-out infinite;
+}
+@keyframes klogoGlow{0%,100%{transform:scale(.9);opacity:.7;}50%{transform:scale(1.08);opacity:1;}}
+
+.klogo-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:22px;}
+
+/* Ring + deer */
+.klogo-mark{position:relative;width:168px;height:168px;display:flex;align-items:center;justify-content:center;}
+.klogo-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible;}
+.klogo-ring circle{fill:none;stroke-linecap:round;}
+.klogo-ring .track{stroke:rgba(255,255,255,.08);stroke-width:1;}
+.klogo-ring .draw{
+  stroke:#dfb052;stroke-width:1.6;
+  stroke-dasharray:515;stroke-dashoffset:515;
+  animation:klogoRing 1.3s cubic-bezier(.65,0,.35,1) .1s forwards;
+}
+@keyframes klogoRing{to{stroke-dashoffset:0;}}
+.klogo-ring .dot{fill:#dfb052;opacity:0;animation:klogoDot .3s ease 1.35s forwards;}
+@keyframes klogoDot{to{opacity:1;}}
+
+.klogo-icon{
+  position:relative;width:86px;height:109px;
+  clip-path:inset(100% 0 0 0);transform:translateY(18px);
+  animation:klogoRise 1.1s cubic-bezier(.16,1,.3,1) .35s forwards;
+}
+.klogo-icon img{width:100%;height:100%;object-fit:contain;display:block;}
+@keyframes klogoRise{to{clip-path:inset(0 0 0 0);transform:none;}}
+/* gold shine clipped to the deer's shape */
+.klogo-shine{
+  position:absolute;inset:0;pointer-events:none;
+  -webkit-mask:var(--klogo-mask) center/contain no-repeat;mask:var(--klogo-mask) center/contain no-repeat;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,226,160,0) 38%,rgba(255,226,160,.95) 50%,rgba(255,226,160,0) 62%,transparent 70%);
+  background-size:300% 100%;background-position:120% 0;
+  animation:klogoShine 1.1s ease-in-out 1.3s forwards;
+}
+@keyframes klogoShine{to{background-position:-60% 0;}}
+
+/* Wordmark */
+.klogo-word{
+  width:min(240px,62vw);
+  clip-path:inset(0 100% 0 0);filter:blur(6px);opacity:.4;
+  animation:klogoWord 1s cubic-bezier(.65,0,.35,1) .95s forwards;
+}
+.klogo-word img{width:100%;height:auto;display:block;}
+@keyframes klogoWord{to{clip-path:inset(0 0 0 0);filter:blur(0);opacity:1;}}
+
+.klogo-msg{
+  margin:0;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,255,255,.7);
+  opacity:0;transform:translateY(8px);animation:klogoMsg .7s ease 1.5s forwards;min-height:1em;
+}
+@keyframes klogoMsg{to{opacity:1;transform:none;}}
+
+/* Waiting state (e.g. while signing in): ring keeps orbiting */
+.klogo-overlay.waiting .klogo-ring .orbit{
+  fill:none;stroke:#f3d48f;stroke-width:2.2;stroke-linecap:round;
+  stroke-dasharray:60 455;opacity:0;
+  animation:klogoFade .4s ease 1.4s forwards,klogoOrbit 1.4s linear 1.4s infinite;
+  transform-box:view-box;transform-origin:50% 50%;
+}
+.klogo-overlay:not(.waiting) .klogo-ring .orbit{display:none;}
+@keyframes klogoOrbit{to{transform:rotate(360deg);}}
+@keyframes klogoFade{to{opacity:1;}}
+
+/* Arrival after login: logo already complete, just lift away */
+.klogo-overlay.static *,.klogo-overlay.static *::before{animation:none !important;}
+.klogo-overlay.static .klogo-icon,.klogo-overlay.static .klogo-word{clip-path:none;transform:none;filter:none;opacity:1;}
+.klogo-overlay.static .klogo-ring .draw{stroke-dashoffset:0;}
+.klogo-overlay.static .klogo-ring .dot,.klogo-overlay.static .klogo-msg{opacity:1;transform:none;}
+
+/* While the opening splash is up, hold the page's own entrance animations
+   so they play right as the logo lifts away */
+html.klogo-busy .hero-content > *,
+html.klogo-busy .site-header *,
+html.klogo-busy .shop-header *,
+html.klogo-busy .auth-card{animation-play-state:paused !important;}
+/* The splash lives inside <body>, so the body's own fade-in must not hide it */
+html.klogo-busy body{overflow:hidden;animation:none !important;opacity:1 !important;}
+
+/* Admin sign-in card entrance */
+.a-login-card{animation:klogoCard .9s cubic-bezier(.16,1,.3,1) both;}
+.a-login-card > *{animation:klogoCardItem .8s cubic-bezier(.16,1,.3,1) both;}
+.a-login-card > *:nth-child(1){animation-delay:.15s;}
+.a-login-card > *:nth-child(2){animation-delay:.22s;}
+.a-login-card > *:nth-child(3){animation-delay:.29s;}
+.a-login-card > *:nth-child(n+4){animation-delay:.36s;}
+@keyframes klogoCard{from{opacity:0;transform:translateY(30px) scale(.98);}to{opacity:1;transform:none;}}
+@keyframes klogoCardItem{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+.a-login-error.show{animation:klogoShake .45s ease;}
+@keyframes klogoShake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(7px);}60%{transform:translateX(-4px);}80%{transform:translateX(3px);}}
+
+@media (max-width:480px){
+  .klogo-mark{width:140px;height:140px;}
+  .klogo-icon{width:72px;height:91px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .klogo-overlay *,.klogo-overlay::before{animation:none !important;}
+  .klogo-icon,.klogo-word{clip-path:none !important;transform:none !important;filter:none !important;opacity:1 !important;}
+  .klogo-ring .draw{stroke-dashoffset:0 !important;}
+  .klogo-msg,.klogo-ring .dot{opacity:1 !important;transform:none !important;}
+  .a-login-card,.a-login-card > *{animation:none !important;}
+}

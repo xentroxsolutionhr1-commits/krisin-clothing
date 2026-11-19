@@ -1,0 +1,187 @@
+/* =========================================================
+   KRISIN CLOTHING — motion layer (booking + polish)
+   Loads after style.css and animations.css. Pairs with js/motion.js.
+   Adds: hero line reveal, header entrance, page transitions,
+   fly-to-bag, badge bounce, button loading spinners, button
+   ripple, toast polish, checkout steps, order-confirmed
+   celebration, order card stagger.
+   ========================================================= */
+:root{
+  --km-ease:cubic-bezier(.16,1,.3,1);
+  --km-ease-io:cubic-bezier(.65,0,.35,1);
+  --km-gold:#dfb052;
+  --km-navy:#14244b;
+}
+
+/* ---------- Page transitions ---------- */
+html.km-leaving body{opacity:0 !important;transition:opacity .22s ease !important;}
+
+/* ---------- Header entrance ---------- */
+.site-header .brand{animation:kmDropIn .9s var(--km-ease) .1s both;}
+.site-header .main-nav a{animation:kmDropIn .8s var(--km-ease) both;}
+.site-header .main-nav a:nth-child(1){animation-delay:.18s;}
+.site-header .main-nav a:nth-child(2){animation-delay:.24s;}
+.site-header .main-nav a:nth-child(3){animation-delay:.30s;}
+.site-header .main-nav a:nth-child(4){animation-delay:.36s;}
+.site-header .main-nav a:nth-child(5){animation-delay:.42s;}
+.site-header .main-nav a:nth-child(6){animation-delay:.48s;}
+.site-header .main-nav a:nth-child(n+7){animation-delay:.54s;}
+.site-header .header-actions{animation:kmDropIn .9s var(--km-ease) .35s both;}
+@keyframes kmDropIn{from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:none;}}
+
+/* ---------- Hero: headline lines rise out of a mask ---------- */
+.hero-content h1.km-split{animation:none !important;opacity:1 !important;transform:none !important;}
+.km-line{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em;}
+.km-line > span{display:block;transform:translateY(110%);animation:kmLineUp 1.1s var(--km-ease) both;}
+.km-line:nth-child(1) > span{animation-delay:.35s;}
+.km-line:nth-child(2) > span{animation-delay:.5s;}
+.km-line:nth-child(3) > span{animation-delay:.65s;}
+@keyframes kmLineUp{to{transform:none;}}
+html.klogo-busy .km-line > span{animation-play-state:paused;}
+/* gold rule that draws in beside the hero eyebrow */
+.hero-content .eyebrow{display:inline-flex;align-items:center;gap:12px;}
+.hero-content .eyebrow::before{content:"";height:1px;width:34px;background:var(--km-gold);transform:scaleX(0);transform-origin:left;animation:kmRule .9s var(--km-ease) .25s forwards;}
+html.klogo-busy .hero-content .eyebrow::before{animation-play-state:paused;}
+@keyframes kmRule{to{transform:scaleX(1);}}
+
+/* ---------- Bag icon: bounce + shake when something is added ---------- */
+.count-badge.km-bump{animation:kmBump .55s var(--km-ease);}
+@keyframes kmBump{0%{transform:scale(1);}35%{transform:scale(1.6);}100%{transform:scale(1);}}
+.icon-btn.km-shake svg{animation:kmShake .6s var(--km-ease);}
+@keyframes kmShake{0%,100%{transform:rotate(0);}20%{transform:rotate(-14deg);}45%{transform:rotate(10deg);}70%{transform:rotate(-5deg);}}
+
+/* Product photo flying into the bag */
+.km-fly{
+  position:fixed;z-index:9000;pointer-events:none;object-fit:cover;
+  border-radius:8px;box-shadow:0 18px 40px -12px rgba(20,36,75,.55);
+}
+/* little gold ring that pops on the bag when the photo lands */
+.km-land{
+  position:fixed;z-index:9001;pointer-events:none;width:36px;height:36px;margin:-18px 0 0 -18px;
+  border-radius:50%;border:2px solid var(--km-gold);animation:kmLand .6s ease-out forwards;
+}
+@keyframes kmLand{from{transform:scale(.3);opacity:1;}to{transform:scale(1.6);opacity:0;}}
+
+/* ---------- Buttons ---------- */
+.btn,.a-btn{position:relative;overflow:hidden;isolation:isolate;}
+.km-ripple{
+  position:absolute;border-radius:50%;pointer-events:none;z-index:-1;
+  width:12px;height:12px;margin:-6px 0 0 -6px;
+  background:rgba(223,176,82,.5);transform:scale(0);
+  animation:kmRipple .65s ease-out forwards;
+}
+@keyframes kmRipple{to{transform:scale(42);opacity:0;}}
+
+/* Loading state: spinner + moving sheen while a button is working
+   ("Signing in…", "Creating secure payment...", "Opening checkout…") */
+.btn.km-loading,.a-btn.km-loading{cursor:progress !important;opacity:1 !important;}
+.btn.km-loading::after,.a-btn.km-loading::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(110deg,transparent 30%,rgba(223,176,82,.28) 50%,transparent 70%);
+  background-size:220% 100%;animation:kmSheen 1.2s linear infinite;
+}
+.km-spin{
+  display:inline-block;width:15px;height:15px;margin-right:10px;flex:0 0 auto;
+  border-radius:50%;border:2px solid currentColor;border-right-color:transparent;
+  animation:kmSpin .7s linear infinite;vertical-align:-2px;
+}
+@keyframes kmSheen{from{background-position:120% 0;}to{background-position:-120% 0;}}
+@keyframes kmSpin{to{transform:rotate(360deg);}}
+
+/* Add-to-cart button confirms with a tick */
+.btn.km-added{background:var(--km-navy) !important;color:var(--km-gold) !important;border-color:var(--km-navy) !important;}
+.km-tick{display:inline-block;width:16px;height:16px;margin-right:8px;vertical-align:-3px;}
+.km-tick path{fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;animation:kmDraw .45s var(--km-ease) .05s forwards;}
+@keyframes kmDraw{to{stroke-dashoffset:0;}}
+
+/* ---------- Toast ---------- */
+.toast{border-left:3px solid var(--km-gold);box-shadow:0 24px 50px -18px rgba(20,36,75,.55);border-radius:2px;
+  transition:opacity .35s ease,transform .55s var(--km-ease) !important;max-width:calc(100vw - 32px);}
+.toast::before{
+  content:"";width:18px;height:18px;flex:0 0 auto;
+  background:var(--km-gold);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* ---------- Product cards: soft light follows the cursor ---------- */
+.product-media::after{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.22),rgba(255,255,255,0) 60%);
+  opacity:0;transition:opacity .4s ease;
+}
+@media (hover:hover){.product-card:hover .product-media::after{opacity:1;}}
+
+/* ---------- Product page: gallery feedback (added by motion.js only when the photo changes) ---------- */
+.size-box{transition:transform .25s var(--km-ease),background .2s,color .2s,border-color .2s;}
+.pdp-main-img img.km-swap{animation:kmImgIn .6s var(--km-ease);}
+@keyframes kmImgIn{from{opacity:.25;transform:scale(1.03);}to{opacity:1;transform:none;}}
+
+/* ---------- Checkout steps ---------- */
+.steps .step .dot{transition:background .4s,border-color .4s,color .4s,transform .4s var(--km-ease);}
+.steps .step.active .dot{position:relative;}
+.steps .step.active .dot::after{
+  content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--km-gold);
+  animation:kmPulse 1.8s ease-out infinite;
+}
+@keyframes kmPulse{0%{transform:scale(.8);opacity:1;}100%{transform:scale(1.5);opacity:0;}}
+.steps .step-line{position:relative;overflow:hidden;}
+.steps .step.done + .step-line::after{
+  content:"";position:absolute;inset:0;background:var(--km-navy);
+  transform:scaleX(0);transform-origin:left;animation:kmFill .8s var(--km-ease) .2s forwards;
+}
+@keyframes kmFill{to{transform:scaleX(1);}}
+.steps .step{animation:kmFadeUp .6s var(--km-ease) both;}
+.steps .step:nth-child(3){animation-delay:.1s;}
+.steps .step:nth-child(5){animation-delay:.2s;}
+.checkout-section,.summary-box{animation:kmFadeUp .8s var(--km-ease) both;}
+.checkout-section:nth-child(2){animation-delay:.1s;}
+.summary-box{animation-delay:.15s;}
+.pay-method{transition:border-color .3s,box-shadow .3s,transform .3s var(--km-ease);}
+.pay-method.selected{box-shadow:0 10px 30px -18px rgba(20,36,75,.5);}
+@keyframes kmFadeUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:none;}}
+
+/* ---------- Order confirmed celebration ---------- */
+.km-success-mark{width:96px;height:96px;margin:0 auto 26px;display:block;}
+.km-success-mark circle{fill:none;stroke:var(--km-gold);stroke-width:2;stroke-dasharray:283;stroke-dashoffset:283;
+  transform:rotate(-90deg);transform-origin:50% 50%;animation:kmDrawCircle .8s var(--km-ease-io) .1s forwards;}
+.km-success-mark .fill{fill:var(--km-navy);stroke:none;transform:scale(0);transform-origin:50% 50%;animation:kmGrow .5s var(--km-ease) .75s forwards;}
+.km-success-mark path{fill:none;stroke:#fff;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:60;stroke-dashoffset:60;animation:kmDrawTick .5s var(--km-ease) 1.05s forwards;}
+@keyframes kmDrawCircle{to{stroke-dashoffset:0;}}
+@keyframes kmGrow{0%{transform:scale(0);}70%{transform:scale(1.08);}100%{transform:scale(1);}}
+@keyframes kmDrawTick{to{stroke-dashoffset:0;}}
+.km-celebrate > *:not(.km-success-mark){animation:kmFadeUp .8s var(--km-ease) both;}
+.km-celebrate > *:nth-child(2){animation-delay:1.1s;}
+.km-celebrate > *:nth-child(3){animation-delay:1.25s;}
+.km-celebrate > *:nth-child(4){animation-delay:1.35s;}
+.km-celebrate > *:nth-child(n+5){animation-delay:1.45s;}
+.km-confetti{position:fixed;inset:0;z-index:600;pointer-events:none;width:100%;height:100%;}
+
+/* ---------- Orders page: cards rise in one after another ---------- */
+.order-card{animation:kmFadeUp .7s var(--km-ease) both;}
+.order-card:nth-child(2){animation-delay:.08s;}
+.order-card:nth-child(3){animation-delay:.16s;}
+.order-card:nth-child(4){animation-delay:.24s;}
+.order-card:nth-child(n+5){animation-delay:.3s;}
+
+/* ---------- Customise page ---------- */
+.cust-cta-btn{transition:transform .3s var(--km-ease),box-shadow .3s;}
+@media (hover:hover){.cust-cta-btn:not([disabled]):hover{box-shadow:0 14px 30px -14px rgba(20,36,75,.6);}}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  .site-header .brand,.site-header .main-nav a,.site-header .header-actions,
+  .steps .step,.checkout-section,.summary-box,.order-card,.km-celebrate > *,
+  .pdp-main-img img{animation:none !important;}
+  .km-line > span{transform:none !important;animation:none !important;}
+  .hero-content .eyebrow::before{transform:none;animation:none;}
+  .km-success-mark *{animation:none !important;stroke-dashoffset:0 !important;transform:none !important;}
+  .km-fly,.km-land,.km-ripple,.km-confetti{display:none !important;}
+}
+
+/* ---------- Fix: header search + bag icons were half size ----------
+   They are <button>s and picked up the browser's default padding,
+   which squeezed the 19px icon down to ~10px. */
+.icon-btn{padding:0;}
+.icon-btn > svg{flex-shrink:0;}
