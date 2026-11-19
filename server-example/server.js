@@ -986,7 +986,13 @@ app.post("/api/orders", (req, res) => {
     }
 
     const finalMethod = (paymentMethod || payment_method || "Online").toUpperCase();
-    const finalStatus = status ? (status.toLowerCase() === "paid" ? "Paid" : "Pending") : (finalMethod === "COD" ? "Pending" : "Paid");
+    if (finalMethod === "COD") {
+      return res.status(400).json({ error: "Cash on Delivery is no longer available." });
+    }
+    if (!["RAZORPAY", "ONLINE"].includes(finalMethod)) {
+      return res.status(400).json({ error: "Invalid payment method. Use Razorpay." });
+    }
+    const finalStatus = "Paid";
 
     // Check if customised clothing order
     const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url));

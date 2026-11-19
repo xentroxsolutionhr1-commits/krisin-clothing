@@ -1530,7 +1530,7 @@ async function calculateOrderPricing(items, normalizedMethod) {
     throw Object.assign(new Error("A non-empty cart is required."), { statusCode: 400 });
   }
 
-  if (!["COD", "RAZORPAY", "ONLINE"].includes(normalizedMethod)) {
+  if (!["RAZORPAY", "ONLINE"].includes(normalizedMethod)) {
     throw Object.assign(new Error("Invalid payment method."), { statusCode: 400 });
   }
 
@@ -1640,7 +1640,7 @@ async function calculateOrderPricing(items, normalizedMethod) {
   }
 
   const shippingFee = subtotal < 1999 ? 99 : 0;
-  const codFee = normalizedMethod === "COD" ? 49 : 0;
+  const codFee = 0;
   const discount = 0;
   const total = subtotal + shippingFee + codFee - discount;
 
@@ -1872,9 +1872,14 @@ app.post("/api/orders", async (req, res) => {
     ).trim();
 
     const normalizedMethod = paymentMethod.toUpperCase();
-    if (!["COD", "RAZORPAY", "ONLINE"].includes(normalizedMethod)) {
+    if (normalizedMethod === "COD") {
       return res.status(400).json({
-        error: "Invalid payment method. Use COD or Razorpay."
+        error: "Cash on Delivery is no longer available."
+      });
+    }
+    if (!["RAZORPAY", "ONLINE"].includes(normalizedMethod)) {
+      return res.status(400).json({
+        error: "Invalid payment method. Use Razorpay."
       });
     }
 
@@ -1888,64 +1893,56 @@ app.post("/api/orders", async (req, res) => {
 
     const razorpaySignature = body.razorpay_signature || null;
 
-    if (normalizedMethod === "COD" && paymentId) {
-      return res.status(400).json({
-        error: "COD orders cannot include a Razorpay payment ID."
-      });
-    }
-
-    if (normalizedMethod !== "COD" && !paymentId) {
+    if (!paymentId) {
       return res.status(400).json({
         error: "Razorpay payment details are required for online orders."
       });
     }
 
     let verifiedRazorpayOrder = null;
-    if (normalizedMethod !== "COD") {
-      if (!razorpayOrderId || !razorpaySignature) {
-        return res.status(400).json({
-          error: "Razorpay order ID, payment ID, and signature are required for online orders."
-        });
-      }
-
-      if (!verifyRazorpaySignature(
-        razorpayOrderId,
-        paymentId,
-        razorpaySignature
-      )) {
-        return res.status(400).json({
-          error: "Payment signature verification failed."
-        });
-      }
-
-      if (!razorpay) {
-        return res.status(503).json({
-          error: "Razorpay is not configured on the server."
-        });
-      }
-
-      try {
-        verifiedRazorpayOrder = await razorpay.orders.fetch(razorpayOrderId);
-      } catch (razorpayError) {
-        console.error("Razorpay order lookup error:", razorpayError);
-        return res.status(400).json({
-          error: "The submitted Razorpay order could not be verified."
-        });
-      }
-
-      if (
-        !verifiedRazorpayOrder ||
-        verifiedRazorpayOrder.receipt !== finalOrderId ||
-        verifiedRazorpayOrder.currency !== "INR"
-      ) {
-        return res.status(400).json({
-          error: "The Razorpay order does not match this checkout."
-        });
-      }
+    if (!razorpayOrderId || !razorpaySignature) {
+      return res.status(400).json({
+        error: "Razorpay order ID, payment ID, and signature are required for online orders."
+      });
     }
 
-    const paymentStatus = normalizedMethod === "COD" ? "pending" : "paid";
-    const orderStatus = normalizedMethod === "COD" ? "pending" : "paid";
+    if (!verifyRazorpaySignature(
+      razorpayOrderId,
+      paymentId,
+      razorpaySignature
+    )) {
+      return res.status(400).json({
+        error: "Payment signature verification failed."
+      });
+    }
+
+    if (!razorpay) {
+      return res.status(503).json({
+        error: "Razorpay is not configured on the server."
+      });
+    }
+
+    try {
+      verifiedRazorpayOrder = await razorpay.orders.fetch(razorpayOrderId);
+    } catch (razorpayError) {
+      console.error("Razorpay order lookup error:", razorpayError);
+      return res.status(400).json({
+        error: "The submitted Razorpay order could not be verified."
+      });
+    }
+
+    if (
+      !verifiedRazorpayOrder ||
+      verifiedRazorpayOrder.receipt !== finalOrderId ||
+      verifiedRazorpayOrder.currency !== "INR"
+    ) {
+      return res.status(400).json({
+        error: "The Razorpay order does not match this checkout."
+      });
+    }
+
+    const paymentStatus = "paid";
+    const orderStatus = "paid";
 
     // Recalculate trusted Subtotal and check customisation
     const hasCustomItems = Array.isArray(finalItems) && finalItems.some(i => i && (i.is_customized || i.custom_image_url || i.custom_details));
@@ -2020,7 +2017,6 @@ app.post("/api/orders", async (req, res) => {
     const verifiedItems = pricing.verifiedItems;
 
     if (
-      normalizedMethod !== "COD" &&
       Number(verifiedRazorpayOrder.amount) !== Math.round(calculatedTotal * 100)
     ) {
       return res.status(400).json({
@@ -2028,17 +2024,15 @@ app.post("/api/orders", async (req, res) => {
       });
     }
 
-    if (normalizedMethod !== "COD") {
-      const paymentVerification = await fetchVerifiedRazorpayPayment(
-        paymentId,
-        razorpayOrderId,
-        Math.round(calculatedTotal * 100)
-      );
-      if (!paymentVerification.ok) {
-        return res.status(paymentVerification.statusCode).json({
-          error: paymentVerification.error
-        });
-      }
+    const paymentVerification = await fetchVerifiedRazorpayPayment(
+      paymentId,
+      razorpayOrderId,
+      Math.round(calculatedTotal * 100)
+    );
+    if (!paymentVerification.ok) {
+      return res.status(paymentVerification.statusCode).json({
+        error: paymentVerification.error
+      });
     }
 
     if (Math.abs(finalTotal - calculatedTotal) > 0.01) {

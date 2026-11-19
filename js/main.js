@@ -319,12 +319,10 @@ function renderDrawer() {
   updateCheckoutButtons();
 }
 
-/* ---------- Dynamic checkout button (login guard) ---------- */
+/* ---------- Dynamic checkout button ---------- */
 function updateCheckoutButtons() {
-  const isLoggedIn = typeof AUTH !== "undefined" && AUTH.isCustomerLoggedIn();
-  const target = isLoggedIn ? "checkout.html" : "login.html";
   document.querySelectorAll("[data-checkout-btn]").forEach(btn => {
-    btn.setAttribute("href", target);
+    btn.setAttribute("href", "checkout.html");
   });
 }
 

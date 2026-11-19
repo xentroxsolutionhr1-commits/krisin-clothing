@@ -202,13 +202,6 @@
               <div class="pm-marks"><span>UPI</span><span>Cards</span><span>Net Banking</span><span>Wallets</span></div>
             </div>
           </label>
-          <label class="pay-method" data-pm="cod">
-            <input type="radio" name="pay" value="cod">
-            <div>
-              <div class="pm-title">Cash on delivery</div>
-              <div class="pm-sub">Pay in cash when your order arrives. A ₹49 handling fee applies.</div>
-            </div>
-          </label>
           <div class="rz-note">
             <svg viewBox="0 0 24 24">
               <rect x="4" y="10" width="16" height="10" rx="1.5" />
@@ -282,8 +275,7 @@
       function totals() {
         const subtotal = STORE.cartTotal();
         const shipping = subtotal >= 1999 ? 0 : 99;
-        const codFee = getSelectedMethod() === "cod" ? 49 : 0;
-        return { subtotal, shipping, codFee, total: subtotal + shipping + codFee };
+        return { subtotal, shipping, total: subtotal + shipping };
       }
 
       function getSelectedMethod() {
@@ -297,7 +289,7 @@
       }
 
       function renderSummary() {
-        const { subtotal, shipping, codFee, total } = totals();
+        const { subtotal, shipping, total } = totals();
         summaryEl.innerHTML = `
       <h3>Order summary</h3>
       ${cart.map(item => {
@@ -342,10 +334,9 @@
         }).join("")}
       <div class="summary-line" style="border-top:1px solid var(--line);margin-top:10px;padding-top:14px"><span>Subtotal</span><span class="mono-price">${formatPrice(subtotal)}</span></div>
       <div class="summary-line"><span>Shipping</span><span class="mono-price">${shipping === 0 ? "Free" : formatPrice(shipping)}</span></div>
-      ${codFee ? `<div class="summary-line"><span>Cash on delivery fee</span><span class="mono-price">${formatPrice(codFee)}</span></div>` : ""}
       <div class="summary-line total"><span>Total</span><span class="mono-price">${formatPrice(total)}</span></div>
     `;
-        payCta.textContent = getSelectedMethod() === "cod" ? "Place order" : `Pay ${formatPrice(total)} with Razorpay`;
+        payCta.textContent = `Pay ${formatPrice(total)} with Razorpay`;
       }
       renderSummary();
 
@@ -434,7 +425,7 @@
 
       async function completeOrder(orderId, paymentDetails = null) {
         const method = getSelectedMethod();
-        const { total, subtotal, shipping, codFee } = totals();
+        const { total, subtotal, shipping } = totals();
         const paymentRef = paymentDetails && paymentDetails.razorpay_payment_id
           ? paymentDetails.razorpay_payment_id
           : null;
@@ -467,14 +458,13 @@
           subtotal: subtotal,
           shipping: shipping,
           shipping_fee: shipping,
-          cod_fee: codFee,
-          pay: method === "cod" ? "COD" : (paymentRef ? "Razorpay" : "Online"),
-          payment_method: method === "cod" ? "COD" : (paymentRef ? "Razorpay" : "Online"),
+          pay: paymentRef ? "Razorpay" : "Online",
+          payment_method: paymentRef ? "Razorpay" : "Online",
           payment_id: paymentRef || null,
           razorpay_order_id: paymentDetails ? paymentDetails.razorpay_order_id : null,
           razorpay_payment_id: paymentRef,
           razorpay_signature: paymentDetails ? paymentDetails.razorpay_signature : null,
-          status: method === "cod" ? "pending" : "paid",
+          status: "paid",
           is_customized: hasCustom,
           custom_image_url: customItem ? customItem.custom_image_url : null,
           printing_fee: customItem ? Number(customItem.printing_fee || 0) : 0,
@@ -590,7 +580,7 @@
           return;
         }
         document.getElementById("order-id").textContent = "#" + orderId;
-        document.getElementById("payment-ref").textContent = paymentRef ? `Payment reference: ${paymentRef}` : "Payment on delivery";
+        document.getElementById("payment-ref").textContent = paymentRef ? `Payment reference: ${paymentRef}` : "Online payment";
         const trackBtn = document.getElementById("track-order-btn");
         if (trackBtn) {
           trackBtn.href = "orders.html?orderId=" + encodeURIComponent(orderId);
@@ -622,11 +612,6 @@ form.addEventListener("submit", async (e) => {
   const name = document.getElementById("fname").value.trim();
   const email = document.getElementById("email").value.trim();
   const phone = document.getElementById("phone").value.trim();
-
-  if (method === "cod") {
-    await completeOrder(orderId, null);
-    return;
-  }
 
   payCta.disabled = true;
   payCta.textContent = "Creating secure payment...";
